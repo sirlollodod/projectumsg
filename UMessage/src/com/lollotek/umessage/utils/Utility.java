@@ -5,8 +5,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.telephony.TelephonyManager;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -88,9 +100,49 @@ public class Utility {
 		return configuration;
 	}
 
-	public static void setConfiguration(Context context, Configuration configuration){
+	public static void setConfiguration(Context context,
+			Configuration configuration) {
 		File configurationFile = new File(context.getFilesDir() + "/"
 				+ Settings.CONFIG_FILE_NAME);
 		saveConfiguration(configuration, configurationFile);
+	}
+
+	public static String getSerialSim(Context context) {
+		TelephonyManager tm = (TelephonyManager) context
+				.getSystemService(Context.TELEPHONY_SERVICE);
+		String simId = tm.getSimSerialNumber();
+		return simId;
+	}
+
+	public static boolean isNetworkAvailable(Context context) {
+		ConnectivityManager cm = (ConnectivityManager) context
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+		// if no network is available networkInfo will be null
+		// otherwise check if we are connected
+		if (networkInfo != null && networkInfo.isConnected()) {
+			return true;
+		}
+		return false;
+	}
+
+	public static JSONObject doPostRequest(String url, JSONObject parameters) {
+
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+
+		try {
+			Iterator<String> keys = parameters.keys();
+			while (keys.hasNext()) {
+				String key = (String) keys.next();
+				String value = parameters.getString(key);
+				nameValuePairs.add(new BasicNameValuePair(key, value));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+
 	}
 }

@@ -1,26 +1,16 @@
 package com.lollotek.umessage.activities;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.data.c;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
@@ -34,20 +24,42 @@ public class Main extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
 		setContentView(R.layout.activity_main);
 
 		context = this;
 
-		m_configuration = Utility.getConfiguration(UMessageApplication
-				.getContext());
-
-		
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
+		m_configuration = Utility.getConfiguration(UMessageApplication
+				.getContext());
+		String storedSerialSim = m_configuration.getSimserial();
+		String sessionId = m_configuration.getSessid();
+		boolean simIsLogging = m_configuration.isSimIsLogging();
+		String actualSerialSim = Utility.getSerialSim(UMessageApplication
+				.getContext());
+		String prefix = m_configuration.getPrefix();
+		String num = m_configuration.getNum();
+
+		if ((storedSerialSim == "") || (storedSerialSim == null)
+				|| (actualSerialSim != storedSerialSim)) {
+			// Registrazione
+			Intent i = new Intent(this,
+					com.lollotek.umessage.activities.Registration.class);
+			startActivity(i);
+
+		} else if (simIsLogging) {
+			// In attesa codici login
+		} else if ((prefix != "") && (num != "") && (sessionId != "")) {
+			// Utente presumibilmente loggato, bisognerebbe assicurarsi che
+			// sessionId valida ed associata a numero attuale
+		} else {
+			// Default: Registrazione
+		}
 	}
 
 	@Override
