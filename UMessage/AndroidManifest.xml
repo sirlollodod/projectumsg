@@ -30,7 +30,7 @@
         </receiver>
 
         <activity
-            android:name="com.lollotek.umessage.activities.MainActivity"
+            android:name="com.lollotek.umessage.activities.Main"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,6 +38,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.lollotek.umessage.activities.UMessageSettings" />
     </application>
 
 </manifest>

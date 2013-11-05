@@ -8,6 +8,8 @@ import java.io.ObjectOutputStream;
 
 import android.content.Context;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.lollotek.umessage.Configuration;
 
 public class Utility {
@@ -60,22 +62,35 @@ public class Utility {
 	}
 
 	public static boolean checkPlayServices(Context context) {
-		//int resultCode = GooglePlayServicesUtil
-		//		.isGooglePlayServicesAvailable(context);
-		//if (resultCode != ConnectionResult.SUCCESS) {
-		
-		
-			// if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-			// GooglePlayServicesUtil.getErrorDialog(resultCode, activity,
-			// PLAY_SERVICES_RESOLUTION_REQUEST).show();
-			// } else {
-			// Log.i(TAG, "This device is not supported.");
-			// return false;
-			// finish();
-			// }
-		//	return false;
-		//}
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(context);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			/*
+			 * if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+			 * GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+			 * PLAY_SERVICES_RESOLUTION_REQUEST).show(); } else { Log.i(TAG,
+			 * "This device is not supported."); finish(); }
+			 */
+			return false;
+		}
 		return true;
 	}
 
+	public static Configuration getConfiguration(Context context) {
+		File configurationFile = new File(context.getFilesDir() + "/"
+				+ Settings.CONFIG_FILE_NAME);
+		Configuration configuration = loadConfiguration(configurationFile);
+		if (configuration == null) {
+			configuration = new Configuration();
+			Utility.saveConfiguration(configuration, configurationFile);
+		}
+
+		return configuration;
+	}
+
+	public static void setConfiguration(Context context, Configuration configuration){
+		File configurationFile = new File(context.getFilesDir() + "/"
+				+ Settings.CONFIG_FILE_NAME);
+		saveConfiguration(configuration, configurationFile);
+	}
 }

@@ -7,7 +7,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.widget.Toast;
 
 import com.lollotek.umessage.UMessageApplication;
@@ -17,7 +19,9 @@ import com.lollotek.umessage.db.Provider;
 public class UMessageService extends Service {
 
 	private Context instance = null;
-
+	private ServiceTestThreadHandler stth;
+	private boolean inUse = false;
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
@@ -30,7 +34,10 @@ public class UMessageService extends Service {
 		super.onCreate();
 		if (instance == null) {
 			instance = this;
+			stth = new ServiceTestThreadHandler();
+			
 		}
+
 	}
 
 	@Override
@@ -46,45 +53,80 @@ public class UMessageService extends Service {
 				Toast.LENGTH_LONG);
 		msg.show();
 
-		new Thread(new Runnable() {
-			public void run() {
-				Provider p = new Provider(UMessageApplication.getContext());
-				Cursor user;
-				// Toast msg;
-				ContentValues values;
-				while (true) {
-					values = new ContentValues();
+		if(!inUse){
+			inUse = true;
+			new Thread(new Runnable() {
+				public void run() {
+					Provider p = new Provider(UMessageApplication.getContext());
+					Cursor user;
+					// Toast msg;
+					ContentValues values;
+					while (true) {
+						values = new ContentValues();
 
-					values.put(DatabaseHelper.KEY_PREFIX, "" + randomBox());
-					values.put(DatabaseHelper.KEY_NUM, "3494566596");
-					values.put(DatabaseHelper.KEY_NAME, "Davide");
+						values.put(DatabaseHelper.KEY_PREFIX, "" + randomBox());
+						values.put(DatabaseHelper.KEY_NUM, "3494566596");
+						values.put(DatabaseHelper.KEY_NAME, "Davide");
 
-					p.insert(DatabaseHelper.TABLE_USER, null, values);
+						p.insert(DatabaseHelper.TABLE_USER, null, values);
 
-					// msg = Toast.makeText(getApplicationContext(),
-					// "Totale utenti db dal service: ", Toast.LENGTH_LONG);
-					// msg.show();
-					try {
-						Thread.sleep(5000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						// msg = Toast.makeText(getApplicationContext(),
+						// "Totale utenti db dal service: ", Toast.LENGTH_LONG);
+						// msg.show();
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
+
 				}
 
-			}
+				public int randomBox() {
 
-			public int randomBox() {
+					Random rand = new Random();
+					int pickedNumber = rand.nextInt(1000);
+					return pickedNumber;
 
-				Random rand = new Random();
-				int pickedNumber = rand.nextInt(1000);
-				return pickedNumber;
+				}
 
-			}
+			}, "prova").start();
+			
+		}
+		else{
+			stth.obtainMessage(1, "Messaggio da inviare").sendToTarget();
+		}
+		
+		
+		
 
-		}, "prova").start();
-
+		TestThread td = new TestThread(stth);
+		td.start();
+		
 		// return super.onStartCommand(intent, flags, startId);
 		return 0;
+	}
+	
+	private class ServiceTestThreadHandler extends Handler{
+		
+		public void handleMessage(Message msg){
+			
+			Toast tst;
+			switch(msg.what){
+			
+			case 0:
+				tst = Toast.makeText(instance, "Dentro servicetestthreadhandler: " + (String) msg.obj, Toast.LENGTH_SHORT);
+				tst.show();
+				break;
+				
+			case 1:
+				tst = Toast.makeText(instance, "Dentro servicetestthreadhandler: " + (String) msg.obj, Toast.LENGTH_SHORT);
+				tst.show();
+				break;
+			
+				
+			}
+		}
 	}
 }
