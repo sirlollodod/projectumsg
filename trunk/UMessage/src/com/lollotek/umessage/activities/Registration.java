@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.utils.Settings;
@@ -49,10 +50,27 @@ public class Registration extends Activity {
 
 	}
 
-	public void startLoginActivity(String email) {
+	public void startLoginActivity(JSONObject userInfo) {
 		Intent i = new Intent(UMessageApplication.getContext(),
 				com.lollotek.umessage.activities.Login.class);
-		i.putExtra("email", email);
+
+		try {
+			String prefix = userInfo.getString("prefix");
+			String num = userInfo.getString("num");
+			String email = userInfo.getString("email");
+			
+			i.putExtra("prefix", prefix);
+			i.putExtra("num", num);
+			i.putExtra("serialSim", serialSim);
+			
+			Configuration configuration = Utility.getConfiguration(UMessageApplication.getContext());
+			configuration.setSimIsLogging(true);
+			Utility.setConfiguration(UMessageApplication.getContext(), configuration);
+			
+		} catch (Exception e) {
+
+		}
+
 		startActivity(i);
 	}
 
@@ -113,8 +131,6 @@ public class Registration extends Activity {
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
 
-					result.accumulate("isRegistered", true);
-
 					return result;
 
 				} else {
@@ -131,17 +147,21 @@ public class Registration extends Activity {
 			super.onPostExecute(result);
 
 			try {
-				if ((result == null) || !(result.getBoolean("isRegistered"))) {
+
+				if (result == null) {
+
+				} else if ((result.getBoolean("isRegistered"))) {
+					// utente gia esistente, codici inviati a mail e per sms dal
+					// sistema PHP. Da avviare activity login
+					startLoginActivity(result);
+
+				} else {
 					// utente non esistente, richiesta anche la mail da
 					// associare
 					b1.setVisibility(View.GONE);
 					emailText.setVisibility(View.VISIBLE);
 					email.setVisibility(View.VISIBLE);
 					b2.setVisibility(View.VISIBLE);
-				} else {
-					// utente gia esistente, codici inviati a mail e per sms dal
-					// sistema PHP. Da avviare activity login
-					startLoginActivity(result.getString("email"));
 
 				}
 			} catch (Exception e) {
@@ -188,15 +208,17 @@ public class Registration extends Activity {
 			super.onPostExecute(result);
 
 			try {
-				if ((result != null) && (result.getString("errorCode") == "OK")) {
+				if ((result == null)) {
+
+				} else if ((result.getString("errorCode") == "OK")) {
 					// utente registrato, codici inviati per sms e mail dal
 					// sistema
 					// PHP. avviare login activity
-					startLoginActivity(result.getString("email"));
+					startLoginActivity(result);
 				} else {
 					b2.setEnabled(true);
 					b2.setText("Conferma");
-					
+
 					Toast msg = Toast.makeText(
 							UMessageApplication.getContext(),
 							"errore registrazione user", Toast.LENGTH_SHORT);
