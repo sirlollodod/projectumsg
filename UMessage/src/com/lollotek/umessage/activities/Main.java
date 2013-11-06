@@ -53,7 +53,16 @@ public class Main extends Activity {
 			startActivity(i);
 
 		} else if (simIsLogging) {
-			// In attesa codici login
+			//Login
+			Intent i = new Intent(UMessageApplication.getContext(),
+					com.lollotek.umessage.activities.Login.class);
+
+			i.putExtra("prefix", m_configuration.getPrefix());
+			i.putExtra("num", m_configuration.getNum());
+			i.putExtra("serialSim", m_configuration.getSimserial());
+
+			startActivity(i);
+
 		} else if ((prefix != "") && (num != "") && (sessionId != "")) {
 			// Utente presumibilmente loggato, bisognerebbe assicurarsi che
 			// sessionId valida ed associata a numero attuale

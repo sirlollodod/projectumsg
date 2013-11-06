@@ -70,10 +70,10 @@ int id satellite 0x7f060002
 int id scrollView1 0x7f060005
 int id settings 0x7f06000f
 int id terrain 0x7f060003
-int id textView1 0x7f060007
-int id textView2 0x7f060008
-int id textView3 0x7f06000c
-int id txt0 0x7f060006
+int id textView1 0x7f060006
+int id textView2 0x7f060007
+int id textView3 0x7f060008
+int id txt0 0x7f06000c
 int layout activity_login 0x7f030000
 int layout activity_main 0x7f030001
 int layout activity_registration 0x7f030002
