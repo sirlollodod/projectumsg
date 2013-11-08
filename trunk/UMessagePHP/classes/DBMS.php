@@ -136,40 +136,40 @@ class DBMS{
 			$stmt->close();
 			return false;
 		}
-		
+
 		do{
 			$newSessId = md5("" . $prefix . $num . $email . time());
-		
+
 			$stmt->bind_param('s', $newSessId);
-				
+
 			if(!$stmt->execute()){
 				$stmt->close();
 				return false;
 			}
-				
+
 			$stmt->store_result();
 			if(!$stmt->num_rows){
 				break;
 			}
-		
+
 		} while (true);
-		
+
 		$query = "INSERT INTO user(prefix, num, email, sessid, gcmid) VALUES(?, ?, ?, ?, '') ;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
 		}
-		
+
 		$stmt->bind_param('ssss', $prefix, $num, $email, $newSessId);
-		
+
 		if(!$stmt->execute()){
 			$stmt->close();
 			return false;
 		}
-		
+
 		$stmt->store_result();
-	
-		$response['email'] = $email;			
+
+		$response['email'] = $email;
 		$stmt->close();
 
 		return $response;
@@ -269,6 +269,7 @@ class DBMS{
 
 	//Controlla che i codici inviati per email e per sms corrispondano, e quindi logga l'utente, generando l'id di sessione ed associandolo all'utente in questione.
 	function loginUser($prefix, $num, $emailver, $smsver){
+		
 		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=? AND emailver=? AND smsver=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
@@ -324,22 +325,27 @@ class DBMS{
 			}
 
 			$stmt->store_result();
-			if($stmt->num_rows == 1){
+			if($stmt->affected_rows == 1){
+				$response = array(
+						'errorCode' => 'OK',
+						'sessionId' => $newSessId
+				);
+				
 				$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";
 				if(!$stmt = $this->connection->prepare($query)){
 					$stmt->close();
-					return false;
+					//return false;
 				}
 
 				$stmt->bind_param('ss', $prefix, $num);
 
 				if(!$stmt->execute()){
 					$stmt->close();
-					return true;
+					//return true;
 				}
 
 				$stmt->close();
-				return true;
+				return $response;
 			}
 			else{
 				$stmt->close();
@@ -355,18 +361,20 @@ class DBMS{
 
 	//L'utente richiede il login: vengono generati i codici di controllo da inviare successivamente per mail e per sms.
 	function requestLoginUser($prefix, $num){
-		$query = "UPDATE user SET sessid='' WHERE prefix=? AND num=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
+		/*$query = "UPDATE user SET sessid='' WHERE prefix=? AND num=?;";
+		 if(!$stmt = $this->connection->prepare($query)){
+		$stmt->close();
+		return false;
 		}
 
 		$stmt->bind_param('ss', $prefix, $num);
 
 		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
+		$stmt->close();
+		return false;
 		}
+
+		*/
 
 		$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";
 		if(!$stmt = $this->connection->prepare($query)){
@@ -381,8 +389,8 @@ class DBMS{
 			return false;
 		}
 
-		$newEmailver  = substr(md5(),0,6);
-		$newSmsver = substr(md5(),0,6);
+		$newEmailver  = substr(md5("" . $prefix . time()),0,6);
+		$newSmsver = substr(md5("" . $newEmailver . time()),0,6);
 
 		$query = "INSERT INTO userlogin VALUES (?, ?, ?, ?)";
 		if(!$stmt = $this->connection->prepare($query)){

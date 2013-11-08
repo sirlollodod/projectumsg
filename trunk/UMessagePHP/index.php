@@ -53,7 +53,7 @@ switch ($_POST['action']){
 			$response['errorCode'] = 'KO';
 			break;
 		}
-
+		
 		$response['errorCode'] = 'OK';
 	
 		$response['isRegistered'] = true;
@@ -61,10 +61,27 @@ switch ($_POST['action']){
 		$response['num'] = $result['num'];
 		$response['email'] = $result['email'];
 
+		if($db->requestLoginUser($_POST['prefix'], $_POST['num'])){
+				$response['verificationCodes'] = 'OK';
+		}
+		else{
+			$response['verificationCodes'] = 'KO';
+		}
+		
 		break;
 
 	case 'LOGIN_USER':
-
+		$result = $db->loginUser($_POST['prefix'], $_POST['num'], $_POST['emailCode'], $_POST['smsCode']);
+		
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['sessionId'] = '';//debug
+			break;
+		}
+		
+		$response['errorCode'] = 'OK';
+		$response['sessionId'] = $result['sessionId'];
+		
 		break;
 
 
