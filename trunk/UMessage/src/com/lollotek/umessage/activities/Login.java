@@ -1,5 +1,6 @@
 package com.lollotek.umessage.activities;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
@@ -36,7 +38,12 @@ public class Login extends Activity {
 		Intent params = getIntent();
 		prefix = params.getStringExtra("prefix");
 		num = params.getStringExtra("num");
-		serialSim = params.getStringExtra("serialSim");
+		email = params.getStringExtra("email");
+
+		Toast msg = Toast.makeText(UMessageApplication.getContext(), "email:"
+				+ email + "\nprefix:" + prefix + "\nnum:" + num,
+				Toast.LENGTH_SHORT);
+		msg.show();
 
 		b1.setOnClickListener(new ButtonClickedListener());
 
@@ -52,16 +59,17 @@ public class Login extends Activity {
 		Configuration configuration = Utility
 				.getConfiguration(UMessageApplication.getContext());
 		try {
-			configuration.setPrefix(result.getString("prefix"));
-			configuration.setNum(result.getString("num"));
-			configuration.setSimserial(result.getString("serialSim"));
-			configuration.setSessid(result.getString("sessId"));
+			configuration.setSessid(result.getString("sessionId"));
 			configuration.setSimIsLogging(false);
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
+			Toast msg = Toast.makeText(UMessageApplication.getContext(),
+					"Utente loggato!", Toast.LENGTH_SHORT);
+			msg.show();
 
-			// utente loggato e configurazione impostata con le info necessarie,
-			// da lanciare l'activity che mostra conversazioni
+			Intent i = new Intent(UMessageApplication.getContext(),
+					com.lollotek.umessage.activities.ConversationsList.class);
+			startActivity(i);
 
 		} catch (Exception e) {
 
@@ -72,10 +80,12 @@ public class Login extends Activity {
 	public class ButtonClickedListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
+			String s = smsCode.getText().toString();
+			String e = emailCode.getText().toString();
 
 			switch (v.getId()) {
 			case R.id.button1:
-				new LoginUserAsyncTask().execute(prefix, num, serialSim);
+				new LoginUserAsyncTask().execute(prefix, num, s, e);
 
 				break;
 
@@ -103,12 +113,13 @@ public class Login extends Activity {
 				parameters.accumulate("action", "LOGIN_USER");
 				parameters.accumulate("prefix", args[0]);
 				parameters.accumulate("num", args[1]);
-				parameters.accumulate("serialSim", args[2]);
+				parameters.accumulate("smsCode", args[2]);
+				parameters.accumulate("emailCode", args[3]);
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
 
 			} catch (Exception e) {
-
+				result = null;
 			}
 
 			return result;
@@ -119,17 +130,22 @@ public class Login extends Activity {
 			super.onPostExecute(result);
 
 			try {
-				if (result == null) {
 
-				} else if (result.getString("errorCode") == "OK") {
+				if (result == null) {
+					b1.setEnabled(true);
+					b1.setText("Conferma");
+
+				} else if (result.getString("errorCode").equals("OK")) {
 					userLogged(result);
 				} else {
 					b1.setEnabled(true);
 					b1.setText("Conferma");
+
 				}
 			} catch (Exception e) {
 				b1.setEnabled(true);
 				b1.setText("Conferma");
+
 			}
 		}
 

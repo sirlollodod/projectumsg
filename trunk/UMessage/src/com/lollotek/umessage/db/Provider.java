@@ -11,14 +11,15 @@ public class Provider {
 
 	public Provider(Context context) {
 		if (dbHelper == null) {
-			dbHelper = DatabaseHelper.getInstance(context.getApplicationContext());
+			dbHelper = DatabaseHelper.getInstance(context
+					.getApplicationContext());
 		}
 	}
 
 	public long insert(String table, String nullColumnHack, ContentValues values) {
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-		long idLastInserted = db.insert(table, nullColumnHack, values);
+		long idLastInserted = db.insertOrThrow(table, nullColumnHack, values);
 
 		return idLastInserted;
 	}
@@ -37,7 +38,7 @@ public class Provider {
 	 * }
 	 */
 	public Cursor getTotalUser() {
-		String query = "SELECT * FROM " + DatabaseHelper.TABLE_USER;
+		String query = "SELECT * FROM " + DatabaseHelper.TABLE_USER + " ORDER BY " + DatabaseHelper.KEY_NAME;
 
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 		Cursor c = db.rawQuery(query, null);
