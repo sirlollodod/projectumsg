@@ -7,7 +7,7 @@ public class Configuration implements java.io.Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String prefix, num, sessId, gcmId, simSerial;
+	private String prefix, num, sessId, gcmId, simSerial, email;
 	private boolean firstExecutionApp, simIsLogging;
 
 	public Configuration() {
@@ -87,6 +87,14 @@ public class Configuration implements java.io.Serializable {
 
 	public void setSimIsLogging(boolean simIsLogging) {
 		this.simIsLogging = simIsLogging;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 }

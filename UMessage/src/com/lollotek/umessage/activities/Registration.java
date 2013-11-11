@@ -48,6 +48,9 @@ public class Registration extends Activity {
 	protected void onResume() {
 		super.onResume();
 
+		// Bisognerebbe cancellare il db locale contenente tutti i dati relativi
+		// all'account precedentemente loggato
+
 	}
 
 	public void startLoginActivity(JSONObject userInfo) {
@@ -58,15 +61,23 @@ public class Registration extends Activity {
 			String prefix = userInfo.getString("prefix");
 			String num = userInfo.getString("num");
 			String email = userInfo.getString("email");
-			
+
 			i.putExtra("prefix", prefix);
 			i.putExtra("num", num);
-			i.putExtra("serialSim", serialSim);
-			
-			Configuration configuration = Utility.getConfiguration(UMessageApplication.getContext());
+			i.putExtra("email", email);
+
+			Configuration configuration = Utility
+					.getConfiguration(UMessageApplication.getContext());
+
+			configuration.setPrefix(prefix);
+			configuration.setNum(num);
 			configuration.setSimIsLogging(true);
-			Utility.setConfiguration(UMessageApplication.getContext(), configuration);
-			
+			configuration.setSimserial(serialSim);
+			configuration.setEmail(email);
+
+			Utility.setConfiguration(UMessageApplication.getContext(),
+					configuration);
+
 		} catch (Exception e) {
 
 		}
@@ -82,14 +93,13 @@ public class Registration extends Activity {
 
 			switch (v.getId()) {
 			case R.id.button1:
-				new CheckUserAlreadyregisteredAsyncTask().execute(p, n,
-						serialSim);
+				new CheckUserAlreadyregisteredAsyncTask().execute(p, n);
 
 				break;
 
 			case R.id.button2:
 				String e = email.getText().toString();
-				new RegisterUserAsyncTask().execute(p, n, serialSim, e);
+				new RegisterUserAsyncTask().execute(p, n, e);
 
 				break;
 			}
@@ -121,13 +131,12 @@ public class Registration extends Activity {
 				parameters.accumulate("num", args[1]);
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
-
-				if (result.getBoolean("isRegistered")) {
+				if ((result.getString("errorCode").equals("OK"))
+						&& result.getBoolean("isRegistered")) {
 					parameters = new JSONObject();
 					parameters.accumulate("action", "REGISTER_USER");
 					parameters.accumulate("prefix", args[0]);
 					parameters.accumulate("num", args[1]);
-					parameters.accumulate("serialSim", args[2]);
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
 
@@ -137,7 +146,7 @@ public class Registration extends Activity {
 					return result;
 				}
 			} catch (Exception e) {
-
+				result = null;
 			}
 			return result;
 		}
@@ -149,8 +158,12 @@ public class Registration extends Activity {
 			try {
 
 				if (result == null) {
-
-				} else if ((result.getBoolean("isRegistered"))) {
+					Toast msg = Toast.makeText(
+							UMessageApplication.getContext(), "Errore:1",
+							Toast.LENGTH_SHORT);
+					msg.show();
+				} else if ((result.getString("errorCode").equals("OK"))
+						&& (result.getBoolean("isRegistered"))) {
 					// utente gia esistente, codici inviati a mail e per sms dal
 					// sistema PHP. Da avviare activity login
 					startLoginActivity(result);
@@ -165,7 +178,9 @@ public class Registration extends Activity {
 
 				}
 			} catch (Exception e) {
-
+				Toast msg = Toast.makeText(UMessageApplication.getContext(),
+						"Errore:2", Toast.LENGTH_SHORT);
+				msg.show();
 			}
 
 		}
@@ -192,13 +207,12 @@ public class Registration extends Activity {
 				parameters.accumulate("action", "REGISTER_USER");
 				parameters.accumulate("prefix", args[0]);
 				parameters.accumulate("num", args[1]);
-				parameters.accumulate("serialSilm", args[2]);
-				parameters.accumulate("email", args[3]);
+				parameters.accumulate("email", args[2]);
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
 
 			} catch (Exception e) {
-
+				result = null;
 			}
 			return result;
 		}
@@ -209,8 +223,11 @@ public class Registration extends Activity {
 
 			try {
 				if ((result == null)) {
-
-				} else if ((result.getString("errorCode") == "OK")) {
+					Toast msg = Toast.makeText(
+							UMessageApplication.getContext(), "Errore:3",
+							Toast.LENGTH_SHORT);
+					msg.show();
+				} else if (result.getString("errorCode").equals("OK")) {
 					// utente registrato, codici inviati per sms e mail dal
 					// sistema
 					// PHP. avviare login activity
@@ -225,7 +242,9 @@ public class Registration extends Activity {
 					msg.show();
 				}
 			} catch (Exception e) {
-
+				Toast msg = Toast.makeText(UMessageApplication.getContext(),
+						"Errore:4", Toast.LENGTH_SHORT);
+				msg.show();
 			}
 		}
 
