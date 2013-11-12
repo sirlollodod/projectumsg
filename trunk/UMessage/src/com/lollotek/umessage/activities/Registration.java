@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -52,6 +53,12 @@ public class Registration extends Activity {
 		// all'account precedentemente loggato
 
 	}
+	
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.registration, menu);
+		return true;
+	}
+	
 
 	public void startLoginActivity(JSONObject userInfo) {
 		Intent i = new Intent(UMessageApplication.getContext(),
@@ -127,7 +134,7 @@ public class Registration extends Activity {
 
 			try {
 				parameters.accumulate("action", "CHECK_USER_REGISTERED");
-				parameters.accumulate("prefix", args[0]);
+				parameters.accumulate("prefix", "+" + args[0]);
 				parameters.accumulate("num", args[1]);
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
@@ -135,7 +142,7 @@ public class Registration extends Activity {
 						&& result.getBoolean("isRegistered")) {
 					parameters = new JSONObject();
 					parameters.accumulate("action", "REGISTER_USER");
-					parameters.accumulate("prefix", args[0]);
+					parameters.accumulate("prefix", "+" + args[0]);
 					parameters.accumulate("num", args[1]);
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
@@ -205,7 +212,7 @@ public class Registration extends Activity {
 
 			try {
 				parameters.accumulate("action", "REGISTER_USER");
-				parameters.accumulate("prefix", args[0]);
+				parameters.accumulate("prefix", "+" + args[0]);
 				parameters.accumulate("num", args[1]);
 				parameters.accumulate("email", args[2]);
 

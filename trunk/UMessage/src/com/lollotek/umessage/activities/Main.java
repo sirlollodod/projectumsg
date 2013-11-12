@@ -98,7 +98,6 @@ public class Main extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.conversationslist, menu);
 		return true;
 	}
 

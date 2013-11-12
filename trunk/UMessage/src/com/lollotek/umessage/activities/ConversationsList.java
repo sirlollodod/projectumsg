@@ -1,5 +1,6 @@
 package com.lollotek.umessage.activities;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +18,10 @@ public class ConversationsList extends Activity {
 
 		setContentView(R.layout.activity_conversationslist);
 
+		ActionBar ab = getActionBar();
+		ab.setTitle("Prova da codice");
+		ab.setSubtitle("Sottotitolo");
+		
 	}
 
 	@Override
