@@ -1,12 +1,13 @@
 package com.lollotek.umessage.activities;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -53,6 +54,31 @@ public class Login extends Activity {
 	protected void onResume() {
 		// TODO Auto-generated method stub
 		super.onResume();
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.reset:
+
+			Configuration configuration = new Configuration();
+			Utility.setConfiguration(UMessageApplication.getContext(),
+					configuration);
+
+			Intent i = new Intent(this,
+					com.lollotek.umessage.activities.Main.class);
+			startActivity(i);
+
+			break;
+
+		}
+
+		return true;
+	}
+
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.login, menu);
+		return true;
 	}
 
 	public void userLogged(JSONObject result) {

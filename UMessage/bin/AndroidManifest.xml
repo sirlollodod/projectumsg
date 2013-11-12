@@ -59,7 +59,8 @@
             android:label="Conversazioni" />
         <activity
             android:name="com.lollotek.umessage.activities.Contacts"
-            android:label="Contatti" />
+            android:label="Contatti"
+            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
     </application>
 
 </manifest>

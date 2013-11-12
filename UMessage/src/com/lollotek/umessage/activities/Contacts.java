@@ -1,11 +1,14 @@
 package com.lollotek.umessage.activities;
 
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -16,14 +19,17 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberType;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.Settings;
+import com.lollotek.umessage.utils.Utility;
 
 public class Contacts extends Activity {
 
-	TextView list1, list2;
+	TextView title, loading, list ;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +37,13 @@ public class Contacts extends Activity {
 
 		setContentView(R.layout.activity_contacts);
 
-		list1 = (TextView) findViewById(R.id.textView1);
-		list2 = (TextView) findViewById(R.id.textView2);
-
+		title = (TextView) findViewById(R.id.textView1);
+		loading = (TextView) findViewById(R.id.textView2);
+		list = (TextView) findViewById(R.id.textView3);
+		
+		loading.setText("");
+		
+		getActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
 	@Override
@@ -47,11 +57,11 @@ public class Contacts extends Activity {
 		Provider p = new Provider(UMessageApplication.getContext());
 		Cursor users = p.getTotalUser();
 
-		list1.setText("Totale utenti importati: " + users.getCount() + "\n\n");
-		list2.setText("");
+		title.setText("Totale utenti importati: " + users.getCount() + "\n\n");
+		list.setText("");
 
 		while (users.moveToNext()) {
-			list2.append(users.getString(users
+			list.append(users.getString(users
 					.getColumnIndex(DatabaseHelper.KEY_NAME))
 					+ ": "
 					+ users.getString(users
@@ -64,11 +74,21 @@ public class Contacts extends Activity {
 	}
 
 	private class LoadUserContactsAsyncTask extends
-			AsyncTask<Void, Exception, Integer> {
+			AsyncTask<Void, Integer, Integer> {
+		
+		private int totalPhoneContacts;
+
+		@Override
+		protected void onProgressUpdate(Integer... values) {
+			super.onProgressUpdate(values);
+			
+			loading.setText("Caricamento contatti " + values[0] + "/" + totalPhoneContacts);
+		}
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			loading.setText("Caricamento contatti...");
 		}
 
 		@Override
@@ -84,8 +104,21 @@ public class Contacts extends Activity {
 
 			Provider p = new Provider(UMessageApplication.getContext());
 			ContentValues value;
+			JSONObject parameters;
+			JSONObject result;
 
+			totalPhoneContacts = phones.getCount();
+			int actualPhoneContact = 0;
+			
+			Configuration configuration = Utility.getConfiguration(UMessageApplication.getContext());
+			String myPrefix = configuration.getPrefix();
+			String myNum = configuration.getNum();
+			
 			while (phones.moveToNext()) {
+				publishProgress(++actualPhoneContact);
+				
+				parameters = new JSONObject();
+				result = null;
 				value = new ContentValues();
 
 				if (isCancelled()) {
@@ -109,24 +142,41 @@ public class Contacts extends Activity {
 
 				phoneUtil.format(num, PhoneNumberFormat.INTERNATIONAL);
 
+				if(myPrefix.equals("+" + num.getCountryCode()) && myNum.equals("" + num.getNationalNumber())){
+					continue;
+				}
+				
 				if (phoneUtil.getNumberType(num) == PhoneNumberType.MOBILE) {
-					// Bisogna controllare qui che il numero selezionato sia
-					// registrato al servizio UMessage
-
-					value.put(DatabaseHelper.KEY_PREFIX,
-							"+" + num.getCountryCode());
-					value.put(
-							DatabaseHelper.KEY_NUM,
-							(num.isItalianLeadingZero() ? "0" : "")
-									+ num.getNationalNumber());
-					value.put(DatabaseHelper.KEY_NAME, name);
 
 					try {
+						parameters
+								.accumulate("action", "CHECK_USER_REGISTERED");
+						parameters.accumulate("prefix",
+								"+" + num.getCountryCode());
+						parameters.accumulate("num", num.getNationalNumber());
+						parameters.accumulate("anonymous", "yes");
+
+						result = Utility.doPostRequest(Settings.SERVER_URL,
+								parameters);
+
+						if ((!result.getString("errorCode").equals("OK"))
+								|| !result.getBoolean("isRegistered")) {
+							continue;
+						}
+
+						value.put(DatabaseHelper.KEY_PREFIX,
+								"+" + num.getCountryCode());
+						value.put(
+								DatabaseHelper.KEY_NUM,
+								(num.isItalianLeadingZero() ? "0" : "")
+										+ num.getNationalNumber());
+						value.put(DatabaseHelper.KEY_NAME, name);
+
 						if (p.insert(DatabaseHelper.TABLE_USER, null, value) != -1) {
 							numMobileContactsLoaded++;
 						}
 					} catch (Exception e) {
-						continue;
+
 					}
 
 				} else {
@@ -149,6 +199,7 @@ public class Contacts extends Activity {
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
+			loading.setText("");
 			loadUsers();
 		}
 
@@ -162,6 +213,11 @@ public class Contacts extends Activity {
 			new LoadUserContactsAsyncTask().execute();
 
 			break;
+
+		case android.R.id.home:
+			NavUtils.navigateUpFromSameTask(this);
+			break;
+
 		}
 
 		return true;
