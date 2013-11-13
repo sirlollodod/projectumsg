@@ -213,63 +213,9 @@ class DBMS{
 
 	}
 
-	//Controlla se un utente è in attesa di loggarsi sul terminale Android
-	function checkUserIsLogging($prefix, $num){
-		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->bind_param('ss', $prefix, $num);
-
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->num_rows == 1){
-			$stmt->close();
-			return true;
-		}
-		else{
-			$stmt->close();
-			return false;
-		}
-	}
-
-	//Controlla se il prefisso, numero di telefono e id di sessione richiesti corrispondono a qualche utente
-	function checkSessionId($prefix, $num, $sessid){
-		$query = "SELECT * FROM user WHERE prefix=? AND num=? AND sessid=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->bind_param('sss', $prefix, $num, $sessid);
-
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->num_rows == 1){
-			$stmt->close();
-			return true;
-		}
-		else{
-			$stmt->close();
-			return false;
-		}
-	}
-
 	//Controlla che i codici inviati per email e per sms corrispondano, e quindi logga l'utente, generando l'id di sessione ed associandolo all'utente in questione.
 	function loginUser($prefix, $num, $emailver, $smsver){
-		
+
 		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=? AND emailver=? AND smsver=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
@@ -330,7 +276,7 @@ class DBMS{
 						'errorCode' => 'OK',
 						'sessionId' => $newSessId
 				);
-				
+
 				$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";
 				if(!$stmt = $this->connection->prepare($query)){
 					$stmt->close();
@@ -406,6 +352,331 @@ class DBMS{
 		}
 
 		$stmt->store_result();
+		if($stmt->affected_rows == 1){		// ATTENZIONE!!!  FORSE VA AFFECTED_ROWS (invece che num_rows)
+			$stmt->close();
+			return true;
+		}
+		else{
+			$stmt->close();
+			return false;
+		}
+	}
+
+	//Controlla se id di sessione richiesta corrisponde a qualche utente
+	function checkSessionId($sessid){
+		$query = "SELECT * FROM user WHERE sessid=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'prefix' => '',
+				'num' => '',
+				'sessionId' => $sessid
+		);
+
+
+		$stmt->bind_param('s', $sessid);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows == 1){
+
+			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessionId, $sGcmId);
+			$stmt->fetch();
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['prefix'] = $sPrefix;
+			$response['num'] = $sNum;
+
+			return $response;
+		}
+		else{
+			$stmt->close();
+			return false;
+		}
+	}
+
+	//Controlla che la chat tra i due numeri richiesti sia già stata creata e ne ritorna l'id in caso la chat esista, false altrimenti
+	function checkSingleChatExists($prefix1, $num1, $prefix2, $num2, $localChatVersion){
+		$query = "SELECT id, vers FROM singlechat WHERE prefix1=? AND num1=? AND prefix2=? AND num2=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'chatExists' => false,
+				'idChat' => '',
+				'syncChatRequired' => ''
+		);
+
+		$stmt->bind_param('ssss', $prefix1, $num1, $prefix2, $num2);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows == 1){
+			$stmt->bind_result($sChatId, $sVersChat);
+			$stmt->fetch();
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['chatExists'] = true;
+			$response['idChat'] = $sChatId;
+			if($sVersChat == $localChatVersion){
+				$response['syncChatRequired'] = false;
+			}
+			else{
+				$response['syncChatRequired'] = true;
+			}
+				
+			return $response;
+		}
+		else{
+			$stmt->bind_param('ssss', $prefix2, $num2, $prefix1, $num1);
+
+			if(!$stmt->execute()){
+				$stmt->close();
+				return false;
+			}
+
+			$stmt->store_result();
+
+			if($stmt->num_rows == 1){
+				$stmt->bind_result($sChatId, $sVersChat);
+				$stmt->fetch();
+				$stmt->close();
+				$response['errorCode'] = 'OK';
+				$response['chatExists'] = true;
+				$response['idChat'] = $sChatId;
+				if($sVersChat == $localChatVersion){
+					$response['syncChatRequired'] = false;
+				}
+				else{
+					$response['syncChatRequired'] = true;
+				}
+				return $response;
+			}
+
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			return $response;
+		}
+	}
+
+	//Crea una chat tra i due numeri richiesti e ritorna l'id della chat appena creata
+	function createNewSingleChat($prefix1, $num1, $prefix2, $num2){
+		$query = "INSERT INTO singlechat(vers, prefix1, num1, prefix2, num2) VALUES (?, ?, ?, ?, ?)";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'idChat' => ''
+		);
+
+		$vers = md5("" . $prefix1 . $num1 . $prefix2 . $num2 . time());
+
+		$stmt->bind_param('sssss', $vers, $prefix1, $num1, $prefix2, $num2);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->affected_rows == 1){
+			$newChatId = $stmt->insert_id;
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['idChat'] = $newChatId;
+			return $response;
+		}
+		else{
+			$stmt->close();
+			return false;
+		}
+	}
+
+	//Ritorna 0 se sender è inserito come user1, 1 se sendere è inserito come user 2
+	function getDirectionMessage($idChat, $senderPrefix, $senderNum){
+		$query = "SELECT * FROM singlechat WHERE id=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'direction' => ''
+		);
+
+		$stmt->bind_param('i', $idChat);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows == 1){
+			$stmt->bind_result($sId, $sVers, $sPrefix1, $sNum1, $sPrefix2, $sNum2);
+			$stmt->fetch();
+			$stmt->close();
+			if(($senderPrefix == $sPrefix1) && ($senderNum == $sNum1)){
+				$response['errorCode'] = 'OK';
+				$response['direction'] = '0';
+			}
+			elseif (($senderPrefix == $sPrefix2) && ($senderNum == $sNum2)){
+				$response['errorCode'] = 'OK';
+				$response['direction'] = '1';
+			}
+				
+			return $response;
+		}
+		else{
+			$stmt->close();
+			$response['errorCode'] = 'KO';
+			return $response;
+		}
+	}
+
+
+	//Crea un nuovo messaggio tra i due utenti richiesti e ne ritorna l'id, in caso positivo aggiorna anche la versione della chat
+	function createNewSingleChatMessage($idChat, $direction, $msg, $type){
+		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type) VALUES (?, ?, ?, ?, ?, ?);";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'idNewMessage' => '',
+				'dataNewMessage' => '',
+				'statusNewMessage' => '',
+				'chatVersionChanged' => false,
+				'newChatVersion' => ''
+		);
+
+
+		$time =  $this->getMillis();
+		$status = '0';
+		$stmt->bind_param('isssis', $idChat, $direction, $msg, $status, $time , $type);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->affected_rows == 1){
+			$newMessageId = $stmt->insert_id;
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['idNewMessage'] = $newMessageId;
+			$response['dataNewMessage'] = $time;
+			$response['statusNewMessage'] = $status;
+
+			{
+				$query = "SELECT vers FROM singlechat WHERE id=?;";
+				if(!$stmt = $this->connection->prepare($query)){
+					$stmt->close();
+					return $response;
+				}
+
+				$stmt->bind_param('i', $idChat);
+
+				if(!$stmt->execute()){
+					return $response;
+				}
+
+				$stmt->store_result();
+
+				if($stmt->num_rows == 1){
+					$stmt->bind_result($sVersion);
+					$stmt->fetch();
+					$stmt->close();
+				}
+				else{
+					$stmt->close();
+					return $response;
+				}
+
+				$query = "UPDATE singlechat SET vers=? WHERE id=?;";
+				if(!$stmt = $this->connection->prepare($query)){
+					$stmt->close();
+					return $response;
+				}
+
+				$newChatVersion = md5("" . $sVersion . time());
+
+				$stmt->bind_param('si', $newChatVersion, $idChat);
+
+				if(!$stmt->execute()){
+					$stmt->close();
+					return $response;
+				}
+
+				if($stmt->affected_rows == 1){
+					$stmt->close();
+					$response['chatVersionChanged'] = true;
+					$response['newChatVersion'] = $newChatVersion;
+					return $response;
+				}
+				else{
+					$stmt->close();
+					return $response;
+				}
+			}
+
+			return $response;
+		}
+		else{
+			return false;
+		}
+
+	}
+
+
+
+	//-----------------------------      OK    ---------------------------------------------
+
+
+	//Controlla se un utente è in attesa di loggarsi sul terminale Android
+	function checkUserIsLogging($prefix, $num){
+		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('ss', $prefix, $num);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
 		if($stmt->num_rows == 1){
 			$stmt->close();
 			return true;
@@ -415,6 +686,9 @@ class DBMS{
 			return false;
 		}
 	}
+
+
+
 
 	//Aggiorna il valore della sessione di GCM associato alla id di sessione richiesto.
 	function updateGcmSessId($sessid, $newGcmid){
@@ -472,78 +746,8 @@ class DBMS{
 		}
 	}
 
-	//Controlla che la chat tra i due numeri richiesti sia già stata creata e ne ritorna l'id in caso la chat esista, false altrimenti
-	function checkSingleChatExists($prefix1, $num1, $prefix2, $num2){
-		$query = "SELECT id FROM singlechat WHERE prefix1=? AND num1=? AND prefix2=? AND num2=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
 
-		$stmt->bind_param('ssss', $prefix1, $num1, $prefix2, $num2);
 
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->num_rows == 1){
-			$stmt->bind_result($searchedChatId);
-			$stmt->fetch();
-			$stmt->close();
-			return $searchedChatId;
-		}
-		else{
-			$stmt->bind_param('ssss', $prefix2, $num2, $prefix1, $num1);
-
-			if(!$stmt->execute()){
-				$stmt->close();
-				return false;
-			}
-
-			$stmt->store_result();
-
-			if($stmt->num_rows == 1){
-				$stmt->bind_result($searchedChatId);
-				$stmt->fetch();
-				$stmt->close();
-				return $searchedChatId;
-			}
-
-			$stmt->close();
-			return false;
-		}
-	}
-
-	//Crea una chat tra i due numeri richiesti e ritorna l'id della chat appena creata
-	function createNewSingleChat($vers, $prefix1, $num1, $prefix2, $num2){
-		$query = "INSERT INTO singlechat(vers, prefix1, num1, prefix2, num2) VALUES (?, ?, ?, ?, ?)";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->bind_param('sssss', $vers, $prefix1, $num1, $prefix2, $num2);
-
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->affected_rows == 1){
-			$newChatId = $stmt->insert_id;
-			$stmt->close();
-			return $newChatId;
-		}
-		else{
-			$stmt->close();
-			return false;
-		}
-	}
 
 	//Ritorna l'oggetto SingleChat relativo all'id richiesto, false altrimenti.
 	function getSingleChatInfo($id){
@@ -575,35 +779,7 @@ class DBMS{
 		}
 	}
 
-	//Crea un nuovo messaggio tra i due utenti richiesti e ne ritorna l'id, in caso positivo aggiorna anche la versione della chat
-	function createNewSingleChatMessage($idChat, $direction, $msg, $status, $type){
-		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type) VALUES (?, ?, ?, ?, ?, ?);";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
 
-		$time =  $this->getMillis();
-		$stmt->bind_param('iisiii', $idChat, $direction, $msg, $status, $time , $type);
-
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->affected_rows == 1){
-			$newMessageId = $stmt->insert_id;
-			$stmt->close();
-			$this->generateNewChatVersion($idChat);
-			return $newMessageId;
-		}
-		else{
-			return false;
-		}
-
-	}
 
 	//Ritorna l'oggetto SingleChatMessage relativo all'id e all'idchat richiesti, false se il messaggio non esiste.
 	function getSingleChatMessageInfo($id,$idChat){
