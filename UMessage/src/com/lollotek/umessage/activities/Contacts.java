@@ -1,16 +1,24 @@
 package com.lollotek.umessage.activities;
 
+import org.apache.http.HttpException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v4.app.NavUtils;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +37,14 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Contacts extends Activity {
 
-	TextView title, loading, list ;
+	TextView title, loading;
+	ListView listView;
+	String[] fromColumns = { DatabaseHelper.KEY_NAME,
+			DatabaseHelper.KEY_PREFIX, DatabaseHelper.KEY_NUM };
+	int[] toViews = { R.id.textView1, R.id.textView2, R.id.textView3 };
+	Context context = null;
+
+	LoadUserContactsAsyncTask loadUserContactAsyncTask;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,12 +52,39 @@ public class Contacts extends Activity {
 
 		setContentView(R.layout.activity_contacts);
 
+		context = this;
+
 		title = (TextView) findViewById(R.id.textView1);
 		loading = (TextView) findViewById(R.id.textView2);
-		list = (TextView) findViewById(R.id.textView3);
-		
-		loading.setText("");
-		
+
+		listView = (ListView) findViewById(R.id.listView1);
+
+		listView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				Cursor c = ((SimpleCursorAdapter) listView.getAdapter())
+						.getCursor();
+
+				c.moveToPosition(position);
+
+				Intent i = new Intent(
+						context,
+						com.lollotek.umessage.activities.SingleChatContact.class);
+				i.putExtra("prefix", c.getString(c
+						.getColumnIndex(DatabaseHelper.KEY_PREFIX)));
+				i.putExtra("num",
+						c.getString(c.getColumnIndex(DatabaseHelper.KEY_NUM)));
+				i.putExtra("name",
+						c.getString(c.getColumnIndex(DatabaseHelper.KEY_NAME)));
+
+				startActivity(i);
+
+			}
+		});
+
+		loading.setVisibility(View.GONE);
+
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
@@ -53,41 +95,44 @@ public class Contacts extends Activity {
 
 	}
 
+	@Override
+	protected void onStop() {
+		super.onStop();
+	}
+
 	private void loadUsers() {
+
 		Provider p = new Provider(UMessageApplication.getContext());
 		Cursor users = p.getTotalUser();
 
-		title.setText("Totale utenti importati: " + users.getCount() + "\n\n");
-		list.setText("");
+		title.setText("Totale utenti registrati: " + users.getCount() + "\n\n");
 
-		while (users.moveToNext()) {
-			list.append(users.getString(users
-					.getColumnIndex(DatabaseHelper.KEY_NAME))
-					+ ": "
-					+ users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_PREFIX))
-					+ " "
-					+ users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_NUM)) + "\n");
+		if (users.getCount() > 0) {
 
+			SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
+					R.layout.usercontact, users, fromColumns, toViews, 0);
+			listView.setAdapter(adapter);
 		}
+
 	}
 
 	private class LoadUserContactsAsyncTask extends
 			AsyncTask<Void, Integer, Integer> {
-		
+
 		private int totalPhoneContacts;
 
 		@Override
 		protected void onProgressUpdate(Integer... values) {
 			super.onProgressUpdate(values);
-			
-			loading.setText("Caricamento contatti " + values[0] + "/" + totalPhoneContacts);
+
+			loading.setText("Caricamento contatti... [ " + values[0] + "/"
+					+ totalPhoneContacts + " ]");
 		}
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			loading.setVisibility(View.VISIBLE);
 			loading.setText("Caricamento contatti...");
 		}
 
@@ -109,20 +154,21 @@ public class Contacts extends Activity {
 
 			totalPhoneContacts = phones.getCount();
 			int actualPhoneContact = 0;
-			
-			Configuration configuration = Utility.getConfiguration(UMessageApplication.getContext());
+
+			Configuration configuration = Utility
+					.getConfiguration(UMessageApplication.getContext());
 			String myPrefix = configuration.getPrefix();
 			String myNum = configuration.getNum();
-			
+
 			while (phones.moveToNext()) {
 				publishProgress(++actualPhoneContact);
-				
+
 				parameters = new JSONObject();
 				result = null;
 				value = new ContentValues();
 
 				if (isCancelled()) {
-					return null;
+					return numMobileContactsLoaded;
 				}
 
 				String name = phones
@@ -142,10 +188,11 @@ public class Contacts extends Activity {
 
 				phoneUtil.format(num, PhoneNumberFormat.INTERNATIONAL);
 
-				if(myPrefix.equals("+" + num.getCountryCode()) && myNum.equals("" + num.getNationalNumber())){
+				if (myPrefix.equals("+" + num.getCountryCode())
+						&& myNum.equals("" + num.getNationalNumber())) {
 					continue;
 				}
-				
+
 				if (phoneUtil.getNumberType(num) == PhoneNumberType.MOBILE) {
 
 					try {
@@ -175,6 +222,8 @@ public class Contacts extends Activity {
 						if (p.insert(DatabaseHelper.TABLE_USER, null, value) != -1) {
 							numMobileContactsLoaded++;
 						}
+					} catch (HttpException e) {
+						return numMobileContactsLoaded;
 					} catch (Exception e) {
 
 					}
@@ -196,11 +245,20 @@ public class Contacts extends Activity {
 		@Override
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
+
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
+			loading.setVisibility(View.GONE);
 			loading.setText("");
 			loadUsers();
+		}
+
+		@Override
+		protected void onCancelled(Integer result) {
+			super.onCancelled(result);
+			loading.setVisibility(View.GONE);
+			loading.setText("");
 		}
 
 	}
@@ -210,7 +268,10 @@ public class Contacts extends Activity {
 		switch (item.getItemId()) {
 		case R.id.refresh:
 
-			new LoadUserContactsAsyncTask().execute();
+			if (loadUserContactAsyncTask == null) {
+				loadUserContactAsyncTask = new LoadUserContactsAsyncTask();
+				loadUserContactAsyncTask.execute();
+			}
 
 			break;
 
