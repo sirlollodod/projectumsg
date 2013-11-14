@@ -1,5 +1,6 @@
 package com.lollotek.umessage.activities;
 
+import org.apache.http.HttpException;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -152,7 +153,11 @@ public class Registration extends Activity {
 				} else {
 					return result;
 				}
-			} catch (Exception e) {
+			}
+			catch (HttpException e){
+				result = null;
+			}
+			catch (Exception e) {
 				result = null;
 			}
 			return result;
@@ -218,7 +223,11 @@ public class Registration extends Activity {
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
 
-			} catch (Exception e) {
+			}
+			catch(HttpException e){
+				result = null;
+			}
+			catch (Exception e) {
 				result = null;
 			}
 			return result;

@@ -1,8 +1,6 @@
 package com.lollotek.umessage.db;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -15,7 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getName();
 
 	// Database Version
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 1;
 
 	// Database Name
 	private static final String DATABASE_NAME = "UMessage";
@@ -32,7 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			KEY_IDLASTMESSAGE = "idLastMessage";
 
 	// Table singlechatmessages columns names
-	public static final String KEY_IDMESSAGE = "idMessage",
+	public static final String //KEY_IDMESSAGE = "idMessage",
 			// KEY_IDCHAT = "", Uguale a singlechat column name
 			KEY_DIRECTION = "direction", KEY_STATUS = "status",
 			KEY_DATA = "data", KEY_TYPE = "type", KEY_MESSAGE = "message",
@@ -40,57 +38,63 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	// Table User columns names
 	public static final String KEY_PREFIX = "prefix", KEY_NUM = "num",
-			KEY_NAME = "name";
+			KEY_NAME = "name", KEY_ID = "_id";
 
 	// Create table singlechat
 	private static final String CREATE_TABLE_SINGLECHAT = TABLE_SINGLECHAT
-			+ "(" + KEY_IDCHAT + " TEXT PRIMARY KEY," + KEY_VERSION + " TEXT,"
-			+ KEY_PREFIXDEST + " TEXT," + KEY_NUMDEST + " TEXT,"
-			+ KEY_IDLASTMESSAGE + " TEXT)";
+			+ "(" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_IDCHAT
+			+ " INTEGER UNIQUE," + KEY_VERSION + " TEXT," + KEY_PREFIXDEST
+			+ " TEXT," + KEY_NUMDEST + " TEXT," + KEY_IDLASTMESSAGE + " INTEGER)";
 
 	// Create table singlechatmessages
 	private static final String CREATE_TABLE_SINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
 			+ "("
-			+ KEY_IDMESSAGE
-			+ " TEXT NOT NULL,"
+			+ KEY_ID
+			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"
+			//+ KEY_IDMESSAGE
+			//+ " INTEGER NOT NULL,"
 			+ KEY_IDCHAT
-			+ " TEXT NOT NULL,"
+			+ " INTEGER NOT NULL UNIQUE,"
 			+ KEY_DIRECTION
 			+ " TEXT,"
 			+ KEY_STATUS
 			+ " TEXT,"
 			+ KEY_DATA
-			+ " TEXT,"
+			+ " INTEGER,"
 			+ KEY_TYPE
 			+ " TEXT,"
 			+ KEY_MESSAGE
 			+ " TEXT,"
 			+ KEY_READ
-			+ " TEXT, PRIMARY KEY ("
-			+ KEY_IDMESSAGE + ", " + KEY_IDCHAT + "))";
+			+ " TEXT)";
+			//, UNIQUE ("
+			//+ KEY_IDMESSAGE + ", " + KEY_IDCHAT + "))";
 
 	// Create table tempsinglechatmessages
 	private static final String CREATE_TABLE_TEMPSINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
 			+ "("
-			+ KEY_IDMESSAGE
-			+ " TEXT NOT NULL,"
+			+ KEY_ID
+			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"
+			//+ KEY_IDMESSAGE
+			//+ " INTEGER NOT NULL,"
 			+ KEY_IDCHAT
-			+ " TEXT NOT NULL,"
+			+ " INTEGER NOT NULL UNIQUE,"
 			+ KEY_DATA
-			+ " TEXT,"
+			+ " INTEGER,"
 			+ KEY_TYPE
 			+ " TEXT,"
 			+ KEY_MESSAGE
-			+ " TEXT, PRIMARY KEY ("
-			+ KEY_IDMESSAGE
-			+ ", "
-			+ KEY_IDCHAT + "))";
+			+ " TEXT)";
+			//", UNIQUE ("
+			//+ KEY_IDMESSAGE
+			//+ ", "
+			//+ KEY_IDCHAT + "))";
 
 	// Create table user
-	private static final String CREATE_TABLE_USER = TABLE_USER + "("
-			+ KEY_PREFIX + " TEXT NOT NULL," + KEY_NUM + " TEXT NOT NULL,"
-			+ KEY_NAME + " TEXT, PRIMARY KEY(" + KEY_PREFIX + ", " + KEY_NUM
-			+ "))";
+	private static final String CREATE_TABLE_USER = TABLE_USER + "(" + KEY_ID
+			+ " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_PREFIX
+			+ " TEXT NOT NULL," + KEY_NUM + " TEXT NOT NULL," + KEY_NAME
+			+ " TEXT NOT NULL, UNIQUE(" + KEY_PREFIX + ", " + KEY_NUM + "))";
 
 	public static DatabaseHelper getInstance(Context context) {
 		if (instance == null) {

@@ -1,6 +1,7 @@
 package com.lollotek.umessage.activities;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,11 +9,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.db.DatabaseHelper;
+import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
@@ -28,7 +32,7 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_main);
-		
+
 		context = this;
 
 	}
@@ -36,6 +40,40 @@ public class Main extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		// testing
+		/*
+		 * { Provider p = new Provider(UMessageApplication.getContext());
+		 * if(p.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null) ==
+		 * -2){ Toast.makeText(UMessageApplication.getContext(),
+		 * "Rimossi tutti i messaggi", Toast.LENGTH_SHORT).show();
+		 * 
+		 * }
+		 * 
+		 * ContentValues value = new ContentValues();
+		 * value.put(DatabaseHelper.KEY_IDCHAT, 0);
+		 * value.put(DatabaseHelper.KEY_VERSION, "asdkmoqwe");
+		 * value.put(DatabaseHelper.KEY_PREFIXDEST, "+39");
+		 * value.put(DatabaseHelper.KEY_NUMDEST, "3396929558");
+		 * value.put(DatabaseHelper.KEY_IDLASTMESSAGE, 0); if
+		 * (p.insert(DatabaseHelper.TABLE_SINGLECHAT, null, value) != -1) {
+		 * Toast.makeText(UMessageApplication.getContext(), "Chat creata",
+		 * Toast.LENGTH_SHORT).show(); }
+		 * 
+		 * value = new ContentValues();
+		 * //value.put(DatabaseHelper.KEY_IDMESSAGE, 41);
+		 * value.put(DatabaseHelper.KEY_IDCHAT, 0);
+		 * value.put(DatabaseHelper.KEY_DIRECTION, "1");
+		 * value.put(DatabaseHelper.KEY_STATUS, "0");
+		 * value.put(DatabaseHelper.KEY_DATA, 23);
+		 * value.put(DatabaseHelper.KEY_TYPE, "text"); value.put(
+		 * DatabaseHelper.KEY_MESSAGE, "Dodicesimo messaggio: ciao scimmia...");
+		 * value.put(DatabaseHelper.KEY_READ, "0");
+		 * 
+		 * if (p.insert(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, value) !=
+		 * -1) { Toast.makeText(UMessageApplication.getContext(),
+		 * "Singolo messaggio inserito", Toast.LENGTH_SHORT) .show(); } }
+		 */
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
 				.getContext());

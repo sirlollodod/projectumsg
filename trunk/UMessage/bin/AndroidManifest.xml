@@ -61,6 +61,10 @@
             android:name="com.lollotek.umessage.activities.Contacts"
             android:label="Contatti"
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
+        <activity
+            android:name="com.lollotek.umessage.activities.SingleChatContact"
+            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
+"
     </application>
 
 </manifest>

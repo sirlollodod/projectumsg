@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
+import org.apache.http.HttpException;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
@@ -29,6 +30,7 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.lollotek.umessage.Configuration;
+import com.lollotek.umessage.UMessageApplication;
 
 public class Utility {
 
@@ -133,12 +135,18 @@ public class Utility {
 	}
 
 	public static JSONObject doPostRequest(String urlToOpen,
-			JSONObject parameters) {
+			JSONObject parameters) throws HttpException{
 
 		JSONObject result;
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 		String postParams = "";
 		boolean isFirst = true;
+		
+		
+		if(!isNetworkAvailable(UMessageApplication.getContext())){
+			throw new HttpException("Connessione non disponibile");
+		}
+		
 		try {
 			Iterator<String> keys = parameters.keys();
 			while (keys.hasNext()) {
