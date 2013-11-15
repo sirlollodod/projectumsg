@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.SingleChatMessagesAdapter;
+import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 
 public class SingleChatContact extends Activity {
@@ -59,11 +60,34 @@ public class SingleChatContact extends Activity {
 
 		Cursor messages = p.getMessages(prefix, num);
 
+		int previousPosition = messages.getPosition();
+		int startPosition = messages.getCount();
+		boolean isSomeNewMessages = false;
+		if(messages.moveToLast()){
+			do{
+			if(messages.getString(messages.getColumnIndex(DatabaseHelper.KEY_TOREAD)).equals("1")){
+				if(!isSomeNewMessages){
+					isSomeNewMessages = true;
+				}
+				
+				startPosition = messages.getPosition();
+			}
+			else{
+				break;
+			}
+				
+			} while(messages.moveToPrevious());
+		}
+		
+		messages.moveToPosition(previousPosition);
+		
 		SingleChatMessagesAdapter adapter = new SingleChatMessagesAdapter(this,
-				R.layout.usercontact, messages, fromColumns, toViews, 0);
+				R.layout.usercontact, messages, fromColumns, toViews, 0, (isSomeNewMessages ? startPosition : -1));
 		listView.setAdapter(adapter);
 
-		listView.setSelection(messages.getCount() - 15);
+		listView.setSelection(startPosition);
+		
+		p.markMessagesAsRed(prefix, num);
 
 	}
 

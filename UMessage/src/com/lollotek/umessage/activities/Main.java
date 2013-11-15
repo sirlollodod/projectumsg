@@ -87,10 +87,10 @@ public class Main extends Activity {
 			Calendar c = Calendar.getInstance();
 			Random r = new Random();
 			int totalNewMessages = 0;
-			for (int i = 0; i < 2; i++) {
+			for (int i = 0; i < 5; i++) {
 				value = new ContentValues();
 				value.put(DatabaseHelper.KEY_PREFIX, "+39");
-				value.put(DatabaseHelper.KEY_NUM, "3471387350");
+				value.put(DatabaseHelper.KEY_NUM, "3400101010");
 				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
 						: "1"));
 				value.put(DatabaseHelper.KEY_STATUS, "0");
@@ -99,7 +99,7 @@ public class Main extends Activity {
 				value.put(DatabaseHelper.KEY_TYPE, "text");
 				value.put(DatabaseHelper.KEY_MESSAGE, "" + i
 						+ "° messaggio: ciao scimmia...");
-				value.put(DatabaseHelper.KEY_READ, "0");
+				value.put(DatabaseHelper.KEY_TOREAD, "1");
 
 				if (p.insertNewMessage(value)) {
 					totalNewMessages++;

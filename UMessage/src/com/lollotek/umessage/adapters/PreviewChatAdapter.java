@@ -38,7 +38,7 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 		View newRow;
 
 		newRow = inflater.inflate(R.layout.chatpreview, parent, false);
-		TextView name, message, time;
+		TextView name, message, time, news;
 
 		cursor.moveToPosition(position);
 
@@ -52,29 +52,63 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 				.getColumnIndex(DatabaseHelper.KEY_MESSAGE));
 		String dataValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_DATA));
+		boolean isSomeNewMessage = (cursor.getString(cursor
+				.getColumnIndex(DatabaseHelper.KEY_TOREAD))).equals("1");
+
+		if (isSomeNewMessage) {
+			news = (TextView) newRow.findViewById(R.id.textView4);
+			news.setVisibility(View.VISIBLE);
+		}
 
 		message.setText(messageValue);
 		if (nameValue.equals("0")) {
-			name.setText("Sconosciuto");
+			String prefix = cursor.getString(cursor
+					.getColumnIndex(DatabaseHelper.KEY_PREFIX));
+			String num = cursor.getString(cursor
+					.getColumnIndex(DatabaseHelper.KEY_NUM));
+			name.setText(prefix + "  " + num);
 		} else {
 			name.setText(nameValue);
 		}
 
 		Calendar c = Calendar.getInstance();
-		c.setTimeInMillis(Long.parseLong(dataValue));
-		String dataFormattedValue = "" + c.get(Calendar.DAY_OF_MONTH) + "/"
-				+ (c.get(Calendar.MONTH)+1) + "/" + c.get(Calendar.YEAR) + "  " + c.get(Calendar.HOUR_OF_DAY) + ":" + (c.get(Calendar.MINUTE) < 10 ? "0" + c.get(Calendar.MINUTE): c.get(Calendar.MINUTE));
 
-		time.setText(dataFormattedValue);
-		if (position % 2 == 0) {
-			newRow.setBackgroundColor(Color.rgb(247, 247, 247));
+		c.setTimeInMillis(Long.parseLong(dataValue));
+		boolean isMessageOfToday = (Calendar.getInstance().get(
+				Calendar.DAY_OF_MONTH) == c.get(Calendar.DAY_OF_MONTH));
+		String dataFormattedValue;
+
+		if (isMessageOfToday) {
+			dataFormattedValue = ""
+					+ (c.get(Calendar.HOUR_OF_DAY) < 10 ? "0"
+							+ c.get(Calendar.HOUR_OF_DAY) : c
+							.get(Calendar.HOUR_OF_DAY))
+					+ ":"
+					+ (c.get(Calendar.MINUTE) < 10 ? "0"
+							+ c.get(Calendar.MINUTE) : c.get(Calendar.MINUTE));
+			;
 		} else {
-			newRow.setBackgroundColor(Color.rgb(229, 229, 229));
+			dataFormattedValue = ""
+					+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
+							+ c.get(Calendar.DAY_OF_MONTH) : c
+							.get(Calendar.DAY_OF_MONTH))
+					+ "/"
+					+ ((c.get(Calendar.MONTH) + 1) < 10 ? "0"
+							+ (c.get(Calendar.MONTH) + 1) : (c
+							.get(Calendar.MONTH) + 1)) + "/"
+					+ c.get(Calendar.YEAR);
+
 		}
 
+		time.setText(dataFormattedValue);
+
+		/*
+		 * if (position % 2 == 0) { newRow.setBackgroundColor(Color.rgb(247,
+		 * 247, 247)); } else { newRow.setBackgroundColor(Color.rgb(229, 229,
+		 * 229)); }
+		 */
 		return newRow;
 	}
-
 	/*
 	 * @Override public void bindView(View view, Context context, Cursor c) {
 	 * super.bindView(view, context, c);

@@ -38,7 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			KEY_STATUS = "status",
 			KEY_DATA = "data", KEY_TYPE = "type",
 			KEY_MESSAGE = "message",
-			KEY_READ = "read";
+			KEY_TOREAD = "read";
 
 	// Table User columns names
 	public static final String KEY_PREFIX = "prefix", KEY_NUM = "num",
@@ -70,7 +70,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			+ KEY_DATA
 			+ " INTEGER,"
 			+ KEY_TYPE
-			+ " TEXT," + KEY_MESSAGE + " TEXT," + KEY_READ + " TEXT)";
+			+ " TEXT," + KEY_MESSAGE + " TEXT," + KEY_TOREAD + " TEXT)";
 	// , UNIQUE ("
 	// + KEY_IDMESSAGE + ", " + KEY_IDCHAT + "))";
 
