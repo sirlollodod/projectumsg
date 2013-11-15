@@ -1,14 +1,17 @@
 package com.lollotek.umessage.activities;
 
+import java.util.Calendar;
+import java.util.Random;
+
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -42,38 +45,73 @@ public class Main extends Activity {
 		super.onResume();
 
 		// testing
-		/*
-		 * { Provider p = new Provider(UMessageApplication.getContext());
-		 * if(p.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null) ==
-		 * -2){ Toast.makeText(UMessageApplication.getContext(),
-		 * "Rimossi tutti i messaggi", Toast.LENGTH_SHORT).show();
-		 * 
-		 * }
-		 * 
-		 * ContentValues value = new ContentValues();
-		 * value.put(DatabaseHelper.KEY_IDCHAT, 0);
-		 * value.put(DatabaseHelper.KEY_VERSION, "asdkmoqwe");
-		 * value.put(DatabaseHelper.KEY_PREFIXDEST, "+39");
-		 * value.put(DatabaseHelper.KEY_NUMDEST, "3396929558");
-		 * value.put(DatabaseHelper.KEY_IDLASTMESSAGE, 0); if
-		 * (p.insert(DatabaseHelper.TABLE_SINGLECHAT, null, value) != -1) {
-		 * Toast.makeText(UMessageApplication.getContext(), "Chat creata",
-		 * Toast.LENGTH_SHORT).show(); }
-		 * 
-		 * value = new ContentValues();
-		 * //value.put(DatabaseHelper.KEY_IDMESSAGE, 41);
-		 * value.put(DatabaseHelper.KEY_IDCHAT, 0);
-		 * value.put(DatabaseHelper.KEY_DIRECTION, "1");
-		 * value.put(DatabaseHelper.KEY_STATUS, "0");
-		 * value.put(DatabaseHelper.KEY_DATA, 23);
-		 * value.put(DatabaseHelper.KEY_TYPE, "text"); value.put(
-		 * DatabaseHelper.KEY_MESSAGE, "Dodicesimo messaggio: ciao scimmia...");
-		 * value.put(DatabaseHelper.KEY_READ, "0");
-		 * 
-		 * if (p.insert(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, value) !=
-		 * -1) { Toast.makeText(UMessageApplication.getContext(),
-		 * "Singolo messaggio inserito", Toast.LENGTH_SHORT) .show(); } }
-		 */
+
+		{
+			Provider p = new Provider(UMessageApplication.getContext());
+
+			// if (p.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null)
+			// == -2) { // Toast.makeText(UMessageApplication.getContext()
+			// "Rimossi tutti i messaggi", Toast.LENGTH_SHORT).show(); // }
+			TextView t = (TextView) findViewById(R.id.textView1);
+			/*
+			 * try { Cursor conversations = p.getConversations();
+			 * Toast.makeText(UMessageApplication.getContext(),
+			 * "Conversazioni: " + conversations.getCount(),
+			 * Toast.LENGTH_SHORT).show();
+			 * 
+			 * 
+			 * while (conversations.moveToNext()) {
+			 * 
+			 * Toast.makeText( UMessageApplication.getContext(), "name: " +
+			 * (conversations .getString( conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_NAME)) .equals("0") ?
+			 * "Sconosciuto" : conversations.getString(conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_NAME))) + "\n" + "prefix: " +
+			 * conversations.getString(conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_PREFIX)) + "\n" + "num: " +
+			 * conversations.getString(conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_NUM)) + "\n" + "data: " +
+			 * conversations.getString(conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_DATA)) + "\n" + "message: " +
+			 * conversations.getString(conversations
+			 * .getColumnIndex(DatabaseHelper.KEY_MESSAGE)),
+			 * Toast.LENGTH_SHORT).show();
+			 * 
+			 * 
+			 * } } catch (Exception e) {
+			 * Toast.makeText(UMessageApplication.getContext(), e.toString(),
+			 * Toast.LENGTH_LONG).show(); }
+			 */
+			ContentValues value;
+
+			Calendar c = Calendar.getInstance();
+			Random r = new Random();
+			int totalNewMessages = 0;
+			for (int i = 0; i < 2; i++) {
+				value = new ContentValues();
+				value.put(DatabaseHelper.KEY_PREFIX, "+39");
+				value.put(DatabaseHelper.KEY_NUM, "3471387350");
+				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
+						: "1"));
+				value.put(DatabaseHelper.KEY_STATUS, "0");
+				value.put(DatabaseHelper.KEY_DATA,
+						Double.parseDouble("" + c.getTimeInMillis()));
+				value.put(DatabaseHelper.KEY_TYPE, "text");
+				value.put(DatabaseHelper.KEY_MESSAGE, "" + i
+						+ "° messaggio: ciao scimmia...");
+				value.put(DatabaseHelper.KEY_READ, "0");
+
+				if (p.insertNewMessage(value)) {
+					totalNewMessages++;
+				}
+
+			}
+
+			Toast.makeText(UMessageApplication.getContext(),
+					"Singoli messaggi inseriti: " + totalNewMessages,
+					Toast.LENGTH_SHORT).show();
+
+		}
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
 				.getContext());

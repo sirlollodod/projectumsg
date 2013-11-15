@@ -10,7 +10,8 @@
         android:layout_height="15dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="dataIfMessageFirstOfDay"
+        android:text="data"
+        android:background="#F4F7AB"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <TextView
@@ -23,6 +24,6 @@
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
         android:gravity="left"
-        android:text="Proviamo a scrivere qualche cosa che speriamo vada a finire su piu di una riga!! Cosi riesco a vedere come e se funziona l&apos;accapo automatico su piu linee lasciando il giusto spazio prima del margine destro!!" />
+        android:text="messaggio" />
 
 </RelativeLayout>

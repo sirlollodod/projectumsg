@@ -31,7 +31,7 @@
         android:layout_marginTop="-3dp"
         android:layout_marginRight="100dp"
         android:singleLine="true"
-        android:text="messagedaskqeioanjwqj12iasdij1209iasdj9012390a"
+        android:text="message"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <TextView

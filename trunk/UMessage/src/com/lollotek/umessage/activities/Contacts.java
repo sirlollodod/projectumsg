@@ -219,7 +219,7 @@ public class Contacts extends Activity {
 										+ num.getNationalNumber());
 						value.put(DatabaseHelper.KEY_NAME, name);
 
-						if (p.insert(DatabaseHelper.TABLE_USER, null, value) != -1) {
+						if (p.insertNewUser(value)) {
 							numMobileContactsLoaded++;
 						}
 					} catch (HttpException e) {
