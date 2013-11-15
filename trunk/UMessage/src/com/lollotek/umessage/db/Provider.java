@@ -142,7 +142,8 @@ public class Provider {
 		Cursor messages = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
 				new String[] { DatabaseHelper.KEY_ID,
 						DatabaseHelper.KEY_DIRECTION, DatabaseHelper.KEY_DATA,
-						DatabaseHelper.KEY_MESSAGE }, DatabaseHelper.KEY_IDCHAT
+						DatabaseHelper.KEY_MESSAGE, DatabaseHelper.KEY_STATUS,
+						DatabaseHelper.KEY_TOREAD }, DatabaseHelper.KEY_IDCHAT
 						+ "=?", new String[] { idChat }, null, null,
 				DatabaseHelper.KEY_DATA);
 
@@ -177,8 +178,9 @@ public class Provider {
 			query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
 					+ DatabaseHelper.KEY_PREFIXDEST + " AS "
 					+ DatabaseHelper.KEY_PREFIX + ", "
-					+ DatabaseHelper.TABLE_SINGLECHAT + "." + DatabaseHelper.KEY_NUMDEST
-					+ " AS " + DatabaseHelper.KEY_NUM + ", IFNULL("
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_NUMDEST + " AS "
+					+ DatabaseHelper.KEY_NUM + ", IFNULL("
 					+ DatabaseHelper.TABLE_USER + "." + DatabaseHelper.KEY_NAME
 					+ ", 0)" + " AS " + DatabaseHelper.KEY_NAME + ", "
 					+ DatabaseHelper.TABLE_USER + "." + DatabaseHelper.KEY_ID
@@ -188,7 +190,10 @@ public class Provider {
 					+ DatabaseHelper.KEY_DATA + ", "
 					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
 					+ DatabaseHelper.KEY_MESSAGE + " AS "
-					+ DatabaseHelper.KEY_MESSAGE + " FROM "
+					+ DatabaseHelper.KEY_MESSAGE + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TOREAD + " AS "
+					+ DatabaseHelper.KEY_TOREAD + " FROM "
 					+ DatabaseHelper.TABLE_SINGLECHAT + " LEFT JOIN  "
 					+ DatabaseHelper.TABLE_USER + " ON "
 					+ DatabaseHelper.TABLE_SINGLECHAT + "."
@@ -202,7 +207,9 @@ public class Provider {
 					+ " ON " + DatabaseHelper.TABLE_SINGLECHAT + "."
 					+ DatabaseHelper.KEY_IDLASTMESSAGE + "="
 					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-					+ DatabaseHelper.KEY_ID + " ORDER BY " + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." + DatabaseHelper.KEY_DATA + " DESC";
+					+ DatabaseHelper.KEY_ID + " ORDER BY "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DATA + " DESC";
 			conversations = db.rawQuery(query, null);
 
 		} catch (Exception e) {
@@ -211,6 +218,31 @@ public class Provider {
 		return conversations;
 	}
 
+	public synchronized boolean markMessagesAsRed(String prefix, String num) {
+
+		Cursor chat = getIdChatDest(prefix, num);
+
+		if (!chat.moveToNext()) {
+			return false;
+		}
+
+		Long idChat = chat.getLong(chat.getColumnIndex(DatabaseHelper.KEY_ID));
+
+		ContentValues value = new ContentValues();
+
+		value.put(DatabaseHelper.KEY_TOREAD, "0");
+
+		if (update(DatabaseHelper.TABLE_SINGLECHATMESSAGES, value,
+				DatabaseHelper.KEY_IDCHAT + "=? AND "
+						+ DatabaseHelper.KEY_TOREAD + "=?", new String[] {
+						String.valueOf(idChat), "1" }) != -1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// test
 	public synchronized Cursor getAllChats() {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
