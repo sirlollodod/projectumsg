@@ -1,5 +1,7 @@
 package com.lollotek.umessage.adapters;
 
+import java.util.Calendar;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.view.LayoutInflater;
@@ -36,14 +38,14 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 
 		cursor.moveToPosition(position);
 
-		String direction = cursor.getString(cursor
+		String directionValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_DIRECTION));
 		String messageValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_MESSAGE));
 		String dataValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_DATA));
 
-		if (direction.equals("0")) {
+		if (directionValue.equals("0")) {
 			rowView = inflater
 					.inflate(R.layout.chatmessage_sent, parent, false);
 		} else {
@@ -54,8 +56,13 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 		data = (TextView) rowView.findViewById(R.id.textView1);
 		message = (TextView) rowView.findViewById(R.id.textView2);
 
+		Calendar c = Calendar.getInstance();
+		c.setTimeInMillis(Long.parseLong(dataValue));
+		String dataFormattedValue = "" + c.get(Calendar.DAY_OF_MONTH) + "/"
+				+ (c.get(Calendar.MONTH)+1) + "/" + c.get(Calendar.YEAR) + "  " + c.get(Calendar.HOUR_OF_DAY) + ":" + (c.get(Calendar.MINUTE) < 10 ? "0" + c.get(Calendar.MINUTE): c.get(Calendar.MINUTE));
+
 		if (position % 3 == 0) {
-			data.setText(dataValue);
+			data.setText(dataFormattedValue);
 		} else {
 			data.setVisibility(View.GONE);
 		}

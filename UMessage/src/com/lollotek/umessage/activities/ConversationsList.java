@@ -25,9 +25,10 @@ public class ConversationsList extends Activity {
 	private Context context = null;
 
 	ListView listView;
-	String[] fromColumns = { DatabaseHelper.KEY_NAME };
+	String[] fromColumns = { DatabaseHelper.KEY_NAME,
+			DatabaseHelper.KEY_MESSAGE, DatabaseHelper.KEY_DATA };
 
-	int[] toViews = { R.id.textView1 };
+	int[] toViews = { R.id.textView1, R.id.textView2, R.id.textView3 };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -75,12 +76,14 @@ public class ConversationsList extends Activity {
 	}
 
 	private void loadConversations() {
+
 		Provider p = new Provider(UMessageApplication.getContext());
-		Cursor users = p.getTotalUser();
+		Cursor users = p.getConversations();
 
 		PreviewChatAdapter adapter = new PreviewChatAdapter(this,
 				R.layout.chatpreview, users, fromColumns, toViews, 0);
 		listView.setAdapter(adapter);
+
 	}
 
 	@Override

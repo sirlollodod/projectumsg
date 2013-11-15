@@ -22,50 +22,49 @@ public class SingleChatContact extends Activity {
 	ListView listView;
 
 	String name, prefix, num;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		try{
+
 		setContentView(R.layout.activity_singlechatcontact);
 		Intent parameter = getIntent();
 		ActionBar ab = getActionBar();
 		name = parameter.getStringExtra("name");
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
-		ab.setTitle(name);
+		if (name.equals("0")) {
+			ab.setTitle("Sconosciuto");
+		} else {
+			ab.setTitle(name);
+		}
 		ab.setSubtitle(prefix + " " + num);
 
 		ab.setDisplayHomeAsUpEnabled(true);
 
 		listView = (ListView) findViewById(R.id.listView1);
-		}
-		catch(Exception e){
-			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
-		}
 
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		try{
-
 		loadMessages(name, prefix, num);
-		}
-		catch(Exception e){
-			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
-		}
+
 	}
 
 	private void loadMessages(String name, String prefix, String num) {
-			
+
 		Provider p = new Provider(UMessageApplication.getContext());
-		
+
 		Cursor messages = p.getMessages(prefix, num);
-		
+
 		SingleChatMessagesAdapter adapter = new SingleChatMessagesAdapter(this,
 				R.layout.usercontact, messages, fromColumns, toViews, 0);
 		listView.setAdapter(adapter);
+
+		listView.setSelection(messages.getCount() - 15);
+
 	}
 
 	@Override

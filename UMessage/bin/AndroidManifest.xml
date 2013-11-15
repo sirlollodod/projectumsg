@@ -56,15 +56,17 @@
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.ConversationsList"
-            android:label="Conversazioni" />
+            android:label="Conversazioni"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.Contacts"
             android:label="Contatti"
-            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
+            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.SingleChatContact"
-            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
-"
+            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList"
+            android:windowSoftInputMode="stateHidden" />
     </application>
 
 </manifest>
