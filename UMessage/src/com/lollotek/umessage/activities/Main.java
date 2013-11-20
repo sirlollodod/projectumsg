@@ -84,13 +84,15 @@ public class Main extends Activity {
 			 */
 			ContentValues value;
 
-			Calendar c = Calendar.getInstance();
+			Calendar c;
 			Random r = new Random();
 			int totalNewMessages = 0;
-			for (int i = 0; i < 5; i++) {
+			int newMessages = r.nextInt(20);
+			for (int i = 0; i < newMessages; i++) {
+				c = Calendar.getInstance();
 				value = new ContentValues();
 				value.put(DatabaseHelper.KEY_PREFIX, "+39");
-				value.put(DatabaseHelper.KEY_NUM, "3400101010");
+				value.put(DatabaseHelper.KEY_NUM, "3396929558");
 				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
 						: "1"));
 				value.put(DatabaseHelper.KEY_STATUS, "0");
@@ -98,7 +100,7 @@ public class Main extends Activity {
 						Double.parseDouble("" + c.getTimeInMillis()));
 				value.put(DatabaseHelper.KEY_TYPE, "text");
 				value.put(DatabaseHelper.KEY_MESSAGE, "" + i
-						+ "° messaggio: ciao scimmia...");
+						+ "° messaggio: provo a inserire un messaggio più lungo, cosi probabilmente andrà a finire su più di una riga!!");
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
 
 				if (p.insertNewMessage(value)) {
