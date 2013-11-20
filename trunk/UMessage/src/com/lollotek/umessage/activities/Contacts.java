@@ -218,6 +218,7 @@ public class Contacts extends Activity {
 								(num.isItalianLeadingZero() ? "0" : "")
 										+ num.getNationalNumber());
 						value.put(DatabaseHelper.KEY_NAME, name);
+						value.put(DatabaseHelper.KEY_IMGSRC, "");
 
 						if (p.insertNewUser(value)) {
 							numMobileContactsLoaded++;
