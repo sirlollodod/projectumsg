@@ -29,15 +29,13 @@ $db = new DBMS();
  *
 */
 $response = array(
-		'request' => $_GET['action'],
+		'request' => $_POST['action'],
 		'errorCode' => '',
 		'errorInfo' => ''
 );
 
-//debug
-$_GET['destPrefix'] = "+39";
 
-switch ($_GET['action']){
+switch ($_POST['action']){
 
 	/**
 	 * + action: CHECK_USER_REGISTERED
@@ -49,8 +47,9 @@ switch ($_GET['action']){
 	 * + email: email dell'utente se registrato e richiesta non anonima
 	 *
 	 */
+
 	case 'CHECK_USER_REGISTERED':
-		$result = $db->checkUserRegistered($_GET['prefix'], $_GET['num']);
+		$result = $db->checkUserRegistered($_POST['prefix'], $_POST['num']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -61,7 +60,7 @@ switch ($_GET['action']){
 
 		if($result['isRegistered']){
 			$response['isRegistered'] = true;
-			if(!isset($_GET['anonymous']) || $_GET['anonymous'] != 'yes'){
+			if(!isset($_POST['anonymous']) || $_POST['anonymous'] != 'yes'){
 				$response['email'] = $result['email'];
 			}
 
@@ -70,6 +69,7 @@ switch ($_GET['action']){
 			$response['isRegistered'] = false;
 			$response['email'] = '';
 		}
+
 		break;
 
 		/**
@@ -86,7 +86,7 @@ switch ($_GET['action']){
 		 *
 		 */
 	case 'REGISTER_USER':
-		$result = $db->registerUser($_GET['prefix'], $_GET['num'], $_GET['email']);
+		$result = $db->registerUser($_POST['prefix'], $_POST['num'], $_POST['email']);
 
 		if(!$result){
 			$response['errorCode'] = 'KO';
@@ -101,7 +101,7 @@ switch ($_GET['action']){
 		$response['num'] = $result['num'];
 		$response['email'] = $result['email'];
 
-		if($db->requestLoginUser($_GET['prefix'], $_GET['num'])){
+		if($db->requestLoginUser($_POST['prefix'], $_POST['num'])){
 			$response['verificationCodes'] = 'OK';
 		}
 		else{
@@ -121,7 +121,7 @@ switch ($_GET['action']){
 		 *
 		 */
 	case 'LOGIN_USER':
-		$result = $db->loginUser($_GET['prefix'], $_GET['num'], $_GET['emailCode'], $_GET['smsCode']);
+		$result = $db->loginUser($_POST['prefix'], $_POST['num'], $_POST['emailCode'], $_POST['smsCode']);
 
 		if(!$result){
 			$response['errorCode'] = 'KO';
@@ -152,7 +152,7 @@ switch ($_GET['action']){
 		 *
 		 */
 	case 'SEND_NEW_MESSAGE':
-		$result = $db->checkSessionId($_GET['sessionId']);
+		$result = $db->checkSessionId($_POST['sessionId']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -171,7 +171,7 @@ switch ($_GET['action']){
 			break;
 		}
 
-		$result = $db->checkUserRegistered($_GET['destPrefix'], $_GET['destNum']);
+		$result = $db->checkUserRegistered($_POST['destPrefix'], $_POST['destNum']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -188,7 +188,7 @@ switch ($_GET['action']){
 			$response['isDestValid'] = true;
 		}
 
-		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_GET['destPrefix'], $_GET['destNum'], $_GET['localChatVersion']);
+		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum'], $_POST['localChatVersion']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -206,17 +206,17 @@ switch ($_GET['action']){
 			$idChat = $result['idChat'];
 		}
 		else{
-			$result = $db->createNewSingleChat($myPrefix, $myNum, $_GET['destPrefix'], $_GET['destNum']);
+			$result = $db->createNewSingleChat($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum']);
 			if(!$result){
 				$response['errorCode'] = 'KO';
 				$response['errorInfo'] = 'PHP error';
 				break;
 			}
-				
+
 			$response['syncChatRequired'] = false;
 			$idChat = $result['idChat'];
-				
-				
+
+
 		}
 
 		$result = $db->getDirectionMessage($idChat, $myPrefix, $myNum);
@@ -236,7 +236,7 @@ switch ($_GET['action']){
 			break;
 		}
 
-		$result = $db->createNewSingleChatMessage($idChat, $myDirection, $_GET['msg'], $_GET['type']);
+		$result = $db->createNewSingleChatMessage($idChat, $myDirection, $_POST['msg'], $_POST['type']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -261,6 +261,21 @@ switch ($_GET['action']){
 
 		break;
 
+		/**
+		 *
+		 *
+		 */
+	case 'SEND_NEW_PROFILE_IMAGE':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+		
+		
+		$imageName = 
+		break;
 
 	default:
 		$response['request'] = "BAD_REQUEST";
