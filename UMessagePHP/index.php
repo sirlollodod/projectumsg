@@ -3,21 +3,7 @@
 include './classes/DBMS.php';
 include './classes/SingleChat.php';
 
-/*$db->registerUser('397', '3494566596', "sirlollodod@libero.it");
- $sessione = $db->getSessionId('397', '3494566596');
-echo $sessione;
-$chatInfo = $db->getSingleChatInfo(4);
-echo "versione della chat di id='1': " . $chatInfo->getVers() . "<br>";
-echo "<br> time millis = '" . $db->getMillis() . "'";
-echo "<br> new message id = '" . $db->createNewSingleChatMessage(4, 1, "proviamo a inserire un nuovo messaggio", 0, 0) . "'";
-$db->createNewSingleChat('0', '397', '3494566596', '39', '3494566596');
-echo "chat esistente? " . ( $db->checkSingleChatExists('309', '3494566596', '397', '3494566596') ? "SI" : "NO" ) . "<br>";
-//echo "aggiorno versione della chat di id='4'... " . ($db->generateNewChatVersion(4)? "AGGIORNATA" : "NON AGGIORNATA" ) . "<br>";
-$chatInfo = $db->getSingleChatInfo(4);
-echo "versione della chat di id='1': " . $chatInfo->getVers() . "<br>";
-*/
-
-
+$imageContactFolder = "./UMessage/contactImages/";
 $db = new DBMS();
 
 /**
@@ -272,9 +258,38 @@ switch ($_POST['action']){
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
-		
-		$imageName = 
+
+		$time = $db->getMillis();
+		$imageBaseName = $imageContactFolder . $result['prefix'] . $result['num'] . "_" . $time;
+		$imageName = $imageBaseName . ".jpg";
+
+		if(move_uploaded_file($_FILES['userProfileImage']['tmp_name'], $imageName)){
+			$result = $db->changeUserImage($_POST['sessionId'], $imageBaseName, $time);
+			if(!$result){
+				$response['errorCode'] = 'KO';
+				$response['errorInfo'] = 'PHP error';
+				break;
+			}
+			
+			if($result['errorCode'] == 'OK'){
+				$response['errorCode'] = 'OK';
+				$oldImageSrc = $result['oldImageSrc'];
+				unlink($oldImageSrc . ".jpg");
+				break;
+			}
+			else{
+				$response['errorCode'] = 'KO';
+				$response['errorInfo'] = 'PHP error';
+				break;
+			}
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response["errorInfo"] = 'Error uploading file.';
+			break;
+		}
+
+
 		break;
 
 	default:

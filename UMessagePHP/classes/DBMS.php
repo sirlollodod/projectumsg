@@ -441,7 +441,7 @@ class DBMS{
 			else{
 				$response['syncChatRequired'] = true;
 			}
-				
+
 			return $response;
 		}
 		else{
@@ -547,7 +547,7 @@ class DBMS{
 				$response['errorCode'] = 'OK';
 				$response['direction'] = '1';
 			}
-				
+
 			return $response;
 		}
 		else{
@@ -656,8 +656,73 @@ class DBMS{
 	}
 
 
+	//Aggiorna tabella utente, modificando l'immagine del profilo e la data di modifica.
+	function changeUserImage($sessid, $imgSrc, $data){
+		$query = "SELECT * FROM user WHERE sessid=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$response = array(
+				'errorCode' => '',
+				'oldImageSrc' => ''
+		);
+
+
+		$stmt->bind_param('s', $sessid);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows == 1){
+
+			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessionId, $sGcmId, $sImgSrc, $sDataImg);
+			$stmt->fetch();
+			$stmt->close();
+			$response['oldImageSrc'] = $sImgSrc;
+
+			$query = "UPDATE user SET imgSrc=?, dataImg=? WHERE sessid=?;";
+			if(!$stmt = $this->connection->prepare($query)){
+				$stmt->close();
+				return false;
+			}
+
+
+			$stmt->bind_param('sis', $imgSrc, $data, $sessid);
+
+			if(!$stmt->execute()){
+				$stmt->close();
+				return false;
+			}
+
+			if($stmt->affected_rows == 1){
+				$stmt->close();
+				$response['errorCode'] = 'OK';
+					
+				return $response;
+			}
+			else{
+				$stmt->close();
+				return false;
+			}
+
+		}
+		else{
+			$stmt->close();
+			return false;
+		}
+
+
+	}
+
 
 	//-----------------------------      OK    ---------------------------------------------
+
 
 
 	//Controlla se un utente è in attesa di loggarsi sul terminale Android
