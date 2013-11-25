@@ -5,6 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
@@ -17,6 +20,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -29,6 +33,7 @@ import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
 public class Profile extends Activity {
@@ -96,11 +101,15 @@ public class Profile extends Activity {
 			File myNewProfileImage = new File(mainFolder.toString() + "/me.jpg");
 
 			compressImage(myNewProfileImage.toString());
-			
+
 			loadProfileImage();
-			
+
+			// testing: in realtà inviare messaggio a service che in background
+			// upload file
+			new UploadProfileImageAsyncTask().execute(myNewProfileImage);
+
 		} catch (Exception e) {
-			
+			Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -205,10 +214,10 @@ public class Profile extends Activity {
 				Log.d("EXIF", "Exif: " + orientation);
 			} else if (orientation == 3) {
 				matrix.postRotate(180);
-				//Log.d("EXIF", "Exif: " + orientation);
+				// Log.d("EXIF", "Exif: " + orientation);
 			} else if (orientation == 8) {
 				matrix.postRotate(270);
-				//Log.d("EXIF", "Exif: " + orientation);
+				// Log.d("EXIF", "Exif: " + orientation);
 			}
 			scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0,
 					scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix,
@@ -281,4 +290,24 @@ public class Profile extends Activity {
 		return inSampleSize;
 	}
 
+	private class UploadProfileImageAsyncTask extends
+			AsyncTask<File, Void, Void> {
+
+		@Override
+		protected Void doInBackground(File... params) {
+			try {
+				Utility.uploadImageProfile(
+						context,
+						Settings.SERVER_URL,
+						params[0],
+						Utility.getConfiguration(
+								UMessageApplication.getContext()).getSessid());
+			} catch (Exception e) {
+
+			}
+			return null;
+
+		}
+
+	}
 }
