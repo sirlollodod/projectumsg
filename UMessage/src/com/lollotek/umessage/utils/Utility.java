@@ -9,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -17,9 +16,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import android.content.Context;
@@ -252,4 +260,33 @@ public class Utility {
 
 	}
 
+	public static JSONObject uploadImageProfile(Context context,
+			String urlToOpen, File imageToUpload, String sessionId) {
+
+		HttpClient httpclient = new DefaultHttpClient();
+		HttpPost httppost = new HttpPost(urlToOpen);
+		JSONObject result = null;
+		try {
+			MultipartEntity entity = new MultipartEntity();
+
+			entity.addPart("action", new StringBody("SEND_NEW_PROFILE_IMAGE"));
+			entity.addPart("sessionId", new StringBody(sessionId));
+			entity.addPart("userProfileImage", new FileBody(imageToUpload));
+			httppost.setEntity(entity);
+			HttpResponse response = httpclient.execute(httppost);
+
+			HttpEntity resEntity = response.getEntity();
+
+			String responseString = EntityUtils.toString(resEntity);
+			result = new JSONObject(responseString);
+
+		} catch (Exception e) {
+			return null;
+		}
+
+		httpclient.getConnectionManager().shutdown();
+
+		return result;
+
+	}
 }
