@@ -154,7 +154,7 @@ class DBMS{
 
 		} while (true);
 
-		$query = "INSERT INTO user(prefix, num, email, sessid, gcmid) VALUES(?, ?, ?, ?, '') ;";
+		$query = "INSERT INTO user(prefix, num, email, sessid, gcmid, imgSrc, dataImg) VALUES(?, ?, ?, ?, '', '', '') ;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
@@ -199,7 +199,7 @@ class DBMS{
 
 		if($stmt->num_rows == 1){
 
-			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessId, $sGcmId);
+			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessId, $sGcmId, $sImgSrc, $sDataImg);
 			$stmt->fetch();
 			$stmt->close();
 			$response['isRegistered'] = true;
@@ -389,7 +389,7 @@ class DBMS{
 
 		if($stmt->num_rows == 1){
 
-			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessionId, $sGcmId);
+			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessionId, $sGcmId, $sImsSrc, $sDataImg);
 			$stmt->fetch();
 			$stmt->close();
 			$response['errorCode'] = 'OK';
