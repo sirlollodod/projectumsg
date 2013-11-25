@@ -13,7 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getName();
 
 	// Database Version
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 3;
 
 	// Database Name
 	private static final String DATABASE_NAME = "UMessage";
@@ -42,7 +42,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	// Table User columns names
 	public static final String KEY_PREFIX = "prefix", KEY_NUM = "num",
-			KEY_NAME = "name", KEY_ID = "_id", KEY_IMGSRC = "imsSrc";
+			KEY_NAME = "name", KEY_ID = "_id", KEY_IMGSRC = "imgSrc",
+			KEY_IMGDATA = "imgData";
 
 	// Create table singlechat
 	private static final String CREATE_TABLE_SINGLECHAT = TABLE_SINGLECHAT
@@ -95,7 +96,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String CREATE_TABLE_USER = TABLE_USER + "(" + KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_PREFIX
 			+ " TEXT NOT NULL," + KEY_NUM + " TEXT NOT NULL," + KEY_NAME
-			+ " TEXT NOT NULL," + KEY_IMGSRC + " TEXT, UNIQUE(" + KEY_PREFIX + ", " + KEY_NUM + "))";
+			+ " TEXT NOT NULL," + KEY_IMGSRC + " TEXT," + KEY_IMGDATA
+			+ " TEXT, UNIQUE(" + KEY_PREFIX + ", " + KEY_NUM + "))";
 
 	public static DatabaseHelper getInstance(Context context) {
 		if (instance == null) {

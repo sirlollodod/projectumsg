@@ -106,6 +106,14 @@ public class ConversationsList extends Activity {
 			startActivity(i);
 
 			break;
+			
+		case R.id.profile:
+			
+			i = new Intent(this, com.lollotek.umessage.activities.Profile.class);
+			
+			startActivity(i);
+			
+			break;
 
 		}
 

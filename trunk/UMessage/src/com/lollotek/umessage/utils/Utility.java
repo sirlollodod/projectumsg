@@ -3,9 +3,10 @@ package com.lollotek.umessage.utils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -25,6 +26,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -135,18 +137,17 @@ public class Utility {
 	}
 
 	public static JSONObject doPostRequest(String urlToOpen,
-			JSONObject parameters) throws HttpException{
+			JSONObject parameters) throws HttpException {
 
 		JSONObject result;
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 		String postParams = "";
 		boolean isFirst = true;
-		
-		
-		if(!isNetworkAvailable(UMessageApplication.getContext())){
+
+		if (!isNetworkAvailable(UMessageApplication.getContext())) {
 			throw new HttpException("Connessione non disponibile");
 		}
-		
+
 		try {
 			Iterator<String> keys = parameters.keys();
 			while (keys.hasNext()) {
@@ -191,4 +192,64 @@ public class Utility {
 		return result;
 
 	}
+
+	public static void prepareDirectory(Context context) {
+		try {
+			// PackageManager m = context.getPackageManager();
+			// String s = context.getPackageName();
+			// PackageInfo pi = m.getPackageInfo(s, 0);
+			// s = pi.applicationInfo.dataDir;
+
+			// File mainFolder = new File(s + Settings.MAIN_FOLDER);
+			// mainFolder.mkdir();
+			File mainFolder = context.getExternalFilesDir(null);
+
+			File imageFolder = new File(mainFolder.toString()
+					+ Settings.CONTACT_PROFILE_IMAGES_FOLDER);
+			imageFolder.mkdir();
+
+		} catch (Exception e) {
+
+		}
+	}
+
+	public static File getMainFolder(Context context) {
+		File mainFolder = null;
+		try {
+			// PackageManager m = context.getPackageManager();
+			// String s = context.getPackageName();
+			// PackageInfo pi = m.getPackageInfo(s, 0);
+			// s = pi.applicationInfo.dataDir;
+
+			// mainFolder = new File(s + Settings.MAIN_FOLDER);
+
+			mainFolder = context.getExternalFilesDir(null);
+		} catch (Exception e) {
+
+		}
+
+		return mainFolder;
+	}
+
+	// testing
+	public static void copyFile(File src, File dst) {
+		try {
+			InputStream in = new FileInputStream(src);
+			OutputStream out = new FileOutputStream(dst);
+
+			// Transfer bytes from in to out
+			byte[] buf = new byte[1024];
+			int len;
+			while ((len = in.read(buf)) > 0) {
+				out.write(buf, 0, len);
+			}
+			in.close();
+			out.close();
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
+
+	}
+
 }

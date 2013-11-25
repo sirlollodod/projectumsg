@@ -7,7 +7,8 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,6 +48,8 @@ public class Main extends Activity {
 		// testing
 
 		{
+			Utility.prepareDirectory(context);
+
 			Provider p = new Provider(UMessageApplication.getContext());
 
 			// if (p.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null)
@@ -92,15 +95,18 @@ public class Main extends Activity {
 				c = Calendar.getInstance();
 				value = new ContentValues();
 				value.put(DatabaseHelper.KEY_PREFIX, "+39");
-				value.put(DatabaseHelper.KEY_NUM, "3396929558");
+				value.put(DatabaseHelper.KEY_NUM, "3488079034");
 				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
 						: "1"));
 				value.put(DatabaseHelper.KEY_STATUS, "0");
 				value.put(DatabaseHelper.KEY_DATA,
 						Double.parseDouble("" + c.getTimeInMillis()));
 				value.put(DatabaseHelper.KEY_TYPE, "text");
-				value.put(DatabaseHelper.KEY_MESSAGE, "" + i
-						+ "° messaggio: provo a inserire un messaggio più lungo, cosi probabilmente andrà a finire su più di una riga!!");
+				value.put(
+						DatabaseHelper.KEY_MESSAGE,
+						""
+								+ i
+								+ "° messaggio: provo a inserire un messaggio più lungo, cosi probabilmente andrà a finire su più di una riga!!");
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
 
 				if (p.insertNewMessage(value)) {
@@ -109,9 +115,9 @@ public class Main extends Activity {
 
 			}
 
-			Toast.makeText(UMessageApplication.getContext(),
-					"Singoli messaggi inseriti: " + totalNewMessages,
-					Toast.LENGTH_SHORT).show();
+			//Toast.makeText(UMessageApplication.getContext(),
+			//		"Singoli messaggi inseriti: " + totalNewMessages,
+			//		Toast.LENGTH_SHORT).show();
 
 		}
 
