@@ -63,7 +63,7 @@ public class Main extends Activity {
 				c = Calendar.getInstance();
 				value = new ContentValues();
 				value.put(DatabaseHelper.KEY_PREFIX, "+39");
-				value.put(DatabaseHelper.KEY_NUM, "3471387350");
+				value.put(DatabaseHelper.KEY_NUM, "3400000000");
 				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
 						: "1"));
 				value.put(DatabaseHelper.KEY_STATUS, "0");
