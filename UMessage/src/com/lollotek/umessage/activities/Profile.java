@@ -33,6 +33,7 @@ import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
@@ -124,13 +125,6 @@ public class Profile extends Activity {
 				// start the activity - we handle returning in onActivityResult
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
-				// loadProfileImage();
-
-				// testing: in realtà inviare messaggio a service che in
-				// background
-				// upload file
-				// new UploadProfileImageAsyncTask().execute(myNewProfileImage);
-
 			} catch (Exception e) {
 				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
 			}
@@ -141,7 +135,6 @@ public class Profile extends Activity {
 			Bitmap thePic;
 			try {
 				Bundle extras = data.getExtras();
-				// get the cropped bitmap
 				thePic = extras.getParcelable("data");
 
 				iv.setImageBitmap(thePic);
@@ -156,9 +149,11 @@ public class Profile extends Activity {
 
 				// compressImage(myNewProfileImage.toString());
 
-				// testing: in realtà da inviare al service che la uploada in
-				// background
-				new UploadProfileImageAsyncTask().execute(myNewProfileImage);
+				Intent service = new Intent(UMessageApplication.getContext(),
+						com.lollotek.umessage.services.UMessageService.class);
+				service.putExtra("action", MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
+
+				startService(service);
 
 			} catch (Exception e) {
 				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
@@ -168,7 +163,7 @@ public class Profile extends Activity {
 
 	}
 
-	public String compressImage(String imageUri) {
+	private String compressImage(String imageUri) {
 
 		String filePath = getRealPathFromURI(imageUri);
 		Bitmap scaledBitmap = null;
@@ -297,7 +292,7 @@ public class Profile extends Activity {
 
 	}
 
-	public String getFilename() {
+	private String getFilename() {
 		File file = new File(Environment.getExternalStorageDirectory()
 				.getPath(), "MyFolder/Images");
 		if (!file.exists()) {
@@ -323,7 +318,7 @@ public class Profile extends Activity {
 		}
 	}
 
-	public int calculateInSampleSize(BitmapFactory.Options options,
+	private int calculateInSampleSize(BitmapFactory.Options options,
 			int reqWidth, int reqHeight) {
 		final int height = options.outHeight;
 		final int width = options.outWidth;
@@ -344,24 +339,4 @@ public class Profile extends Activity {
 		return inSampleSize;
 	}
 
-	private class UploadProfileImageAsyncTask extends
-			AsyncTask<File, Void, Void> {
-
-		@Override
-		protected Void doInBackground(File... params) {
-			try {
-				Utility.uploadImageProfile(
-						context,
-						Settings.SERVER_URL,
-						params[0],
-						Utility.getConfiguration(
-								UMessageApplication.getContext()).getSessid());
-			} catch (Exception e) {
-
-			}
-			return null;
-
-		}
-
-	}
 }

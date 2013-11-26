@@ -22,7 +22,7 @@ public class SingleChatContact extends Activity {
 	int[] toViews = {};
 	ListView listView;
 
-	String name, prefix, num;
+	String name, prefix, num, iconSrc;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +34,9 @@ public class SingleChatContact extends Activity {
 		name = parameter.getStringExtra("name");
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
+		iconSrc = parameter.getStringExtra("iconSrc");
+		
+		
 		if (name.equals("0")) {
 			ab.setTitle("Sconosciuto");
 		} else {

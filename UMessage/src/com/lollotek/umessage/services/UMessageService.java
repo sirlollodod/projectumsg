@@ -7,6 +7,7 @@ import org.apache.http.HttpException;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -66,17 +67,43 @@ public class UMessageService extends Service {
 
 		actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
 
+		Message m;
+
 		switch (actionRequest) {
 
-		case MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC:
-			String imageUrl = intent.getStringExtra("imageSrc");
-			imageUrl = imageUrl.substring(2);
+		case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
+			String myProfileImageUrl = intent.getStringExtra("imageUrl");
+			myProfileImageUrl = myProfileImageUrl.substring(2);
 
-			Message m = new Message();
-			m.what = MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC;
-			m.obj = Settings.SERVER_URL + imageUrl;
+			m = new Message();
+			m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
+			m.obj = Settings.SERVER_URL + myProfileImageUrl;
 			serviceHandler.sendMessage(m);
 
+			break;
+
+		case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
+
+			serviceHandler.obtainMessage(MessageTypes.UPLOAD_MY_PROFILE_IMAGE)
+					.sendToTarget();
+
+			break;
+
+		case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
+			
+				String userImageUrl = intent.getStringExtra("imageUrl");
+				Bundle data = new Bundle();
+				data.putString("prefix", intent.getStringExtra("prefix"));
+				data.putString("num", intent.getStringExtra("num"));
+				
+				m = new Message();
+				m.setData(data);
+				m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
+				m.obj = Settings.SERVER_URL + userImageUrl;
+				serviceHandler.sendMessage(m);
+			
+				
+			
 			break;
 
 		case MessageTypes.ERROR:
@@ -89,25 +116,54 @@ public class UMessageService extends Service {
 
 	private class ServiceHandler extends Handler {
 
+		private final long DEFAULT_WAIT_TIME = 10000;
+
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
+			Message m;
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_MAIN_THREAD_HANDLER:
 				mainThreadHandler = (Handler) msg.obj;
 				break;
 
-			case MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC:
+			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
+				m = new Message();
+				m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
+				m.obj = msg.obj;
+				try {
+					mainThreadHandler
+							.removeMessages(MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+				}
+				break;
 
-				Message m = new Message();
-				m.what = MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC;
+			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
+				m = new Message();
+				m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
+				try {
+					mainThreadHandler
+							.removeMessages(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+				}
+				break;
+
+			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
+				m = new Message();
+				m.setData(msg.getData());
+				m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
 				m.obj = msg.obj;
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10000);
+					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
 				}
+
 				break;
 			}
 		}

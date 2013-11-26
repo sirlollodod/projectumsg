@@ -6,11 +6,12 @@
 
     <ImageView
         android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="45dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="25dp"
-        android:src="@drawable/ic_launcher" />
+        android:layout_marginRight="10dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/not_available" />
 
     <TextView
         android:id="@+id/textView1"
@@ -29,7 +30,7 @@
         android:layout_marginLeft="10dp"
         android:layout_below="@+id/textView1"
         android:layout_marginTop="-3dp"
-        android:layout_marginRight="40dp"
+        android:layout_marginRight="50dp"
         android:singleLine="true"
         android:text="message"
         android:textAppearance="?android:attr/textAppearanceSmall" />
@@ -49,7 +50,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/textView2"
-        android:layout_marginRight="15dp"
+        android:layout_marginRight="10dp"
         android:layout_alignParentRight="true"
         android:text="NEW"
         android:textColor="#FFFFFF"

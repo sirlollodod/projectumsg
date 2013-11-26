@@ -1,33 +1,39 @@
 package com.lollotek.umessage.adapters;
 
-import java.text.SimpleDateFormat;
+import java.io.File;
 import java.util.Calendar;
-import java.util.Date;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.db.DatabaseHelper;
+import com.lollotek.umessage.utils.Settings;
+import com.lollotek.umessage.utils.Utility;
 
 public class PreviewChatAdapter extends SimpleCursorAdapter {
 
 	private Cursor cursor;
 	private Context context;
 
+	private File mainFolder;
+	private String contactProfileImagesFolder;
+	
 	public PreviewChatAdapter(Context context, int layout, Cursor c,
 			String[] from, int[] to, int flags) {
 		super(context, layout, c, from, to, flags);
 
 		this.context = context;
 		this.cursor = c;
-
+		this.mainFolder = Utility.getMainFolder(context);
+		this.contactProfileImagesFolder = Settings.CONTACT_PROFILE_IMAGES_FOLDER;
 	}
 
 	@Override
@@ -39,7 +45,8 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 
 		newRow = inflater.inflate(R.layout.chatpreview, parent, false);
 		TextView name, message, time, news;
-
+		ImageView icon;
+		
 		cursor.moveToPosition(position);
 
 		name = (TextView) newRow.findViewById(R.id.textView1);
@@ -60,6 +67,13 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 			news.setVisibility(View.VISIBLE);
 		}
 
+		String iconSrc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
+		
+		if(!iconSrc.equals("") && !iconSrc.equals("0")){
+			icon = (ImageView) newRow.findViewById(R.id.imageView1);
+			File iconFile  = new File(mainFolder.toString() + contactProfileImagesFolder + iconSrc);
+			icon.setImageURI(Uri.fromFile(iconFile));
+		}
 		message.setText(messageValue);
 		if (nameValue.equals("0")) {
 			String prefix = cursor.getString(cursor

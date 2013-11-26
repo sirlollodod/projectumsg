@@ -113,6 +113,7 @@ public class Provider {
 		return true;
 	}
 
+	//da riscrivere con uso metodo query invece che rawquery
 	public synchronized Cursor getTotalUser() {
 		String query = "SELECT * FROM " + DatabaseHelper.TABLE_USER
 				+ " ORDER BY " + DatabaseHelper.KEY_NAME;
@@ -184,7 +185,10 @@ public class Provider {
 					+ DatabaseHelper.TABLE_USER + "." + DatabaseHelper.KEY_NAME
 					+ ", 0)" + " AS " + DatabaseHelper.KEY_NAME + ", "
 					+ DatabaseHelper.TABLE_USER + "." + DatabaseHelper.KEY_ID
-					+ " AS " + DatabaseHelper.KEY_ID + ", "
+					+ " AS " + DatabaseHelper.KEY_ID + ", IFNULL("
+					+ DatabaseHelper.TABLE_USER + "."
+					+ DatabaseHelper.KEY_IMGSRC + ", 0)" + " AS "
+					+ DatabaseHelper.KEY_IMGSRC + ", "
 					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
 					+ DatabaseHelper.KEY_DATA + " AS "
 					+ DatabaseHelper.KEY_DATA + ", "
@@ -249,5 +253,22 @@ public class Provider {
 		Cursor chats = db.query(DatabaseHelper.TABLE_SINGLECHAT, null, null,
 				null, null, null, null);
 		return chats;
+	}
+
+	public synchronized boolean updateUserImage(String prefix, String num,
+			String fileSrc, long data) {
+		ContentValues userToUpdate = new ContentValues();
+
+		userToUpdate.put(DatabaseHelper.KEY_IMGSRC, fileSrc);
+		userToUpdate.put(DatabaseHelper.KEY_IMGDATA, data);
+		int affectedRows = update(DatabaseHelper.TABLE_USER, userToUpdate,
+				DatabaseHelper.KEY_PREFIX + "=? AND " + DatabaseHelper.KEY_NUM
+						+ "=?", new String[] { prefix, num });
+
+		if (affectedRows > 1) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
