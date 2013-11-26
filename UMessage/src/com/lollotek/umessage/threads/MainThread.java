@@ -3,14 +3,18 @@ package com.lollotek.umessage.threads;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.http.HttpException;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.utils.MessageTypes;
+import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
 public class MainThread extends Thread {
@@ -84,21 +88,43 @@ public class MainThread extends Thread {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
 				updateThreadHandler = (Handler) msg.obj;
 				break;
-				
+
 			case MessageTypes.RECEIVE_NEW_MESSAGE_THREAD_HANDLER:
 				newMessageThreadHandler = (Handler) msg.obj;
 				break;
-				
+
 			case MessageTypes.DESTROY:
-				updateThreadHandler.obtainMessage(MessageTypes.DESTROY).sendToTarget();
-				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY).sendToTarget();
+				updateThreadHandler.obtainMessage(MessageTypes.DESTROY)
+						.sendToTarget();
+				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY)
+						.sendToTarget();
 				updateThreadHandler = null;
 				newMessageThreadHandler = null;
 				serviceThreadHandler = null;
 				updateThread = null;
 				newMessageThread = null;
 				Looper.myLooper().quit();
-				
+				break;
+
+			case MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC:
+				try {
+					String imageUrl = (String) msg.obj;
+
+					File mainFolder = Utility.getMainFolder(UMessageApplication
+							.getContext());
+					File myNewProfileImage = new File(mainFolder.toString()
+							+ Settings.MY_PROFILE_IMAGE_SRC);
+
+					Utility.downloadFileFromUrl(
+							UMessageApplication.getContext(),
+							myNewProfileImage, imageUrl);
+				} catch (HttpException e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"mainthread: --->\n" + e.toString(),
+							Toast.LENGTH_LONG).show();
+				}
+				break;
+
 			}
 		}
 
