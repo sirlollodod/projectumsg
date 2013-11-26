@@ -1,5 +1,7 @@
 package com.lollotek.umessage.activities;
 
+import java.io.File;
+
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
@@ -32,6 +34,7 @@ import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
@@ -219,6 +222,29 @@ public class Contacts extends Activity {
 										+ num.getNationalNumber());
 						value.put(DatabaseHelper.KEY_NAME, name);
 						value.put(DatabaseHelper.KEY_IMGSRC, "");
+						value.put(DatabaseHelper.KEY_IMGDATA, "");
+
+						String userImageUrl = result
+								.getString("imageProfileSrc");
+
+						if (userImageUrl.length() > 2) {
+							userImageUrl = userImageUrl.substring(2);
+
+							Intent service = new Intent(
+									UMessageApplication.getContext(),
+									com.lollotek.umessage.services.UMessageService.class);
+
+							service.putExtra("action",
+									MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC);
+							service.putExtra("prefix",
+									"+" + num.getCountryCode());
+							service.putExtra("num",
+									(num.isItalianLeadingZero() ? "0" : "")
+											+ num.getNationalNumber());
+							service.putExtra("imageUrl", userImageUrl);
+
+							startService(service);
+						}
 
 						if (p.insertNewUser(value)) {
 							numMobileContactsLoaded++;

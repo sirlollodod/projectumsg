@@ -25,10 +25,12 @@ public class ConversationsList extends Activity {
 	private Context context = null;
 
 	ListView listView;
-	String[] fromColumns = { DatabaseHelper.KEY_NAME,
-			DatabaseHelper.KEY_MESSAGE, DatabaseHelper.KEY_DATA };
+	String[] fromColumns = { DatabaseHelper.KEY_IMGSRC,
+			DatabaseHelper.KEY_NAME, DatabaseHelper.KEY_MESSAGE,
+			DatabaseHelper.KEY_DATA };
 
-	int[] toViews = { R.id.textView1, R.id.textView2, R.id.textView3 };
+	int[] toViews = { R.id.imageView1, R.id.textView1, R.id.textView2,
+			R.id.textView3 };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +63,8 @@ public class ConversationsList extends Activity {
 						c.getString(c.getColumnIndex(DatabaseHelper.KEY_NUM)));
 				i.putExtra("name",
 						c.getString(c.getColumnIndex(DatabaseHelper.KEY_NAME)));
+				i.putExtra("iconSrc", c.getString(c
+						.getColumnIndex(DatabaseHelper.KEY_IMGSRC)));
 
 				startActivity(i);
 			}

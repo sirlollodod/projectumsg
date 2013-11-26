@@ -19,7 +19,9 @@ public class MessageTypes {
 	public static final int ERROR = 51;
 	
 	// Tipi messaggio ricevuti da Service
-	public static final int DOWNLOAD_PROFILE_IMAGE_FROM_SRC = 70;
+	public static final int DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC = 70;
+	public static final int UPLOAD_MY_PROFILE_IMAGE = 71;
+	public static final int DOWNLOAD_USER_IMAGE_FROM_SRC = 72;
 	
 	
 	

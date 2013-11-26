@@ -5,14 +5,15 @@ import java.io.IOException;
 
 import org.apache.http.HttpException;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -80,9 +81,14 @@ public class MainThread extends Thread {
 
 	private class MainThreadHandler extends Handler {
 
+		private File mainFolder, myNewProfileImage;
+		private Provider p;
+		
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
+
+			Message m;
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
@@ -106,25 +112,68 @@ public class MainThread extends Thread {
 				Looper.myLooper().quit();
 				break;
 
-			case MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC:
+			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
+				String imageUrl = (String) msg.obj;
+
+				mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+				myNewProfileImage = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC);
 				try {
-					String imageUrl = (String) msg.obj;
-
-					File mainFolder = Utility.getMainFolder(UMessageApplication
-							.getContext());
-					File myNewProfileImage = new File(mainFolder.toString()
-							+ Settings.MY_PROFILE_IMAGE_SRC);
-
 					Utility.downloadFileFromUrl(
 							UMessageApplication.getContext(),
 							myNewProfileImage, imageUrl);
 				} catch (HttpException e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							"mainthread: --->\n" + e.toString(),
-							Toast.LENGTH_LONG).show();
+
 				}
 				break;
 
+			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
+				mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+
+				myNewProfileImage = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC);
+
+				try {
+					Utility.uploadImageProfile(
+							UMessageApplication.getContext(),
+							Settings.SERVER_URL,
+							myNewProfileImage,
+							Utility.getConfiguration(
+									UMessageApplication.getContext())
+									.getSessid());
+				} catch (Exception e) {
+					m = new Message();
+					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
+					this.sendMessageDelayed(m, 60000);
+				}
+				break;
+
+			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
+				mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+				
+				Bundle data = msg.getData();
+
+				String userImageUrl = (String) msg.obj;
+				String newUserImageFileName = userImageUrl.substring(userImageUrl.indexOf("+"));
+				int posNumDataSeparator = newUserImageFileName.indexOf("_");
+				String newImageName = "/" + newUserImageFileName.substring(0, posNumDataSeparator) + ".jpg";
+				long newImageData = Long.parseLong(newUserImageFileName.substring(posNumDataSeparator+1, newUserImageFileName.length()-4));
+				File userImage = new File(mainFolder.toString() + Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
+				
+				try{
+					Utility.downloadFileFromUrl(UMessageApplication.getContext(), userImage, userImageUrl);
+					p = new Provider(UMessageApplication.getContext());
+					p.updateUserImage(data.getString("prefix"), data.getString("num"), newImageName, newImageData);
+					
+				}
+				catch(Exception e){
+					
+				}
+
+				break;
 			}
 		}
 
