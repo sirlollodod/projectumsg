@@ -1,8 +1,10 @@
 package com.lollotek.umessage.utils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -10,6 +12,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,6 +30,7 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.ByteArrayBuffer;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
@@ -34,7 +38,6 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -289,4 +292,40 @@ public class Utility {
 		return result;
 
 	}
+
+	public static boolean downloadFileFromUrl(Context context, File file,
+			String fileUrlToDownload) throws HttpException {
+
+		if (!isNetworkAvailable(UMessageApplication.getContext())) {
+			throw new HttpException("Connessione non disponibile");
+		}
+
+		try {
+
+			URL url = new URL(fileUrlToDownload);
+
+			URLConnection ucon = url.openConnection();
+			InputStream is = ucon.getInputStream();
+			BufferedInputStream bis = new BufferedInputStream(is);
+			/*
+			 * Read bytes to the Buffer until there is nothing more to read(-1).
+			 */
+			ByteArrayBuffer baf = new ByteArrayBuffer(50);
+			int current = 0;
+			while ((current = bis.read()) != -1) {
+				baf.append((byte) current);
+			}
+
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(baf.toByteArray());
+			fos.close();
+
+		} catch (Exception e) {
+			Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+			return false;
+		}
+
+		return true;
+	}
+
 }

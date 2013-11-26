@@ -41,7 +41,7 @@ public class Profile extends Activity {
 	private ImageView iv;
 	private Button b;
 	private Context context;
-	private final int PICK_IMAGE = 0;
+	private final int TAKE_IMAGE = 0, CROP_IMAGE = 1;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -63,13 +63,13 @@ public class Profile extends Activity {
 				File mainFolder = Utility.getMainFolder(context);
 
 				File myNewProfileImage = new File(mainFolder.toString()
-						+ "/me.jpg");
+						+ Settings.MY_PROFILE_IMAGE_SRC);
 
 				Intent i = new Intent(
 						android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 				i.putExtra(MediaStore.EXTRA_OUTPUT,
 						Uri.fromFile(myNewProfileImage));
-				startActivityForResult(i, PICK_IMAGE);
+				startActivityForResult(i, TAKE_IMAGE);
 			}
 		});
 
@@ -84,7 +84,8 @@ public class Profile extends Activity {
 	public void loadProfileImage() {
 		File mainFolder = Utility.getMainFolder(UMessageApplication
 				.getContext());
-		File myProfileImage = new File(mainFolder.toString() + "/me.jpg");
+		File myProfileImage = new File(mainFolder.toString()
+				+ Settings.MY_PROFILE_IMAGE_SRC);
 		if (myProfileImage.exists()) {
 			iv.setImageURI(Uri.fromFile(myProfileImage));
 		}
@@ -95,21 +96,74 @@ public class Profile extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		try {
-			File mainFolder = Utility.getMainFolder(context);
+		switch (requestCode) {
 
-			File myNewProfileImage = new File(mainFolder.toString() + "/me.jpg");
+		case TAKE_IMAGE:
+			try {
+				File mainFolder = Utility.getMainFolder(context);
 
-			compressImage(myNewProfileImage.toString());
+				File myNewProfileImage = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC);
 
-			loadProfileImage();
+				// compressImage(myNewProfileImage.toString());
 
-			// testing: in realtà inviare messaggio a service che in background
-			// upload file
-			new UploadProfileImageAsyncTask().execute(myNewProfileImage);
+				Intent cropIntent = new Intent("com.android.camera.action.CROP");
+				// indicate image type and Uri
+				cropIntent.setDataAndType(Uri.fromFile(myNewProfileImage),
+						"image/*");
+				// set crop properties
+				cropIntent.putExtra("crop", "true");
+				// indicate aspect of desired crop
+				cropIntent.putExtra("aspectX", 1);
+				cropIntent.putExtra("aspectY", 1);
+				// indicate output X and Y
+				cropIntent.putExtra("outputX", 256);
+				cropIntent.putExtra("outputY", 256);
+				// retrieve data on return
+				cropIntent.putExtra("return-data", true);
+				// start the activity - we handle returning in onActivityResult
+				startActivityForResult(cropIntent, CROP_IMAGE);
 
-		} catch (Exception e) {
-			Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+				// loadProfileImage();
+
+				// testing: in realtà inviare messaggio a service che in
+				// background
+				// upload file
+				// new UploadProfileImageAsyncTask().execute(myNewProfileImage);
+
+			} catch (Exception e) {
+				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+			}
+			break;
+
+		case CROP_IMAGE:
+
+			Bitmap thePic;
+			try {
+				Bundle extras = data.getExtras();
+				// get the cropped bitmap
+				thePic = extras.getParcelable("data");
+
+				iv.setImageBitmap(thePic);
+				File mainFolder = Utility.getMainFolder(context);
+
+				File myNewProfileImage = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC);
+
+				FileOutputStream out = new FileOutputStream(myNewProfileImage);
+				thePic.compress(Bitmap.CompressFormat.JPEG, 90, out);
+				out.close();
+
+				// compressImage(myNewProfileImage.toString());
+
+				// testing: in realtà da inviare al service che la uploada in
+				// background
+				new UploadProfileImageAsyncTask().execute(myNewProfileImage);
+
+			} catch (Exception e) {
+				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+			}
+			break;
 		}
 
 	}
@@ -233,7 +287,7 @@ public class Profile extends Activity {
 
 			// write the compressed bitmap at the destination specified by
 			// filename.
-			scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 30, out);
+			scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

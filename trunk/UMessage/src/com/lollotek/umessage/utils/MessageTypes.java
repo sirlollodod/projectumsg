@@ -16,4 +16,11 @@ public class MessageTypes {
 	
 	// Tipi messaggio generali
 	public static final int DESTROY = 50;
+	public static final int ERROR = 51;
+	
+	// Tipi messaggio ricevuti da Service
+	public static final int DOWNLOAD_PROFILE_IMAGE_FROM_SRC = 70;
+	
+	
+	
 }

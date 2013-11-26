@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
@@ -94,12 +95,23 @@ public class Login extends Activity {
 					"Utente loggato!", Toast.LENGTH_SHORT);
 			msg.show();
 
+			Intent service = new Intent(UMessageApplication.getContext(),
+					com.lollotek.umessage.services.UMessageService.class);
+
+			service.putExtra("action",
+					MessageTypes.DOWNLOAD_PROFILE_IMAGE_FROM_SRC);
+			service.putExtra("imageSrc", result.getString("imageProfileSrc"));
+			startService(service);
+
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.ConversationsList.class);
 			startActivity(i);
 
 		} catch (Exception e) {
-
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(), result.toString(),
+					Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -145,11 +157,9 @@ public class Login extends Activity {
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
 
-			}
-			catch (HttpException e){
+			} catch (HttpException e) {
 				result = null;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				result = null;
 			}
 

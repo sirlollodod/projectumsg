@@ -21,6 +21,7 @@ import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
@@ -46,45 +47,12 @@ public class Main extends Activity {
 		super.onResume();
 
 		// testing
-
 		{
+
 			Utility.prepareDirectory(context);
 
 			Provider p = new Provider(UMessageApplication.getContext());
 
-			// if (p.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null)
-			// == -2) { // Toast.makeText(UMessageApplication.getContext()
-			// "Rimossi tutti i messaggi", Toast.LENGTH_SHORT).show(); // }
-			TextView t = (TextView) findViewById(R.id.textView1);
-			/*
-			 * try { Cursor conversations = p.getConversations();
-			 * Toast.makeText(UMessageApplication.getContext(),
-			 * "Conversazioni: " + conversations.getCount(),
-			 * Toast.LENGTH_SHORT).show();
-			 * 
-			 * 
-			 * while (conversations.moveToNext()) {
-			 * 
-			 * Toast.makeText( UMessageApplication.getContext(), "name: " +
-			 * (conversations .getString( conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_NAME)) .equals("0") ?
-			 * "Sconosciuto" : conversations.getString(conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_NAME))) + "\n" + "prefix: " +
-			 * conversations.getString(conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_PREFIX)) + "\n" + "num: " +
-			 * conversations.getString(conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_NUM)) + "\n" + "data: " +
-			 * conversations.getString(conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_DATA)) + "\n" + "message: " +
-			 * conversations.getString(conversations
-			 * .getColumnIndex(DatabaseHelper.KEY_MESSAGE)),
-			 * Toast.LENGTH_SHORT).show();
-			 * 
-			 * 
-			 * } } catch (Exception e) {
-			 * Toast.makeText(UMessageApplication.getContext(), e.toString(),
-			 * Toast.LENGTH_LONG).show(); }
-			 */
 			ContentValues value;
 
 			Calendar c;
@@ -115,9 +83,9 @@ public class Main extends Activity {
 
 			}
 
-			//Toast.makeText(UMessageApplication.getContext(),
-			//		"Singoli messaggi inseriti: " + totalNewMessages,
-			//		Toast.LENGTH_SHORT).show();
+			// Toast.makeText(UMessageApplication.getContext(),
+			// "Singoli messaggi inseriti: " + totalNewMessages,
+			// Toast.LENGTH_SHORT).show();
 
 		}
 
@@ -135,12 +103,20 @@ public class Main extends Activity {
 		if ((storedSerialSim.equals("")) || (storedSerialSim == null)
 				|| !(actualSerialSim.equals(storedSerialSim))) {
 			// Registrazione
+			Intent service = new Intent(this,
+					com.lollotek.umessage.services.UMessageService.class);
+			stopService(service);
+
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);
 			startActivity(i);
 
 		} else if (simIsLogging) {
 			// Login
+			Intent service = new Intent(this,
+					com.lollotek.umessage.services.UMessageService.class);
+			stopService(service);
+
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.Login.class);
 
@@ -159,6 +135,10 @@ public class Main extends Activity {
 			startActivity(i);
 		} else {
 			// Default: Registrazione
+			Intent service = new Intent(this,
+					com.lollotek.umessage.services.UMessageService.class);
+			stopService(service);
+
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);
 			startActivity(i);
