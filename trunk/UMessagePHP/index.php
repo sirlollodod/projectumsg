@@ -31,6 +31,7 @@ switch ($_POST['action']){
 	 * return:
 	 * + isRegistered: true o false, a seconda che utente richiesto sia già registrato al servizio online
 	 * + email: email dell'utente se registrato e richiesta non anonima
+	 * + imageProfileSrc: percorso preceduto da ./ relativo all'immagine profilo dell'utente, se immagine presente, vuoto altrimenti
 	 *
 	 */
 
@@ -46,8 +47,12 @@ switch ($_POST['action']){
 
 		if($result['isRegistered']){
 			$response['isRegistered'] = true;
+			$response['imageProfileSrc'] = $result['imageProfileSrc'];
 			if(!isset($_POST['anonymous']) || $_POST['anonymous'] != 'yes'){
 				$response['email'] = $result['email'];
+			}
+			else{
+				$response['email'] = '';
 			}
 
 		}
@@ -104,6 +109,7 @@ switch ($_POST['action']){
 		 * + smsCode: codice di conferma inviato per sms
 		 * return:
 		 * + sessionId: valore della sessione per l'utente richiesto se utente loggato
+		 * + imageProfileSrc: percorso preceduto da ./ relativo all'immagine profilo dell'utente, se immagine presente, vuoto altrimenti
 		 *
 		 */
 	case 'LOGIN_USER':
@@ -118,6 +124,7 @@ switch ($_POST['action']){
 
 		$response['errorCode'] = 'OK';
 		$response['sessionId'] = $result['sessionId'];
+		$response['imageProfileSrc'] = $result['imageProfileSrc'];
 
 		break;
 
@@ -273,8 +280,10 @@ switch ($_POST['action']){
 			
 			if($result['errorCode'] == 'OK'){
 				$response['errorCode'] = 'OK';
-				$oldImageSrc = $result['oldImageSrc'];
-				unlink($oldImageSrc . ".jpg");
+				$oldImageBaseSrc = $result['oldImageSrc'];
+				$oldImageSrc = $oldImageBaseSrc . ".jpg";
+				if(is_file($oldImageSrc))
+				unlink($oldImageSrc);
 				break;
 			}
 			else{
