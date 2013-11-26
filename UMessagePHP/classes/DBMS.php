@@ -204,6 +204,7 @@ class DBMS{
 			$stmt->close();
 			$response['isRegistered'] = true;
 			$response['email'] = $sEmail;
+			$response['imageProfileSrc'] = $sImgSrc . ".jpg";
 			return $response;
 		}
 		else{
@@ -274,8 +275,37 @@ class DBMS{
 			if($stmt->affected_rows == 1){
 				$response = array(
 						'errorCode' => 'OK',
-						'sessionId' => $newSessId
+						'sessionId' => '',
+						'imageProfileSrc' => ''
 				);
+					
+				$response['sessionId'] = $newSessId;
+
+				$query = "SELECT * FROM user WHERE sessid=?;";
+				if(!$stmt = $this->connection->prepare($query)){
+					$stmt->close();
+					return false;
+				}
+
+				$stmt->bind_param('s', $newSessId);
+
+				if(!$stmt->execute()){
+					$stmt->close();
+					return false;
+				}
+
+				$stmt->store_result();
+				if(!$stmt->num_rows){
+					return false;
+				}
+
+				$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessId, $sGcmId, $sImgSrc, $sDataImg);
+				$stmt->fetch();
+				$stmt->close();
+					
+				$response['imageProfileSrc'] = $sImgSrc . ".jpg";
+					
+
 
 				$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";
 				if(!$stmt = $this->connection->prepare($query)){
