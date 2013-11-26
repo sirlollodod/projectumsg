@@ -4,15 +4,19 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.http.HttpException;
+import org.json.JSONObject;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
@@ -83,7 +87,7 @@ public class MainThread extends Thread {
 
 		private File mainFolder, myNewProfileImage;
 		private Provider p;
-		
+
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
@@ -153,29 +157,121 @@ public class MainThread extends Thread {
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
-				
+
 				Bundle data = msg.getData();
 
 				String userImageUrl = (String) msg.obj;
-				String newUserImageFileName = userImageUrl.substring(userImageUrl.indexOf("+"));
+				String newUserImageFileName = userImageUrl
+						.substring(userImageUrl.indexOf("+"));
 				int posNumDataSeparator = newUserImageFileName.indexOf("_");
-				String newImageName = "/" + newUserImageFileName.substring(0, posNumDataSeparator) + ".jpg";
-				long newImageData = Long.parseLong(newUserImageFileName.substring(posNumDataSeparator+1, newUserImageFileName.length()-4));
-				File userImage = new File(mainFolder.toString() + Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
-				
-				try{
-					Utility.downloadFileFromUrl(UMessageApplication.getContext(), userImage, userImageUrl);
+				String newImageName = "/"
+						+ newUserImageFileName
+								.substring(0, posNumDataSeparator) + ".jpg";
+				long newImageData = Long.parseLong(newUserImageFileName
+						.substring(posNumDataSeparator + 1,
+								newUserImageFileName.length() - 4));
+				File userImage = new File(mainFolder.toString()
+						+ Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
+
+				try {
+					Utility.downloadFileFromUrl(
+							UMessageApplication.getContext(), userImage,
+							userImageUrl);
 					p = new Provider(UMessageApplication.getContext());
-					p.updateUserImage(data.getString("prefix"), data.getString("num"), newImageName, newImageData);
-					
-				}
-				catch(Exception e){
-					
+					p.updateUserImage(data.getString("prefix"),
+							data.getString("num"), newImageName, newImageData);
+
+				} catch (Exception e) {
+
 				}
 
 				break;
+
+			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
+				mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+
+				p = new Provider(UMessageApplication.getContext());
+				Cursor users = p.getTotalUser();
+
+				int count = 0;
+				while (users.moveToNext()) {
+
+					String prefix = users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_PREFIX));
+					String num = users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_NUM));
+					String imageSrc = users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
+
+					long imageData = Long.parseLong(users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
+
+					try {
+
+						JSONObject parameters = new JSONObject();
+						JSONObject result = new JSONObject();
+
+						parameters
+								.accumulate("action", "CHECK_USER_REGISTERED");
+						parameters.accumulate("prefix", prefix);
+						parameters.accumulate("num", num);
+						parameters.accumulate("anonymous", "yes");
+
+						result = Utility.doPostRequest(Settings.SERVER_URL,
+								parameters);
+
+						String newUserImageUrl;
+						if (!result.getString("errorCode").equals("OK")) {
+							continue;
+						}
+
+						newUserImageUrl = result.getString("imageProfileSrc");
+
+						if (newUserImageUrl.length() == 0) {
+							continue;
+						}
+
+						newUserImageUrl = newUserImageUrl.substring(2);
+
+						newUserImageFileName = newUserImageUrl
+								.substring(newUserImageUrl.indexOf("+"));
+
+						posNumDataSeparator = newUserImageFileName.indexOf("_");
+						newImageName = "/"
+								+ newUserImageFileName.substring(0,
+										posNumDataSeparator) + ".jpg";
+						newImageData = Long.parseLong(newUserImageFileName
+								.substring(posNumDataSeparator + 1,
+										newUserImageFileName.length() - 4));
+						userImage = new File(mainFolder.toString()
+								+ Settings.CONTACT_PROFILE_IMAGES_FOLDER
+								+ newImageName);
+
+						if ((imageSrc.equals("0")) || (imageData == 0)
+								|| (imageData != newImageData)) {
+							if (Utility.downloadFileFromUrl(
+									UMessageApplication.getContext(),
+									userImage, Settings.SERVER_URL
+											+ newUserImageUrl)) {
+								p = new Provider(
+										UMessageApplication.getContext());
+								p.updateUserImage(prefix, num, newImageName,
+										newImageData);
+							}
+
+						}
+
+					} catch (Exception e) {
+						Toast.makeText(UMessageApplication.getContext(),
+								count + ":\n" + e.toString(),
+								Toast.LENGTH_SHORT).show();
+					}
+				}
+
+				break;
+
 			}
 		}
-
 	}
 }

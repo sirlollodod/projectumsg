@@ -73,8 +73,7 @@ public class UMessageService extends Service {
 
 		case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
 			String myProfileImageUrl = intent.getStringExtra("imageUrl");
-			myProfileImageUrl = myProfileImageUrl.substring(2);
-
+			
 			m = new Message();
 			m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
 			m.obj = Settings.SERVER_URL + myProfileImageUrl;
@@ -90,22 +89,26 @@ public class UMessageService extends Service {
 			break;
 
 		case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
-			
-				String userImageUrl = intent.getStringExtra("imageUrl");
-				Bundle data = new Bundle();
-				data.putString("prefix", intent.getStringExtra("prefix"));
-				data.putString("num", intent.getStringExtra("num"));
-				
-				m = new Message();
-				m.setData(data);
-				m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
-				m.obj = Settings.SERVER_URL + userImageUrl;
-				serviceHandler.sendMessage(m);
-			
-				
-			
+
+			String userImageUrl = intent.getStringExtra("imageUrl");
+			Bundle data = new Bundle();
+			data.putString("prefix", intent.getStringExtra("prefix"));
+			data.putString("num", intent.getStringExtra("num"));
+
+			m = new Message();
+			m.setData(data);
+			m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
+			m.obj = Settings.SERVER_URL + userImageUrl;
+			serviceHandler.sendMessage(m);
+
 			break;
 
+		case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
+			serviceHandler
+					.obtainMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES)
+					.sendToTarget();
+
+			break;
 		case MessageTypes.ERROR:
 
 			break;
@@ -164,6 +167,16 @@ public class UMessageService extends Service {
 					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
 				}
 
+				break;
+
+			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
+				m = new Message();
+				m.what = MessageTypes.DOWNLOAD_ALL_USERS_IMAGES;
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+				}
 				break;
 			}
 		}

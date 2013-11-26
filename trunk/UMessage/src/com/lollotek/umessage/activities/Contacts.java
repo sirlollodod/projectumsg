@@ -221,13 +221,16 @@ public class Contacts extends Activity {
 								(num.isItalianLeadingZero() ? "0" : "")
 										+ num.getNationalNumber());
 						value.put(DatabaseHelper.KEY_NAME, name);
-						value.put(DatabaseHelper.KEY_IMGSRC, "");
-						value.put(DatabaseHelper.KEY_IMGDATA, "");
+						value.put(DatabaseHelper.KEY_IMGSRC, "0");
+						value.put(DatabaseHelper.KEY_IMGDATA, "0");
 
-						String userImageUrl = result
+						
+
+						//testing: in realtà unica chiamata a service per aggiornamento tutti contatti esistenti e controllo immagine se da scaricare o no
+						/*
+						  String userImageUrl = result
 								.getString("imageProfileSrc");
-
-						if (userImageUrl.length() > 2) {
+								if (userImageUrl.length() > 2) {
 							userImageUrl = userImageUrl.substring(2);
 
 							Intent service = new Intent(
@@ -245,6 +248,9 @@ public class Contacts extends Activity {
 
 							startService(service);
 						}
+						*/
+
+						
 
 						if (p.insertNewUser(value)) {
 							numMobileContactsLoaded++;
@@ -273,6 +279,13 @@ public class Contacts extends Activity {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 
+			Intent service = new Intent(
+					UMessageApplication.getContext(),
+					com.lollotek.umessage.services.UMessageService.class);
+			service.putExtra("action", MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
+			
+			startService(service);
+			
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
