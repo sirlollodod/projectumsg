@@ -19,13 +19,14 @@
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="15dp"
-        android:layout_marginTop="2dp"
         android:layout_below="@+id/textView3"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="2dp"
         android:background="#F4F7AB"
         android:gravity="center"
         android:text="data"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/textView2"
@@ -36,10 +37,22 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="50dp"
         android:layout_marginTop="5dp"
-        android:gravity="left"
         android:background="#E2DFF7"
+        android:gravity="left"
         android:paddingLeft="3dp"
         android:paddingRight="3dp"
         android:text="messaggio" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="12dp"
+        android:layout_alignRight="@+id/textView2"
+        android:layout_below="@+id/textView2"
+        android:background="#E2DFF7"
+        android:layout_marginTop="-3dp"
+        android:text="time"
+        android:textColor="#7D747C"
+        android:textSize="10dp" />
 
 </RelativeLayout>

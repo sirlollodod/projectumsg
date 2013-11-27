@@ -63,13 +63,13 @@ public class Profile extends Activity {
 			public void onClick(View v) {
 				File mainFolder = Utility.getMainFolder(context);
 
-				File myNewProfileImage = new File(mainFolder.toString()
-						+ Settings.MY_PROFILE_IMAGE_SRC);
+				File myNewProfileImageTemp = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC_TEMP);
 
 				Intent i = new Intent(
 						android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 				i.putExtra(MediaStore.EXTRA_OUTPUT,
-						Uri.fromFile(myNewProfileImage));
+						Uri.fromFile(myNewProfileImageTemp));
 				startActivityForResult(i, TAKE_IMAGE);
 			}
 		});
@@ -103,14 +103,14 @@ public class Profile extends Activity {
 			try {
 				File mainFolder = Utility.getMainFolder(context);
 
-				File myNewProfileImage = new File(mainFolder.toString()
-						+ Settings.MY_PROFILE_IMAGE_SRC);
+				File myNewProfileImageTemp = new File(mainFolder.toString()
+						+ Settings.MY_PROFILE_IMAGE_SRC_TEMP);
 
 				// compressImage(myNewProfileImage.toString());
 
 				Intent cropIntent = new Intent("com.android.camera.action.CROP");
 				// indicate image type and Uri
-				cropIntent.setDataAndType(Uri.fromFile(myNewProfileImage),
+				cropIntent.setDataAndType(Uri.fromFile(myNewProfileImageTemp),
 						"image/*");
 				// set crop properties
 				cropIntent.putExtra("crop", "true");
@@ -118,34 +118,40 @@ public class Profile extends Activity {
 				cropIntent.putExtra("aspectX", 1);
 				cropIntent.putExtra("aspectY", 1);
 				// indicate output X and Y
-				cropIntent.putExtra("outputX", 256);
-				cropIntent.putExtra("outputY", 256);
+				cropIntent.putExtra("outputX", 128);
+				cropIntent.putExtra("outputY", 128);
 				// retrieve data on return
 				cropIntent.putExtra("return-data", true);
 				// start the activity - we handle returning in onActivityResult
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
 			} catch (Exception e) {
-				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+				//Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
 			}
 			break;
 
 		case CROP_IMAGE:
 
 			Bitmap thePic;
+			File mainFolder = Utility.getMainFolder(context);
+
+			File myNewProfileImageTemp = new File(mainFolder.toString()
+					+ Settings.MY_PROFILE_IMAGE_SRC_TEMP);
+
 			try {
 				Bundle extras = data.getExtras();
 				thePic = extras.getParcelable("data");
 
 				iv.setImageBitmap(thePic);
-				File mainFolder = Utility.getMainFolder(context);
+
+				FileOutputStream out = new FileOutputStream(
+						myNewProfileImageTemp);
+				thePic.compress(Bitmap.CompressFormat.JPEG, 75, out);
+				out.close();
 
 				File myNewProfileImage = new File(mainFolder.toString()
 						+ Settings.MY_PROFILE_IMAGE_SRC);
-
-				FileOutputStream out = new FileOutputStream(myNewProfileImage);
-				thePic.compress(Bitmap.CompressFormat.JPEG, 90, out);
-				out.close();
+				myNewProfileImageTemp.renameTo(myNewProfileImage);
 
 				// compressImage(myNewProfileImage.toString());
 
@@ -156,7 +162,10 @@ public class Profile extends Activity {
 				startService(service);
 
 			} catch (Exception e) {
-				Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+				if (myNewProfileImageTemp.isFile()) {
+					myNewProfileImageTemp.delete();
+				}
+				//Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
 			}
 			break;
 		}

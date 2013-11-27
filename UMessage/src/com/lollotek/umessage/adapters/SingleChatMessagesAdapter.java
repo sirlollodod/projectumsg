@@ -35,7 +35,7 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		View rowView;
-		TextView data, message, newMessages;
+		TextView data, message, newMessages, time;
 
 		cursor.moveToPosition(position);
 
@@ -56,7 +56,8 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 
 		data = (TextView) rowView.findViewById(R.id.textView1);
 		message = (TextView) rowView.findViewById(R.id.textView2);
-
+		time = (TextView) rowView.findViewById(R.id.textView4);
+		
 		if (position == firstToReadPosition) {
 			newMessages = (TextView) rowView.findViewById(R.id.textView3);
 			newMessages.setVisibility(View.VISIBLE);
@@ -68,7 +69,7 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 				Calendar.DAY_OF_MONTH) == c.get(Calendar.DAY_OF_MONTH));
 		String dataFormattedValue;
 
-		if (isMessageOfToday) {
+		//if (isMessageOfToday) {
 			dataFormattedValue = ""
 					+ (c.get(Calendar.HOUR_OF_DAY) < 10 ? "0"
 							+ c.get(Calendar.HOUR_OF_DAY) : c
@@ -77,8 +78,10 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 					+ (c.get(Calendar.MINUTE) < 10 ? "0"
 							+ c.get(Calendar.MINUTE) : c.get(Calendar.MINUTE));
 			;
+		/*	
 		} else {
-			dataFormattedValue = ""
+		
+		dataFormattedValue = ""
 					+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
 							+ c.get(Calendar.DAY_OF_MONTH) : c
 							.get(Calendar.DAY_OF_MONTH))
@@ -89,12 +92,16 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 					+ c.get(Calendar.YEAR);
 
 		}
-
-		if (position % 3 == 0) {
+		*/
+		
+		/*if (position % 3 == 0) {
 			data.setText(dataFormattedValue);
 		} else {
 			data.setVisibility(View.GONE);
 		}
+		*/
+		time.setText(dataFormattedValue);
+		
 
 		message.setText(messageValue);
 

@@ -25,7 +25,8 @@
         android:background="#F4F7AB"
         android:gravity="center"
         android:text="data"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/textView2"
@@ -41,5 +42,17 @@
         android:paddingLeft="3dp"
         android:paddingRight="3dp"
         android:text="messaggio" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="12dp"
+        android:layout_alignLeft="@+id/textView2"
+        android:layout_below="@+id/textView2"
+        android:layout_marginTop="-3dp"
+        android:background="#F7DFEC"
+        android:text="time"
+        android:textColor="#7D747C"
+        android:textSize="10dp" />
 
 </RelativeLayout>

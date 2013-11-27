@@ -264,8 +264,12 @@ public class Utility {
 	}
 
 	public static JSONObject uploadImageProfile(Context context,
-			String urlToOpen, File imageToUpload, String sessionId) {
+			String urlToOpen, File imageToUpload, String sessionId) throws HttpException {
 
+		if (!isNetworkAvailable(UMessageApplication.getContext())) {
+			throw new HttpException("Connessione non disponibile");
+		}
+		
 		HttpClient httpclient = new DefaultHttpClient();
 		HttpPost httppost = new HttpPost(urlToOpen);
 		JSONObject result = null;
@@ -284,7 +288,7 @@ public class Utility {
 			result = new JSONObject(responseString);
 
 		} catch (Exception e) {
-			return null;
+			throw new HttpException("Errore upload immagine.");
 		}
 
 		httpclient.getConnectionManager().shutdown();
