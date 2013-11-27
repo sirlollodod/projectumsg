@@ -3,6 +3,7 @@ package com.lollotek.umessage.activities;
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -58,8 +59,9 @@ public class Contacts extends Activity {
 
 		title = (TextView) findViewById(R.id.textView1);
 		loading = (TextView) findViewById(R.id.textView2);
-
 		listView = (ListView) findViewById(R.id.listView1);
+		ActionBar ab = getActionBar();
+		ab.setDisplayHomeAsUpEnabled(true);
 
 		listView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
@@ -88,7 +90,6 @@ public class Contacts extends Activity {
 
 		loading.setVisibility(View.GONE);
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
 	@Override
@@ -311,13 +312,15 @@ public class Contacts extends Activity {
 
 			break;
 
-		case android.R.id.home:
-			NavUtils.navigateUpFromSameTask(this);
-			break;
+		/*
+		 * case android.R.id.home:
+		 * 
+		 * NavUtils.navigateUpFromSameTask(this); break;
+		 */
 
 		}
 
-		return true;
+		return super.onOptionsItemSelected(item);
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {

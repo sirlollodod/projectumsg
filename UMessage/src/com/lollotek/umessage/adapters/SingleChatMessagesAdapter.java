@@ -4,6 +4,7 @@ import java.util.Calendar;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,8 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 
 	private static int firstToReadPosition;
 
+	private Bundle indexFirstOfDay;
+
 	public SingleChatMessagesAdapter(Context context, int layout, Cursor c,
 			String[] from, int[] to, int flags, int firstToReadPosition) {
 		super(context, layout, c, from, to, flags);
@@ -27,6 +30,10 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 		this.context = context;
 		this.cursor = c;
 		SingleChatMessagesAdapter.firstToReadPosition = firstToReadPosition;
+	}
+
+	public void setIndexFirstOfDay(Bundle bundle) {
+		this.indexFirstOfDay = bundle;
 	}
 
 	@Override
@@ -57,7 +64,7 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 		data = (TextView) rowView.findViewById(R.id.textView1);
 		message = (TextView) rowView.findViewById(R.id.textView2);
 		time = (TextView) rowView.findViewById(R.id.textView4);
-		
+
 		if (position == firstToReadPosition) {
 			newMessages = (TextView) rowView.findViewById(R.id.textView3);
 			newMessages.setVisibility(View.VISIBLE);
@@ -67,41 +74,31 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 		c.setTimeInMillis(Long.parseLong(dataValue));
 		boolean isMessageOfToday = (Calendar.getInstance().get(
 				Calendar.DAY_OF_MONTH) == c.get(Calendar.DAY_OF_MONTH));
-		String dataFormattedValue;
+		String timeFormattedValue, dataFormattedValue;
 
-		//if (isMessageOfToday) {
-			dataFormattedValue = ""
-					+ (c.get(Calendar.HOUR_OF_DAY) < 10 ? "0"
-							+ c.get(Calendar.HOUR_OF_DAY) : c
-							.get(Calendar.HOUR_OF_DAY))
-					+ ":"
-					+ (c.get(Calendar.MINUTE) < 10 ? "0"
-							+ c.get(Calendar.MINUTE) : c.get(Calendar.MINUTE));
-			;
-		/*	
-		} else {
-		
+		timeFormattedValue = ""
+				+ (c.get(Calendar.HOUR_OF_DAY) < 10 ? "0"
+						+ c.get(Calendar.HOUR_OF_DAY) : c
+						.get(Calendar.HOUR_OF_DAY))
+				+ ":"
+				+ (c.get(Calendar.MINUTE) < 10 ? "0" + c.get(Calendar.MINUTE)
+						: c.get(Calendar.MINUTE));
+
 		dataFormattedValue = ""
-					+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
-							+ c.get(Calendar.DAY_OF_MONTH) : c
-							.get(Calendar.DAY_OF_MONTH))
-					+ "/"
-					+ ((c.get(Calendar.MONTH) + 1) < 10 ? "0"
-							+ (c.get(Calendar.MONTH) + 1) : (c
-							.get(Calendar.MONTH) + 1)) + "/"
-					+ c.get(Calendar.YEAR);
+				+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
+						+ c.get(Calendar.DAY_OF_MONTH) : c
+						.get(Calendar.DAY_OF_MONTH))
+				+ "/"
+				+ ((c.get(Calendar.MONTH) + 1) < 10 ? "0"
+						+ (c.get(Calendar.MONTH) + 1)
+						: (c.get(Calendar.MONTH) + 1)) + "/"
+				+ c.get(Calendar.YEAR);
 
-		}
-		*/
-		
-		/*if (position % 3 == 0) {
+		if(indexFirstOfDay.getBoolean(""+position, false)){
 			data.setText(dataFormattedValue);
-		} else {
-			data.setVisibility(View.GONE);
+			data.setVisibility(View.VISIBLE);
 		}
-		*/
-		time.setText(dataFormattedValue);
-		
+		time.setText(timeFormattedValue);
 
 		message.setText(messageValue);
 
