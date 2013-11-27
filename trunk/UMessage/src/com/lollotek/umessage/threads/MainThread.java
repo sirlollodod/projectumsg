@@ -30,6 +30,8 @@ public class MainThread extends Thread {
 	private UpdateThread updateThread = null;
 	private NewMessageThread newMessageThread = null;
 
+	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
+
 	GoogleCloudMessaging gcm = null;
 
 	public MainThread(Handler handler) {
@@ -128,7 +130,9 @@ public class MainThread extends Thread {
 							UMessageApplication.getContext(),
 							myNewProfileImage, imageUrl);
 				} catch (HttpException e) {
-
+					this.sendEmptyMessageDelayed(
+							MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC,
+							TIME_MINUTE * 1000);
 				}
 				break;
 
@@ -150,10 +154,11 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					m = new Message();
 					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
-					this.sendMessageDelayed(m, 60000);
+					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 
+			//da sistemare, mai utilizzato	
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
@@ -194,7 +199,6 @@ public class MainThread extends Thread {
 				p = new Provider(UMessageApplication.getContext());
 				Cursor users = p.getTotalUser();
 
-				int count = 0;
 				while (users.moveToNext()) {
 
 					String prefix = users.getString(users
@@ -263,10 +267,13 @@ public class MainThread extends Thread {
 						}
 
 					} catch (Exception e) {
-						Toast.makeText(UMessageApplication.getContext(),
-								count + ":\n" + e.toString(),
-								Toast.LENGTH_SHORT).show();
+
 					}
+
+					// Schedulo aggiornamento immagini tra 1gg
+					this.sendEmptyMessageDelayed(
+							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES,
+							TIME_DAY * 1000);
 				}
 
 				break;

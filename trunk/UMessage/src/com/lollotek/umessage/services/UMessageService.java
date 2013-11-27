@@ -26,6 +26,8 @@ public class UMessageService extends Service {
 	private MainThread mainThread = null;
 	private Handler mainThreadHandler = null;
 
+	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -44,6 +46,15 @@ public class UMessageService extends Service {
 			mainThread = new MainThread(serviceHandler);
 			mainThread.start();
 		}
+
+		initialize();
+
+	}
+
+	// Inizializzazione base del service
+	private void initialize() {
+		Toast.makeText(instance, "Inizializzazione service...", Toast.LENGTH_SHORT).show();
+		serviceHandler.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 
 	}
 
@@ -88,6 +99,7 @@ public class UMessageService extends Service {
 
 			break;
 
+		//da sistemare, mai utilizzato
 		case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 
 			String userImageUrl = intent.getStringExtra("imageUrl");
@@ -119,8 +131,6 @@ public class UMessageService extends Service {
 
 	private class ServiceHandler extends Handler {
 
-		private final long DEFAULT_WAIT_TIME = 10000;
-
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
@@ -140,7 +150,7 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 
@@ -152,10 +162,11 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 
+			//da sistemare, mai utilizzato
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				m = new Message();
 				m.setData(msg.getData());
@@ -164,18 +175,22 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 
 				break;
 
 			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
-				m = new Message();
-				m.what = MessageTypes.DOWNLOAD_ALL_USERS_IMAGES;
+				this.removeMessages(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 				try {
-					mainThreadHandler.sendMessage(m);
+					mainThreadHandler
+							.removeMessages(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
+					mainThreadHandler
+							.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, DEFAULT_WAIT_TIME);
+					this.sendEmptyMessageDelayed(
+							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES,
+							TIME_MINUTE * 1000);
 				}
 				break;
 			}
