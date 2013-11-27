@@ -271,4 +271,37 @@ public class Provider {
 			return false;
 		}
 	}
+
+	public synchronized Cursor getUserInfo(String prefix, String num){
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+		ContentValues user = new ContentValues();
+		
+		user.put(DatabaseHelper.KEY_PREFIX, prefix);
+		user.put(DatabaseHelper.KEY_NUM, num);
+		
+		Cursor userInfo = null;
+		
+		try{
+			userInfo = db.query(DatabaseHelper.TABLE_USER, null, DatabaseHelper.KEY_PREFIX + "=? AND " + DatabaseHelper.KEY_NUM + "=?", new String[] {prefix, num},null, null, null);
+			
+		}
+		catch(Exception e){
+			userInfo = null;
+		}
+		
+		return userInfo;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

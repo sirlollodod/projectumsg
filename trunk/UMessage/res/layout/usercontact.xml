@@ -6,11 +6,12 @@
 
     <ImageView
         android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="45dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="25dp"
-        android:src="@drawable/ic_launcher" />
+        android:layout_marginRight="10dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/not_available" />
 
     <TextView
         android:id="@+id/textView1"
@@ -27,7 +28,7 @@
         android:layout_height="15dp"
         android:layout_below="@+id/textView1"
         android:layout_marginLeft="10dp"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="0dp"
         android:layout_toRightOf="@+id/imageView1"
         android:text="prefix"
         android:textAppearance="?android:attr/textAppearanceSmall" />

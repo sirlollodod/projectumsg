@@ -1,7 +1,5 @@
 package com.lollotek.umessage.activities;
 
-import java.io.File;
-
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
@@ -32,6 +30,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.adapters.ContactAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -66,6 +65,7 @@ public class Contacts extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
+
 				Cursor c = ((SimpleCursorAdapter) listView.getAdapter())
 						.getCursor();
 
@@ -112,7 +112,7 @@ public class Contacts extends Activity {
 
 		if (users.getCount() > 0) {
 
-			SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
+			ContactAdapter adapter = new ContactAdapter(this,
 					R.layout.usercontact, users, fromColumns, toViews, 0);
 			listView.setAdapter(adapter);
 		}
@@ -224,33 +224,30 @@ public class Contacts extends Activity {
 						value.put(DatabaseHelper.KEY_IMGSRC, "0");
 						value.put(DatabaseHelper.KEY_IMGDATA, "0");
 
-						
-
-						//testing: in realtà unica chiamata a service per aggiornamento tutti contatti esistenti e controllo immagine se da scaricare o no
+						// testing: in realtà unica chiamata a service per
+						// aggiornamento tutti contatti esistenti e controllo
+						// immagine se da scaricare o no
 						/*
-						  String userImageUrl = result
-								.getString("imageProfileSrc");
-								if (userImageUrl.length() > 2) {
-							userImageUrl = userImageUrl.substring(2);
-
-							Intent service = new Intent(
-									UMessageApplication.getContext(),
-									com.lollotek.umessage.services.UMessageService.class);
-
-							service.putExtra("action",
-									MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC);
-							service.putExtra("prefix",
-									"+" + num.getCountryCode());
-							service.putExtra("num",
-									(num.isItalianLeadingZero() ? "0" : "")
-											+ num.getNationalNumber());
-							service.putExtra("imageUrl", userImageUrl);
-
-							startService(service);
-						}
-						*/
-
-						
+						 * String userImageUrl = result
+						 * .getString("imageProfileSrc"); if
+						 * (userImageUrl.length() > 2) { userImageUrl =
+						 * userImageUrl.substring(2);
+						 * 
+						 * Intent service = new Intent(
+						 * UMessageApplication.getContext(),
+						 * com.lollotek.umessage
+						 * .services.UMessageService.class);
+						 * 
+						 * service.putExtra("action",
+						 * MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC);
+						 * service.putExtra("prefix", "+" +
+						 * num.getCountryCode()); service.putExtra("num",
+						 * (num.isItalianLeadingZero() ? "0" : "") +
+						 * num.getNationalNumber());
+						 * service.putExtra("imageUrl", userImageUrl);
+						 * 
+						 * startService(service); }
+						 */
 
 						if (p.insertNewUser(value)) {
 							numMobileContactsLoaded++;
@@ -279,13 +276,12 @@ public class Contacts extends Activity {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 
-			Intent service = new Intent(
-					UMessageApplication.getContext(),
+			Intent service = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.services.UMessageService.class);
 			service.putExtra("action", MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
-			
+
 			startService(service);
-			
+
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();

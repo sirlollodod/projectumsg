@@ -73,7 +73,7 @@ public class UMessageService extends Service {
 
 		case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
 			String myProfileImageUrl = intent.getStringExtra("imageUrl");
-			
+
 			m = new Message();
 			m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
 			m.obj = Settings.SERVER_URL + myProfileImageUrl;

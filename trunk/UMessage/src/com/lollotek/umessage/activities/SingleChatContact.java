@@ -2,6 +2,7 @@ package com.lollotek.umessage.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -24,6 +25,8 @@ public class SingleChatContact extends Activity {
 
 	String name, prefix, num, iconSrc;
 
+	Provider p;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -36,6 +39,14 @@ public class SingleChatContact extends Activity {
 		num = parameter.getStringExtra("num");
 		iconSrc = parameter.getStringExtra("iconSrc");
 		
+		p = new Provider(UMessageApplication.getContext());
+		Cursor userInfo = p.getUserInfo(prefix, num);
+		
+		if((userInfo != null) && (userInfo.moveToNext())){
+			String imageSrc = userInfo.getString(userInfo.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
+			long imageData = Long.parseLong(userInfo.getString(userInfo.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
+			
+		}
 		
 		if (name.equals("0")) {
 			ab.setTitle("Sconosciuto");
@@ -59,7 +70,7 @@ public class SingleChatContact extends Activity {
 
 	private void loadMessages(String name, String prefix, String num) {
 
-		Provider p = new Provider(UMessageApplication.getContext());
+		p = new Provider(UMessageApplication.getContext());
 
 		Cursor messages = p.getMessages(prefix, num);
 

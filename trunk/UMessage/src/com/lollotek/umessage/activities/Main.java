@@ -7,12 +7,10 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -21,7 +19,6 @@ import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
-import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
@@ -45,36 +42,67 @@ public class Main extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
+		
 		// testing
 		{
 
+			
 			Utility.prepareDirectory(context);
 
 			Provider p = new Provider(UMessageApplication.getContext());
+			Cursor users = p.getTotalUser();
+			String[] messages = {
+					"scrivo qualcosa di breve...",
+					"Ciao!!!",
+					"Qualcosa di leggermente più lungo, forse va su 2 righe...",
+					"Questo invece è decisamente più lungo, spero che oltre a prendere la seconda riga vada anche sulla terza e/o 4°!!" };
 
 			ContentValues value;
 
 			Calendar c;
 			Random r = new Random();
 			int totalNewMessages = 0;
-			int newMessages = r.nextInt(20);
-			for (int i = 0; i < newMessages; i++) {
+			int newMessages = r.nextInt(30);
+			boolean unknownPhoneNumber;
+			while (totalNewMessages < newMessages) {
+				
+				unknownPhoneNumber = false;
+				if (!users.moveToNext()) {
+					if(!users.moveToFirst()){
+						break;
+					}
+					
+				}
+
+				if (!r.nextBoolean()) {
+					continue;
+				}
+
+				if (r.nextInt(15) == 0) {
+					unknownPhoneNumber = true;
+				}
 				c = Calendar.getInstance();
 				value = new ContentValues();
-				value.put(DatabaseHelper.KEY_PREFIX, "+39");
-				value.put(DatabaseHelper.KEY_NUM, "3400000000");
+				value.put(DatabaseHelper.KEY_PREFIX, users.getString(users
+						.getColumnIndex(DatabaseHelper.KEY_PREFIX)));
+				value.put(
+						DatabaseHelper.KEY_NUM,
+						(unknownPhoneNumber ? (users.getString(users
+								.getColumnIndex(DatabaseHelper.KEY_NUM)).substring(
+								0,
+								users.getString(
+										users.getColumnIndex(DatabaseHelper.KEY_NUM))
+										.length() - 1))
+								+ r.nextInt(10)
+								: users.getString(users
+										.getColumnIndex(DatabaseHelper.KEY_NUM))));
 				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
 						: "1"));
 				value.put(DatabaseHelper.KEY_STATUS, "0");
 				value.put(DatabaseHelper.KEY_DATA,
 						Double.parseDouble("" + c.getTimeInMillis()));
 				value.put(DatabaseHelper.KEY_TYPE, "text");
-				value.put(
-						DatabaseHelper.KEY_MESSAGE,
-						""
-								+ i
-								+ "° messaggio: provo a inserire un messaggio più lungo, cosi probabilmente andrà a finire su più di una riga!!");
+				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(4)]);
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
 
 				if (p.insertNewMessage(value)) {
@@ -87,6 +115,7 @@ public class Main extends Activity {
 			// "Singoli messaggi inseriti: " + totalNewMessages,
 			// Toast.LENGTH_SHORT).show();
 
+			
 		}
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
@@ -143,6 +172,9 @@ public class Main extends Activity {
 					com.lollotek.umessage.activities.Registration.class);
 			startActivity(i);
 		}
+		
+		
+		
 	}
 
 	@Override
