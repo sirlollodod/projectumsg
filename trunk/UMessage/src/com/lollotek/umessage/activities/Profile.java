@@ -5,9 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
@@ -20,16 +17,16 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
@@ -126,7 +123,8 @@ public class Profile extends Activity {
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
 			} catch (Exception e) {
-				//Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+				// Toast.makeText(context, e.toString(),
+				// Toast.LENGTH_LONG).show();
 			}
 			break;
 
@@ -165,7 +163,8 @@ public class Profile extends Activity {
 				if (myNewProfileImageTemp.isFile()) {
 					myNewProfileImageTemp.delete();
 				}
-				//Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+				// Toast.makeText(context, e.toString(),
+				// Toast.LENGTH_LONG).show();
 			}
 			break;
 		}
@@ -346,6 +345,24 @@ public class Profile extends Activity {
 		}
 
 		return inSampleSize;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case android.R.id.home:
+
+			try {
+				NavUtils.navigateUpFromSameTask(this);
+			} catch (Exception e) {
+				finish();
+			}
+
+			break;
+
+		}
+
+		return super.onOptionsItemSelected(item);
 	}
 
 }

@@ -1,16 +1,25 @@
 package com.lollotek.umessage.activities;
 
+import java.io.File;
 import java.util.Calendar;
+import java.util.concurrent.RunnableScheduledFuture;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lollotek.umessage.R;
@@ -18,6 +27,8 @@ import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.SingleChatMessagesAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.Settings;
+import com.lollotek.umessage.utils.Utility;
 
 public class SingleChatContact extends Activity {
 
@@ -28,38 +39,82 @@ public class SingleChatContact extends Activity {
 	String name, prefix, num, iconSrc;
 
 	Provider p;
+	Context context;
+
+	private int firstMessageDisplayed;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		context = this;
+
+		firstMessageDisplayed = -1;
 		setContentView(R.layout.activity_singlechatcontact);
 		Intent parameter = getIntent();
 		ActionBar ab = getActionBar();
-		name = parameter.getStringExtra("name");
+		ab.setCustomView(R.layout.actionbar_singlechatcontact);
+		ab.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM
+				| ActionBar.DISPLAY_HOME_AS_UP);
+
+		ab.setDisplayHomeAsUpEnabled(true);
+
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
-		iconSrc = parameter.getStringExtra("iconSrc");
+
+		TextView nameView, prefixView, numView;
+		nameView = (TextView) ab.getCustomView().findViewById(R.id.textView1);
+		prefixView = (TextView) ab.getCustomView().findViewById(R.id.textView2);
+		numView = (TextView) ab.getCustomView().findViewById(R.id.textView3);
+
+		ImageView iconView = (ImageView) ab.getCustomView().findViewById(
+				R.id.imageView2);
+
+		final ImageView backImageView = (ImageView) ab.getCustomView()
+				.findViewById(R.id.imageView1);
 
 		p = new Provider(UMessageApplication.getContext());
 		Cursor userInfo = p.getUserInfo(prefix, num);
 
 		if ((userInfo != null) && (userInfo.moveToNext())) {
-			String imageSrc = userInfo.getString(userInfo
+			name = userInfo.getString(userInfo
+					.getColumnIndex(DatabaseHelper.KEY_NAME));
+			iconSrc = userInfo.getString(userInfo
 					.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
 			long imageData = Long.parseLong(userInfo.getString(userInfo
 					.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
+			if (!iconSrc.equals("0")) {
+				File icon = new File(Utility.getMainFolder(UMessageApplication
+						.getContext())
+						+ Settings.CONTACT_PROFILE_IMAGES_FOLDER
+						+ iconSrc);
+				iconView.setImageURI(Uri.fromFile(icon));
+			}
+			nameView.setText(name);
 
-		}
-
-		if (name.equals("0")) {
-			ab.setTitle("Sconosciuto");
 		} else {
-			ab.setTitle(name);
+			nameView.setText("Sconosciuto");
 		}
-		ab.setSubtitle(prefix + " " + num);
 
-		ab.setDisplayHomeAsUpEnabled(true);
+		prefixView.setText(prefix);
+		numView.setText(num);
+
+		backImageView.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				p.markMessagesAsRed(prefix, num);
+
+				backImageView.setAlpha((float) 0.8);
+				try {
+					NavUtils.navigateUpFromSameTask((Activity) context);
+				} catch (Exception e) {
+					finish();
+				}
+
+			}
+		});
 
 		listView = (ListView) findViewById(R.id.listView1);
 
@@ -68,8 +123,37 @@ public class SingleChatContact extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+
 		loadMessages(name, prefix, num);
 
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		firstMessageDisplayed = listView.getFirstVisiblePosition();
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+
+		firstMessageDisplayed = listView.getFirstVisiblePosition();
+
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+
+	}
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+
+		p.markMessagesAsRed(prefix, num);
 	}
 
 	private void loadMessages(String name, String prefix, String num) {
@@ -149,9 +233,11 @@ public class SingleChatContact extends Activity {
 
 		listView.setAdapter(adapter);
 
-		listView.setSelection(startPosition);
-
-		p.markMessagesAsRed(prefix, num);
+		if (firstMessageDisplayed != -1) {
+			listView.setSelection(firstMessageDisplayed);
+		} else {
+			listView.setSelection(startPosition);
+		}
 
 	}
 

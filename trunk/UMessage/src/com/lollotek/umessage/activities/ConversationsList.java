@@ -32,6 +32,8 @@ public class ConversationsList extends Activity {
 	int[] toViews = { R.id.imageView1, R.id.textView1, R.id.textView2,
 			R.id.textView3 };
 
+	private static int firstConversationDisplayed;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -87,6 +89,28 @@ public class ConversationsList extends Activity {
 		PreviewChatAdapter adapter = new PreviewChatAdapter(this,
 				R.layout.chatpreview, users, fromColumns, toViews, 0);
 		listView.setAdapter(adapter);
+
+		try{
+			listView.setSelection(firstConversationDisplayed);
+		}
+		catch(Exception e){
+			listView.setSelection(0);
+		}
+
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		firstConversationDisplayed = listView.getFirstVisiblePosition();
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+
+		firstConversationDisplayed = listView.getFirstVisiblePosition();
 
 	}
 
