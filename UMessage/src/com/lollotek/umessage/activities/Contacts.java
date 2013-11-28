@@ -312,11 +312,15 @@ public class Contacts extends Activity {
 
 			break;
 
-		/*
-		 * case android.R.id.home:
-		 * 
-		 * NavUtils.navigateUpFromSameTask(this); break;
-		 */
+		case android.R.id.home:
+
+			try {
+				NavUtils.navigateUpFromSameTask(this);
+			} catch (Exception e) {
+				finish();
+			}
+			
+			break;
 
 		}
 
