@@ -194,7 +194,8 @@ class DBMS{
 
 		$response = array(
 				'isRegistered' => false,
-				'email' => ''
+				'email' => '',
+				'imageProfileSrc' => ''
 		);
 
 		if($stmt->num_rows == 1){
@@ -204,7 +205,12 @@ class DBMS{
 			$stmt->close();
 			$response['isRegistered'] = true;
 			$response['email'] = $sEmail;
-			$response['imageProfileSrc'] = $sImgSrc . ".jpg";
+			if($sImgSrc == "" || $sImgSrc == null){
+				$response['imageProfileSrc'] = '';
+			}
+			else{
+				$response['imageProfileSrc'] = $sImgSrc . ".jpg";
+			}
 			return $response;
 		}
 		else{
@@ -303,8 +309,12 @@ class DBMS{
 				$stmt->fetch();
 				$stmt->close();
 					
-				$response['imageProfileSrc'] = $sImgSrc . ".jpg";
-					
+				if($sImgSrc == "" || $sImgSrc == null){
+					$response['imageProfileSrc'] = '';
+				}
+				else{
+					$response['imageProfileSrc'] = $sImgSrc . ".jpg";
+				}
 
 
 				$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";

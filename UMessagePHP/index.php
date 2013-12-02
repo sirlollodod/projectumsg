@@ -191,6 +191,7 @@ switch ($_POST['action']){
 		if($result['chatExists']){
 			if($result['syncChatRequired']){
 				$response['errorCode'] = 'OK';
+				$response['errorInfo'] = 'Chat synchronization required';
 				$response['syncChatRequired'] = true;
 				break;
 			}
@@ -255,8 +256,12 @@ switch ($_POST['action']){
 		break;
 
 		/**
-		 *
-		 *
+		 * + action: SEND_NEW_PROFILE_IMAGE
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + userProfileImage: nuovo file immagine del profilo dell'utente
+		 * return:
+		 * + isSessionValid: true o false, a seconda che la sessionId della richiesta sia valida o meno
+		 * 
 		 */
 	case 'SEND_NEW_PROFILE_IMAGE':
 		$result = $db->checkSessionId($_POST['sessionId']);
@@ -266,6 +271,16 @@ switch ($_POST['action']){
 			break;
 		}
 
+		if(!$result['isRegistered']){
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'SessionId not valid';
+			$response['isSessionValid'] = false;
+			break;
+		}
+		else{
+			$response['isSessionValid'] = true;
+		}
+		
 		$time = $db->getMillis();
 		$imageBaseName = $imageContactFolder . $result['prefix'] . $result['num'] . "_" . $time;
 		$imageName = $imageBaseName . ".jpg";
@@ -275,20 +290,27 @@ switch ($_POST['action']){
 			if(!$result){
 				$response['errorCode'] = 'KO';
 				$response['errorInfo'] = 'PHP error';
+				if(is_file($imageName)){
+					unlink($imageName);
+				}
 				break;
 			}
-			
+
 			if($result['errorCode'] == 'OK'){
 				$response['errorCode'] = 'OK';
 				$oldImageBaseSrc = $result['oldImageSrc'];
 				$oldImageSrc = $oldImageBaseSrc . ".jpg";
-				if(is_file($oldImageSrc))
-				unlink($oldImageSrc);
+				if(is_file($oldImageSrc)){
+					unlink($oldImageSrc);
+				}
 				break;
 			}
 			else{
 				$response['errorCode'] = 'KO';
 				$response['errorInfo'] = 'PHP error';
+				if(is_file($imageName)){
+					unlink($imageName);
+				}
 				break;
 			}
 		}
@@ -301,6 +323,10 @@ switch ($_POST['action']){
 
 		break;
 
+		/**
+		 * Caso di default.
+		 * 
+		 */
 	default:
 		$response['request'] = "BAD_REQUEST";
 		$response['errorCode'] = "KO";
