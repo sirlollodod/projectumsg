@@ -28,6 +28,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -153,6 +154,10 @@ public class Profile extends Activity {
 
 				// compressImage(myNewProfileImage.toString());
 
+				Configuration configuration = Utility.getConfiguration(context);
+				configuration.setProfileImageToUpload(true);
+				Utility.setConfiguration(context, configuration);
+				
 				Intent service = new Intent(UMessageApplication.getContext(),
 						com.lollotek.umessage.services.UMessageService.class);
 				service.putExtra("action", MessageTypes.UPLOAD_MY_PROFILE_IMAGE);

@@ -1,9 +1,5 @@
 package com.lollotek.umessage.services;
 
-import java.io.File;
-
-import org.apache.http.HttpException;
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +9,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.widget.Toast;
 
+import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.threads.MainThread;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -53,7 +50,13 @@ public class UMessageService extends Service {
 
 	// Inizializzazione base del service
 	private void initialize() {
-		Toast.makeText(instance, "Inizializzazione service...", Toast.LENGTH_SHORT).show();
+		Configuration configuration = Utility.getConfiguration(instance);
+
+		if (configuration.isProfileImageToUpload()) {
+						serviceHandler
+					.sendEmptyMessage(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
+		}
+
 		serviceHandler.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 
 	}
@@ -99,7 +102,7 @@ public class UMessageService extends Service {
 
 			break;
 
-		//da sistemare, mai utilizzato
+		// da sistemare, mai utilizzato
 		case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 
 			String userImageUrl = intent.getStringExtra("imageUrl");
@@ -126,7 +129,9 @@ public class UMessageService extends Service {
 			break;
 
 		}
-		return 0;
+
+		return Service.START_STICKY;
+
 	}
 
 	private class ServiceHandler extends Handler {
@@ -166,7 +171,7 @@ public class UMessageService extends Service {
 				}
 				break;
 
-			//da sistemare, mai utilizzato
+			// da sistemare, mai utilizzato
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				m = new Message();
 				m.setData(msg.getData());

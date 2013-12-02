@@ -75,7 +75,7 @@ public class Provider {
 			ContentValues newChat = new ContentValues();
 			newChat.put(DatabaseHelper.KEY_PREFIXDEST, prefix);
 			newChat.put(DatabaseHelper.KEY_NUMDEST, num);
-			newChat.put(DatabaseHelper.KEY_VERSION, "");
+			newChat.put(DatabaseHelper.KEY_VERSION, "0");
 			newChat.put(DatabaseHelper.KEY_IDLASTMESSAGE, "");
 
 			idChat = insert(DatabaseHelper.TABLE_SINGLECHAT, null, newChat);

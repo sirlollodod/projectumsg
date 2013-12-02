@@ -42,16 +42,19 @@ public class Main extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
+
 		// testing
 		{
 
-			
 			Utility.prepareDirectory(context);
 
 			Provider p = new Provider(UMessageApplication.getContext());
 			Cursor users = p.getTotalUser();
 			String[] messages = {
+					"12-0",
+					"Esci questa sera?",
+					"Penso di no, non sto molto bene, casomai facciamo un'altra volta.. OK??",
+					"Meglio di no",
 					"scrivo qualcosa di breve...",
 					"Ciao!!!",
 					"Qualcosa di leggermente più lungo, forse va su 2 righe...",
@@ -62,23 +65,23 @@ public class Main extends Activity {
 			Calendar c;
 			Random r = new Random();
 			int totalNewMessages = 0;
-			int newMessages = r.nextInt(30);
+			int newMessages = r.nextInt(10);
 			boolean unknownPhoneNumber;
 			while (totalNewMessages < newMessages) {
-				
+
 				unknownPhoneNumber = false;
 				if (!users.moveToNext()) {
-					if(!users.moveToFirst()){
+					if (!users.moveToFirst()) {
 						break;
 					}
-					
+
 				}
 
 				if (!r.nextBoolean()) {
 					continue;
 				}
 
-				if (r.nextInt(15) == 0) {
+				if (r.nextInt(40) == 0) {
 					unknownPhoneNumber = true;
 				}
 				c = Calendar.getInstance();
@@ -102,7 +105,7 @@ public class Main extends Activity {
 				value.put(DatabaseHelper.KEY_DATA,
 						Double.parseDouble("" + c.getTimeInMillis()));
 				value.put(DatabaseHelper.KEY_TYPE, "text");
-				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(4)]);
+				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(8)]);
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
 
 				if (p.insertNewMessage(value)) {
@@ -115,7 +118,6 @@ public class Main extends Activity {
 			// "Singoli messaggi inseriti: " + totalNewMessages,
 			// Toast.LENGTH_SHORT).show();
 
-			
 		}
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
@@ -135,6 +137,8 @@ public class Main extends Activity {
 			Intent service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
 			stopService(service);
+
+			// Qui dovrei resettare file locali dell'applicazione (file + DB)
 
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);
@@ -172,9 +176,7 @@ public class Main extends Activity {
 					com.lollotek.umessage.activities.Registration.class);
 			startActivity(i);
 		}
-		
-		
-		
+
 	}
 
 	@Override
