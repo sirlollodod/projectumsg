@@ -8,7 +8,7 @@ public class Configuration implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private String prefix, num, sessId, gcmId, simSerial, email;
-	private boolean firstExecutionApp, simIsLogging;
+	private boolean firstExecutionApp, simIsLogging, profileImageToUpload;
 
 	public Configuration() {
 		super();
@@ -19,6 +19,8 @@ public class Configuration implements java.io.Serializable {
 		this.simSerial = "";
 		this.firstExecutionApp = true;
 		this.simIsLogging = false;
+		this.profileImageToUpload = false;
+		
 	}
 
 	public Configuration(String prefix, String num, String sessId, String gcmId,
@@ -95,6 +97,14 @@ public class Configuration implements java.io.Serializable {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public boolean isProfileImageToUpload() {
+		return profileImageToUpload;
+	}
+
+	public void setProfileImageToUpload(boolean profileImateToUpload) {
+		this.profileImageToUpload = profileImateToUpload;
 	}
 
 }

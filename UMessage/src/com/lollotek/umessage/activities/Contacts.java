@@ -46,6 +46,7 @@ public class Contacts extends Activity {
 			DatabaseHelper.KEY_PREFIX, DatabaseHelper.KEY_NUM };
 	int[] toViews = { R.id.textView1, R.id.textView2, R.id.textView3 };
 	Context context = null;
+	private static int firstContactDisplayed;
 
 	LoadUserContactsAsyncTask loadUserContactAsyncTask;
 
@@ -56,7 +57,7 @@ public class Contacts extends Activity {
 		setContentView(R.layout.activity_contacts);
 
 		context = this;
-
+		firstContactDisplayed = -1;
 		title = (TextView) findViewById(R.id.textView1);
 		loading = (TextView) findViewById(R.id.textView2);
 		listView = (ListView) findViewById(R.id.listView1);
@@ -100,8 +101,17 @@ public class Contacts extends Activity {
 	}
 
 	@Override
+	protected void onPause() {
+		super.onPause();
+
+		firstContactDisplayed = listView.getFirstVisiblePosition();
+	}
+
+	@Override
 	protected void onStop() {
 		super.onStop();
+
+		firstContactDisplayed = listView.getFirstVisiblePosition();
 	}
 
 	private void loadUsers() {
@@ -116,6 +126,12 @@ public class Contacts extends Activity {
 			ContactAdapter adapter = new ContactAdapter(this,
 					R.layout.usercontact, users, fromColumns, toViews, 0);
 			listView.setAdapter(adapter);
+		}
+
+		if (firstContactDisplayed != -1) {
+			listView.setSelection(firstContactDisplayed);
+		} else {
+			listView.setSelection(0);
 		}
 
 	}
@@ -319,7 +335,7 @@ public class Contacts extends Activity {
 			} catch (Exception e) {
 				finish();
 			}
-			
+
 			break;
 
 		}

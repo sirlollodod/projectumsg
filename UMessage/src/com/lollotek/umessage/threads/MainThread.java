@@ -144,13 +144,30 @@ public class MainThread extends Thread {
 						+ Settings.MY_PROFILE_IMAGE_SRC);
 
 				try {
-					Utility.uploadImageProfile(
+					JSONObject result = Utility.uploadImageProfile(
 							UMessageApplication.getContext(),
 							Settings.SERVER_URL,
 							myNewProfileImage,
 							Utility.getConfiguration(
 									UMessageApplication.getContext())
 									.getSessid());
+					Configuration configuration = Utility
+							.getConfiguration(UMessageApplication.getContext());
+
+					if ((result == null)
+							|| (result.getString("errorCode").equals("KO"))) {
+						m = new Message();
+						m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
+						this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					} else if (!result.getBoolean("isSessionValid")) {
+						configuration.setSessid("");
+					} else {
+						configuration.setProfileImageToUpload(false);
+					}
+
+					Utility.setConfiguration(UMessageApplication.getContext(),
+							configuration);
+
 				} catch (Exception e) {
 					m = new Message();
 					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
@@ -158,7 +175,7 @@ public class MainThread extends Thread {
 				}
 				break;
 
-			//da sistemare, mai utilizzato	
+			// da sistemare, mai utilizzato
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
@@ -270,11 +287,11 @@ public class MainThread extends Thread {
 
 					}
 
-					// Schedulo aggiornamento immagini tra 1gg
-					this.sendEmptyMessageDelayed(
-							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES,
-							TIME_DAY * 1000);
 				}
+
+				// Schedulo aggiornamento immagini tra 1gg
+				this.sendEmptyMessageDelayed(
+						MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, TIME_DAY * 1000);
 
 				break;
 

@@ -57,7 +57,7 @@ public class Utility {
 	 * @return la configurazione caricata da file se disponibile, null
 	 *         altrimenti.
 	 */
-	public static Configuration loadConfiguration(File configFile) {
+	private static Configuration loadConfiguration(File configFile) {
 		Configuration configuration;
 		try {
 			ObjectInputStream inputStream = new ObjectInputStream(
@@ -80,7 +80,7 @@ public class Utility {
 	 *            puntatore al file in cui salvare la configurazione.
 	 * @return true se configurazione salvata con successo, false altrimenti.
 	 */
-	public static boolean saveConfiguration(Configuration configuration,
+	private static boolean saveConfiguration(Configuration configuration,
 			File configFile) {
 		try {
 			ObjectOutputStream outputStream = new ObjectOutputStream(
