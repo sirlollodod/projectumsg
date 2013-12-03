@@ -40,7 +40,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Contacts extends Activity {
 
-	TextView title, loading;
+	static TextView title, loading;
 	ListView listView;
 	String[] fromColumns = { DatabaseHelper.KEY_NAME,
 			DatabaseHelper.KEY_PREFIX, DatabaseHelper.KEY_NUM };
@@ -48,7 +48,7 @@ public class Contacts extends Activity {
 	Context context = null;
 	private static int firstContactDisplayed;
 
-	LoadUserContactsAsyncTask loadUserContactAsyncTask;
+	static LoadUserContactsAsyncTask loadUserContactAsyncTask = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +89,12 @@ public class Contacts extends Activity {
 			}
 		});
 
-		loading.setVisibility(View.GONE);
+		if (loadUserContactAsyncTask == null) {
+			loading.setVisibility(View.GONE);
+		} else {
+			loading.setText("Caricamento contatti...");
+			loading.setVisibility(View.VISIBLE);
+		}
 
 	}
 
@@ -301,9 +306,11 @@ public class Contacts extends Activity {
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
+
 			loading.setVisibility(View.GONE);
 			loading.setText("");
 			loadUsers();
+			loadUserContactAsyncTask = null;
 		}
 
 		@Override
@@ -311,6 +318,7 @@ public class Contacts extends Activity {
 			super.onCancelled(result);
 			loading.setVisibility(View.GONE);
 			loading.setText("");
+			loadUserContactAsyncTask = null;
 		}
 
 	}

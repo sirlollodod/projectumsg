@@ -58,13 +58,13 @@ public class SynchronizationManager {
 		}
 	}
 
-	protected void onSynchronizationProgress() {
+	public void onSynchronizationProgress() {
 		for (SynchronizationListener listener : synchronizationListeners) {
 			listener.onProgress();
 		}
 	}
 
-	protected void onSynchronizationFinish() {
+	public void onSynchronizationFinish() {
 		for (SynchronizationListener listener : synchronizationListeners) {
 			listener.onFinish();
 		}

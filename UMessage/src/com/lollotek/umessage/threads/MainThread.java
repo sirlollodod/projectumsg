@@ -19,6 +19,7 @@ import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -337,6 +338,7 @@ public class MainThread extends Thread {
 					long newMessageId = p.insertNewMessage(value);
 
 					if (newMessageId != -1) {
+						SynchronizationManager.getInstance().onSynchronizationFinish();
 						b.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 
