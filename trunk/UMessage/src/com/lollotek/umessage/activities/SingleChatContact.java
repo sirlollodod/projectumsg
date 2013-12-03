@@ -20,12 +20,15 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.SingleChatMessagesAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.listeners.SynchronizationListener;
+import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -43,11 +46,48 @@ public class SingleChatContact extends Activity {
 
 	private int firstMessageDisplayed;
 
+	private SynchronizationListener syncListener;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		context = this;
+
+		syncListener = new SynchronizationListener() {
+
+			@Override
+			public void onStart() {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onProgress() {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onFinish() {
+				try {
+					runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							loadMessages(true);
+
+						}
+
+					});
+
+				} catch (Exception e) {
+					Toast.makeText(context, e.toString(), Toast.LENGTH_LONG)
+							.show();
+				}
+
+			}
+		};
 
 		firstMessageDisplayed = -1;
 		setContentView(R.layout.activity_singlechatcontact);
@@ -152,14 +192,18 @@ public class SingleChatContact extends Activity {
 	protected void onResume() {
 		super.onResume();
 
-		loadMessages(name, prefix, num);
+		loadMessages(false);
 
+		SynchronizationManager.getInstance().registerSynchronizationListener(
+				syncListener);
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
 
+		SynchronizationManager.getInstance().unregisterSynchronizationListener(
+				syncListener);
 		firstMessageDisplayed = listView.getFirstVisiblePosition();
 	}
 
@@ -184,7 +228,7 @@ public class SingleChatContact extends Activity {
 		p.markMessagesAsRed(prefix, num);
 	}
 
-	private void loadMessages(String name, String prefix, String num) {
+	private void loadMessages(boolean startFromBottom) {
 
 		p = new Provider(UMessageApplication.getContext());
 
@@ -267,7 +311,9 @@ public class SingleChatContact extends Activity {
 
 		listView.setAdapter(adapter);
 
-		if (firstMessageDisplayed != -1) {
+		if (startFromBottom) {
+			listView.setSelection(messages.getCount());
+		} else if ((firstMessageDisplayed != -1)) {
 			listView.setSelection(firstMessageDisplayed);
 		} else {
 			listView.setSelection(startPosition);

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
@@ -30,19 +31,23 @@ public class UMessageService extends Service {
 	public void onCreate() {
 		super.onCreate();
 
-		Utility.prepareDirectory(UMessageApplication.getContext());
+		try {
+			Utility.prepareDirectory(UMessageApplication.getContext());
 
-		if (instance == null) {
-			instance = this;
-		}
+			if (instance == null) {
+				instance = this;
+			}
 
-		if (serviceHandler == null) {
-			serviceHandler = new ServiceHandler();
-		}
+			if (serviceHandler == null) {
+				serviceHandler = new ServiceHandler();
+			}
 
-		if (mainThread == null) {
-			mainThread = new MainThread(serviceHandler);
-			mainThread.start();
+			if (mainThread == null) {
+				mainThread = new MainThread(serviceHandler);
+				mainThread.start();
+			}
+		} catch (Exception e) {
+			Toast.makeText(instance, e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -78,7 +83,11 @@ public class UMessageService extends Service {
 
 		int actionRequest;
 
-		actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
+		try {
+			actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
+		} catch (Exception e) {
+			actionRequest = MessageTypes.ERROR;
+		}
 
 		Message m;
 

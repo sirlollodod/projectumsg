@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SyncResult;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
@@ -45,7 +46,6 @@ public class Main extends Activity {
 
 		// testing
 		{
-
 			Utility.prepareDirectory(context);
 
 			Provider p = new Provider(UMessageApplication.getContext());
@@ -66,7 +66,7 @@ public class Main extends Activity {
 			Random r = new Random();
 			int totalNewMessages = 0;
 			int newMessages = r.nextInt(10);
-			boolean unknownPhoneNumber;
+			boolean unknownPhoneNumber, direction;
 			while (totalNewMessages < newMessages) {
 
 				unknownPhoneNumber = false;
@@ -99,14 +99,15 @@ public class Main extends Activity {
 								+ r.nextInt(10)
 								: users.getString(users
 										.getColumnIndex(DatabaseHelper.KEY_NUM))));
-				value.put(DatabaseHelper.KEY_DIRECTION, (r.nextBoolean() ? "0"
-						: "1"));
-				value.put(DatabaseHelper.KEY_STATUS, "0");
+
+				direction = r.nextBoolean();
+				value.put(DatabaseHelper.KEY_DIRECTION, (direction ? "0" : "1"));
+				value.put(DatabaseHelper.KEY_STATUS, (direction ? "0" : "1"));
 				value.put(DatabaseHelper.KEY_DATA,
 						Double.parseDouble("" + c.getTimeInMillis()));
 				value.put(DatabaseHelper.KEY_TYPE, "text");
 				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(8)]);
-				value.put(DatabaseHelper.KEY_TOREAD, "1");
+				value.put(DatabaseHelper.KEY_TOREAD, (direction ? "0" : "1"));
 				value.put(DatabaseHelper.KEY_TAG, "hashvalue");
 
 				if (p.insertNewMessage(value) != -1) {
@@ -132,13 +133,13 @@ public class Main extends Activity {
 		String num = m_configuration.getNum();
 		String email = m_configuration.getEmail();
 		boolean isFirstExecutionApp = m_configuration.isFirstExecutionApp();
-		
-		if(isFirstExecutionApp){
-			Intent service = new Intent(this, com.lollotek.umessage.services.UMessageService.class);
+
+		if (isFirstExecutionApp) {
+			Intent service = new Intent(this,
+					com.lollotek.umessage.services.UMessageService.class);
 			startService(service);
 		}
-		
-		
+
 		if ((storedSerialSim.equals("")) || (storedSerialSim == null)
 				|| !(actualSerialSim.equals(storedSerialSim))) {
 			// Registrazione
