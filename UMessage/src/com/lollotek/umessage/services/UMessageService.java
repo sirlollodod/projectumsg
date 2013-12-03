@@ -1,5 +1,7 @@
 package com.lollotek.umessage.services;
 
+import java.util.Calendar;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
@@ -126,6 +127,25 @@ public class UMessageService extends Service {
 					.sendToTarget();
 
 			break;
+
+		case MessageTypes.SEND_NEW_TEXT_MESSAGE:
+			Bundle b = new Bundle();
+			b.putString("messageText", intent.getStringExtra("messageText"));
+			b.putString("prefix", intent.getStringExtra("prefix"));
+			b.putString("num", intent.getStringExtra("num"));
+			Calendar c = Calendar.getInstance();
+			String messageTag = Utility.md5(intent.getStringExtra("num")
+					+ intent.getStringExtra("messageText")
+					+ c.getTimeInMillis());
+			b.putString("messageTag", messageTag);
+
+			m = new Message();
+			m.setData(b);
+			m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
+
+			serviceHandler.sendMessage(m);
+
+			break;
 		case MessageTypes.ERROR:
 
 			break;
@@ -197,6 +217,18 @@ public class UMessageService extends Service {
 					this.sendEmptyMessageDelayed(
 							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES,
 							TIME_MINUTE * 1000);
+				}
+				break;
+
+			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
+				m = new Message();
+				m.setData(msg.getData());
+				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 			}

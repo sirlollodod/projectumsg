@@ -2,14 +2,12 @@ package com.lollotek.umessage.activities;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.concurrent.RunnableScheduledFuture;
 
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -17,16 +15,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.SingleChatMessagesAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
@@ -69,6 +69,10 @@ public class SingleChatContact extends Activity {
 
 		ImageView iconView = (ImageView) ab.getCustomView().findViewById(
 				R.id.imageView2);
+
+		Button sendButton = (Button) findViewById(R.id.button1);
+
+		final EditText messageEditText = (EditText) findViewById(R.id.editText1);
 
 		final ImageView backImageView = (ImageView) ab.getCustomView()
 				.findViewById(R.id.imageView1);
@@ -117,6 +121,30 @@ public class SingleChatContact extends Activity {
 		});
 
 		listView = (ListView) findViewById(R.id.listView1);
+
+		sendButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				String messageText = messageEditText.getText().toString();
+
+				if (messageText.length() > 0) {
+					messageEditText.setText("");
+					Intent service = new Intent(
+							context,
+							com.lollotek.umessage.services.UMessageService.class);
+
+					service.putExtra("action",
+							MessageTypes.SEND_NEW_TEXT_MESSAGE);
+					service.putExtra("messageText", messageText);
+					service.putExtra("prefix", prefix);
+					service.putExtra("num", num);
+
+					startService(service);
+				}
+
+			}
+		});
 
 	}
 

@@ -24,6 +24,7 @@ public class MessageTypes {
 	public static final int DOWNLOAD_USER_IMAGE_FROM_SRC = 72;
 	public static final int DOWNLOAD_ALL_USERS_IMAGES = 73;
 	public static final int STARTED_FROM_BOOT_RECEIVER = 74;
+	public static final int SEND_NEW_TEXT_MESSAGE = 75;
 	
 	
 }
