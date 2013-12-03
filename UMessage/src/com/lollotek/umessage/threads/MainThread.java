@@ -175,7 +175,6 @@ public class MainThread extends Thread {
 				}
 				break;
 
-			// da sistemare, mai utilizzato
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
@@ -196,13 +195,29 @@ public class MainThread extends Thread {
 						+ Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
 
 				try {
-					Utility.downloadFileFromUrl(
-							UMessageApplication.getContext(), userImage,
-							userImageUrl);
 					p = new Provider(UMessageApplication.getContext());
-					p.updateUserImage(data.getString("prefix"),
-							data.getString("num"), newImageName, newImageData);
+					Cursor userInfo = p.getUserInfo(data.getString("prefix"),
+							data.getString("num"));
 
+					if (!userInfo.moveToNext()) {
+						break;
+					}
+
+					String imageSrc = userInfo.getString(userInfo
+							.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
+
+					long imageData = Long.parseLong(userInfo.getString(userInfo
+							.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
+
+					if ((imageSrc.equals("0")) || (imageData == 0)
+							|| (imageData != newImageData)) {
+						Utility.downloadFileFromUrl(
+								UMessageApplication.getContext(), userImage,
+								Settings.SERVER_URL + userImageUrl);
+						p.updateUserImage(data.getString("prefix"),
+								data.getString("num"), newImageName,
+								newImageData);
+					}
 				} catch (Exception e) {
 
 				}
