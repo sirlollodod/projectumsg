@@ -2,16 +2,17 @@ package com.lollotek.umessage.threads;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
@@ -318,10 +319,41 @@ public class MainThread extends Thread {
 				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
 
 				try {
+					p = new Provider(UMessageApplication.getContext());
+					Calendar c = Calendar.getInstance();
+					ContentValues value = new ContentValues();
+					value.put(DatabaseHelper.KEY_PREFIX, b.getString("prefix"));
+					value.put(DatabaseHelper.KEY_NUM, b.getString("num"));
+					value.put(DatabaseHelper.KEY_DIRECTION, 0);
+					value.put(DatabaseHelper.KEY_STATUS, "0");
+					value.put(DatabaseHelper.KEY_DATA,
+							Double.parseDouble("" + c.getTimeInMillis()));
+					value.put(DatabaseHelper.KEY_TYPE, "text");
+					value.put(DatabaseHelper.KEY_MESSAGE,
+							b.getString("messageText"));
+					value.put(DatabaseHelper.KEY_TOREAD, "0");
+					value.put(DatabaseHelper.KEY_TAG, b.getString("messageTag"));
 
+					long newMessageId = p.insertNewMessage(value);
+
+					if (newMessageId != -1) {
+						b.putLong("messageId", newMessageId);
+						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
+
+						mainThreadHandler.sendMessage(m);
+
+					} else {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					}
 				} catch (Exception e) {
-
+					mainThreadHandler.sendMessageDelayed(msg,
+							TIME_MINUTE * 1000);
 				}
+				break;
+
+			case MessageTypes.UPLOAD_NEW_MESSAGE:
+
 				break;
 
 			}

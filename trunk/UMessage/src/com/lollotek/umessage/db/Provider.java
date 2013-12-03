@@ -65,7 +65,8 @@ public class Provider {
 		return totalRowsUpdated;
 	}
 
-	public synchronized boolean insertNewMessage(ContentValues message) {
+	// testing: return idNewMessage invece che true/false
+	public synchronized long insertNewMessage(ContentValues message) {
 		String prefix = message.getAsString(DatabaseHelper.KEY_PREFIX);
 		String num = message.getAsString(DatabaseHelper.KEY_NUM);
 
@@ -84,11 +85,11 @@ public class Provider {
 		}
 
 		if ((idChat == -1) || (idChat == 0)) {
-			return false;
+			return -1;
 		}
 
 		message.put(DatabaseHelper.KEY_IDCHAT, idChat);
-		
+
 		message.remove(DatabaseHelper.KEY_PREFIX);
 		message.remove(DatabaseHelper.KEY_NUM);
 
@@ -98,7 +99,7 @@ public class Provider {
 				message);
 
 		if ((idNewMessage == -1) || (idNewMessage == 0)) {
-			return false;
+			return -1;
 		}
 
 		int affectedRows;
@@ -110,10 +111,10 @@ public class Provider {
 				DatabaseHelper.KEY_ID + "=?",
 				new String[] { String.valueOf(idChat) });
 
-		return true;
+		return idNewMessage;
 	}
 
-	//da riscrivere con uso metodo query invece che rawquery
+	// da riscrivere con uso metodo query invece che rawquery
 	public synchronized Cursor getTotalUser() {
 		String query = "SELECT * FROM " + DatabaseHelper.TABLE_USER
 				+ " ORDER BY " + DatabaseHelper.KEY_NAME;
@@ -177,6 +178,9 @@ public class Provider {
 		try {
 
 			query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + " AS "
+					+ DatabaseHelper.KEY_IDCHAT + ", "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
 					+ DatabaseHelper.KEY_PREFIXDEST + " AS "
 					+ DatabaseHelper.KEY_PREFIX + ", "
 					+ DatabaseHelper.TABLE_SINGLECHAT + "."
@@ -272,36 +276,55 @@ public class Provider {
 		}
 	}
 
-	public synchronized Cursor getUserInfo(String prefix, String num){
+	public synchronized Cursor getUserInfo(String prefix, String num) {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
 		ContentValues user = new ContentValues();
-		
+
 		user.put(DatabaseHelper.KEY_PREFIX, prefix);
 		user.put(DatabaseHelper.KEY_NUM, num);
-		
+
 		Cursor userInfo = null;
-		
-		try{
-			userInfo = db.query(DatabaseHelper.TABLE_USER, null, DatabaseHelper.KEY_PREFIX + "=? AND " + DatabaseHelper.KEY_NUM + "=?", new String[] {prefix, num},null, null, null);
-			
-		}
-		catch(Exception e){
+
+		try {
+			userInfo = db.query(DatabaseHelper.TABLE_USER, null,
+					DatabaseHelper.KEY_PREFIX + "=? AND "
+							+ DatabaseHelper.KEY_NUM + "=?", new String[] {
+							prefix, num }, null, null, null);
+
+		} catch (Exception e) {
 			userInfo = null;
 		}
-		
+
 		return userInfo;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+	public synchronized Cursor getConversationsNewMessages() {
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+		String query = "";
+		Cursor conversationsNewMessages = null;
+
+		try {
+			query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + " AS "
+					+ DatabaseHelper.KEY_IDCHAT + ", COUNT(*) AS count FROM "
+					+ DatabaseHelper.TABLE_SINGLECHAT + " JOIN "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + " ON "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + "="
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_IDCHAT + " WHERE "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TOREAD + "=? GROUP BY "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID;
+			conversationsNewMessages = db.rawQuery(query, new String[] { "1" });
+
+		} catch (Exception e) {
+
+		}
+
+		return conversationsNewMessages;
+	}
+
 }
