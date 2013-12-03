@@ -56,6 +56,8 @@
         android:layout_marginRight="10dp"
         android:layout_alignParentRight="true"
         android:text="NEW"
+        android:ems="2"
+        android:gravity="center"
         android:textColor="#FFFFFF"
         android:background="#F72835"
         android:visibility="gone"
