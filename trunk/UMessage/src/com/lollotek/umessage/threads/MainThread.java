@@ -211,12 +211,13 @@ public class MainThread extends Thread {
 
 					if ((imageSrc.equals("0")) || (imageData == 0)
 							|| (imageData != newImageData)) {
-						Utility.downloadFileFromUrl(
+						if (Utility.downloadFileFromUrl(
 								UMessageApplication.getContext(), userImage,
-								Settings.SERVER_URL + userImageUrl);
-						p.updateUserImage(data.getString("prefix"),
-								data.getString("num"), newImageName,
-								newImageData);
+								userImageUrl)) {
+							p.updateUserImage(data.getString("prefix"),
+									data.getString("num"), newImageName,
+									newImageData);
+						}
 					}
 				} catch (Exception e) {
 
@@ -308,6 +309,19 @@ public class MainThread extends Thread {
 				this.sendEmptyMessageDelayed(
 						MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, TIME_DAY * 1000);
 
+				break;
+
+			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
+				m = new Message();
+				Bundle b = msg.getData();
+				m.setData(b);
+				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
+
+				try {
+
+				} catch (Exception e) {
+
+				}
 				break;
 
 			}

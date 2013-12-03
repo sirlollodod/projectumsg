@@ -239,11 +239,9 @@ public class Contacts extends Activity {
 						value.put(DatabaseHelper.KEY_IMGSRC, "0");
 						value.put(DatabaseHelper.KEY_IMGDATA, "0");
 
-						if (!p.insertNewUser(value)) {
-							break;
+						if (p.insertNewUser(value)) {
+							numMobileContactsLoaded++;
 						}
-
-						numMobileContactsLoaded++;
 
 						// Controllo adesso singolo contatto se immagine profilo
 						// da scaricare/aggiornare

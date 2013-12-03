@@ -107,6 +107,7 @@ public class Main extends Activity {
 				value.put(DatabaseHelper.KEY_TYPE, "text");
 				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(8)]);
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
+				value.put(DatabaseHelper.KEY_TAG, "hashvalue");
 
 				if (p.insertNewMessage(value)) {
 					totalNewMessages++;

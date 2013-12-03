@@ -52,6 +52,8 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 				.getColumnIndex(DatabaseHelper.KEY_MESSAGE));
 		String dataValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_DATA));
+		String statusValue = cursor.getString(cursor
+				.getColumnIndex(DatabaseHelper.KEY_STATUS));
 
 		if (directionValue.equals("0")) {
 			rowView = inflater
@@ -94,15 +96,18 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 						: (c.get(Calendar.MONTH) + 1)) + "/"
 				+ c.get(Calendar.YEAR);
 
-		if(indexFirstOfDay.getBoolean(""+position, false)){
+		if (indexFirstOfDay.getBoolean("" + position, false)) {
 			data.setText(dataFormattedValue);
 			data.setVisibility(View.VISIBLE);
 		}
-		time.setText(timeFormattedValue);
 
+		if (statusValue.equals("0")) {
+			time.setText("###");
+		} else {
+			time.setText(timeFormattedValue);
+		}
 		message.setText(messageValue);
 
 		return rowView;
 	}
-
 }

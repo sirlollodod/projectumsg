@@ -88,7 +88,7 @@ public class Provider {
 		}
 
 		message.put(DatabaseHelper.KEY_IDCHAT, idChat);
-
+		
 		message.remove(DatabaseHelper.KEY_PREFIX);
 		message.remove(DatabaseHelper.KEY_NUM);
 
