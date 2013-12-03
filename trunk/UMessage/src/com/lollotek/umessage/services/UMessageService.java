@@ -44,16 +44,14 @@ public class UMessageService extends Service {
 			mainThread.start();
 		}
 
-		initialize();
-
 	}
 
 	// Inizializzazione base del service
-	private void initialize() {
+	private void scheduleDownloadAllProfileImages() {
 		Configuration configuration = Utility.getConfiguration(instance);
 
 		if (configuration.isProfileImageToUpload()) {
-						serviceHandler
+			serviceHandler
 					.sendEmptyMessage(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
 		}
 
@@ -85,6 +83,11 @@ public class UMessageService extends Service {
 
 		switch (actionRequest) {
 
+		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
+			scheduleDownloadAllProfileImages();
+
+			break;
+
 		case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
 			String myProfileImageUrl = intent.getStringExtra("imageUrl");
 
@@ -102,7 +105,6 @@ public class UMessageService extends Service {
 
 			break;
 
-		// da sistemare, mai utilizzato
 		case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 
 			String userImageUrl = intent.getStringExtra("imageUrl");
@@ -171,7 +173,6 @@ public class UMessageService extends Service {
 				}
 				break;
 
-			// da sistemare, mai utilizzato
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
 				m = new Message();
 				m.setData(msg.getData());

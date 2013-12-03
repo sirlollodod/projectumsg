@@ -23,7 +23,7 @@ public class MessageTypes {
 	public static final int UPLOAD_MY_PROFILE_IMAGE = 71;
 	public static final int DOWNLOAD_USER_IMAGE_FROM_SRC = 72;
 	public static final int DOWNLOAD_ALL_USERS_IMAGES = 73;
-	
+	public static final int STARTED_FROM_BOOT_RECEIVER = 74;
 	
 	
 }

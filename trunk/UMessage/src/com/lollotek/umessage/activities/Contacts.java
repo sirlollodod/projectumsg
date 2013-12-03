@@ -207,8 +207,11 @@ public class Contacts extends Activity {
 				}
 
 				phoneUtil.format(num, PhoneNumberFormat.INTERNATIONAL);
+				String prefixNum = "+" + num.getCountryCode();
+				String phoneNum = (num.isItalianLeadingZero() ? "0" : "")
+						+ num.getNationalNumber();
 
-				if (myPrefix.equals("+" + num.getCountryCode())
+				if (myPrefix.equals(prefixNum)
 						&& myNum.equals("" + num.getNationalNumber())) {
 					continue;
 				}
@@ -218,9 +221,8 @@ public class Contacts extends Activity {
 					try {
 						parameters
 								.accumulate("action", "CHECK_USER_REGISTERED");
-						parameters.accumulate("prefix",
-								"+" + num.getCountryCode());
-						parameters.accumulate("num", num.getNationalNumber());
+						parameters.accumulate("prefix", prefixNum);
+						parameters.accumulate("num", phoneNum);
 						parameters.accumulate("anonymous", "yes");
 
 						result = Utility.doPostRequest(Settings.SERVER_URL,
@@ -231,44 +233,37 @@ public class Contacts extends Activity {
 							continue;
 						}
 
-						value.put(DatabaseHelper.KEY_PREFIX,
-								"+" + num.getCountryCode());
-						value.put(
-								DatabaseHelper.KEY_NUM,
-								(num.isItalianLeadingZero() ? "0" : "")
-										+ num.getNationalNumber());
+						value.put(DatabaseHelper.KEY_PREFIX, prefixNum);
+						value.put(DatabaseHelper.KEY_NUM, phoneNum);
 						value.put(DatabaseHelper.KEY_NAME, name);
 						value.put(DatabaseHelper.KEY_IMGSRC, "0");
 						value.put(DatabaseHelper.KEY_IMGDATA, "0");
 
-						// testing: in realtà unica chiamata a service per
-						// aggiornamento tutti contatti esistenti e controllo
-						// immagine se da scaricare o no
-						/*
-						 * String userImageUrl = result
-						 * .getString("imageProfileSrc"); if
-						 * (userImageUrl.length() > 2) { userImageUrl =
-						 * userImageUrl.substring(2);
-						 * 
-						 * Intent service = new Intent(
-						 * UMessageApplication.getContext(),
-						 * com.lollotek.umessage
-						 * .services.UMessageService.class);
-						 * 
-						 * service.putExtra("action",
-						 * MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC);
-						 * service.putExtra("prefix", "+" +
-						 * num.getCountryCode()); service.putExtra("num",
-						 * (num.isItalianLeadingZero() ? "0" : "") +
-						 * num.getNationalNumber());
-						 * service.putExtra("imageUrl", userImageUrl);
-						 * 
-						 * startService(service); }
-						 */
-
-						if (p.insertNewUser(value)) {
-							numMobileContactsLoaded++;
+						if (!p.insertNewUser(value)) {
+							break;
 						}
+
+						numMobileContactsLoaded++;
+
+						// Controllo adesso singolo contatto se immagine profilo
+						// da scaricare/aggiornare
+						String userImageUrl = result
+								.getString("imageProfileSrc");
+						if (userImageUrl.length() > 2) {
+							userImageUrl = userImageUrl.substring(2);
+							Intent service = new Intent(
+									UMessageApplication.getContext(),
+									com.lollotek.umessage.services.UMessageService.class);
+							service.putExtra("action",
+									MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC);
+							service.putExtra("imageUrl", userImageUrl);
+							service.putExtra("prefix", prefixNum);
+							service.putExtra("num", phoneNum);
+
+							startService(service);
+
+						}
+
 					} catch (HttpException e) {
 						return numMobileContactsLoaded;
 					} catch (Exception e) {
@@ -293,11 +288,17 @@ public class Contacts extends Activity {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 
-			Intent service = new Intent(UMessageApplication.getContext(),
-					com.lollotek.umessage.services.UMessageService.class);
-			service.putExtra("action", MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
-
-			startService(service);
+			/*
+			 * testing: controllo singoli contatti e non tutti alla fine, per
+			 * evitare doppie chiamate a PHP per ottenere indirizzo immagini
+			 * profilo Intent service = new
+			 * Intent(UMessageApplication.getContext(),
+			 * com.lollotek.umessage.services.UMessageService.class);
+			 * service.putExtra("action",
+			 * MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
+			 * 
+			 * startService(service);
+			 */
 
 			Toast msg = Toast.makeText(UMessageApplication.getContext(),
 					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
