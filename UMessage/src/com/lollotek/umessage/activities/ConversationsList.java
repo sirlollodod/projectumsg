@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
@@ -85,15 +86,25 @@ public class ConversationsList extends Activity {
 
 		Provider p = new Provider(UMessageApplication.getContext());
 		Cursor users = p.getConversations();
+		Cursor newMessagesCount = p.getConversationsNewMessages();
+
+		Bundle b = new Bundle();
+
+		while (newMessagesCount.moveToNext()) {
+			b.putInt(newMessagesCount.getString(newMessagesCount
+					.getColumnIndex(DatabaseHelper.KEY_IDCHAT)), Integer
+					.parseInt(newMessagesCount.getString(newMessagesCount
+							.getColumnIndex("count"))));
+		}
 
 		PreviewChatAdapter adapter = new PreviewChatAdapter(this,
 				R.layout.chatpreview, users, fromColumns, toViews, 0);
+		adapter.setNewMessagesCount(b);
 		listView.setAdapter(adapter);
 
-		try{
+		try {
 			listView.setSelection(firstConversationDisplayed);
-		}
-		catch(Exception e){
+		} catch (Exception e) {
 			listView.setSelection(0);
 		}
 

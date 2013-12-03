@@ -195,14 +195,20 @@ public class SingleChatContact extends Activity {
 		boolean isSomeNewMessages = false;
 		if (messages.moveToLast()) {
 			do {
-				if (messages.getString(
+				if ((messages.getString(
 						messages.getColumnIndex(DatabaseHelper.KEY_TOREAD))
-						.equals("1")) {
+						.equals("1") && (messages.getString(messages
+						.getColumnIndex(DatabaseHelper.KEY_DIRECTION))
+						.equals("1")))) {
 					if (!isSomeNewMessages) {
 						isSomeNewMessages = true;
 					}
 
 					startPosition = messages.getPosition();
+				} else if ((messages.getString(messages
+						.getColumnIndex(DatabaseHelper.KEY_DIRECTION))
+						.equals("0"))) {
+					continue;
 				} else {
 					break;
 				}

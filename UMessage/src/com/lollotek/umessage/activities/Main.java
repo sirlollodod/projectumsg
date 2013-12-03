@@ -109,7 +109,7 @@ public class Main extends Activity {
 				value.put(DatabaseHelper.KEY_TOREAD, "1");
 				value.put(DatabaseHelper.KEY_TAG, "hashvalue");
 
-				if (p.insertNewMessage(value)) {
+				if (p.insertNewMessage(value) != -1) {
 					totalNewMessages++;
 				}
 
@@ -131,7 +131,14 @@ public class Main extends Activity {
 		String prefix = m_configuration.getPrefix();
 		String num = m_configuration.getNum();
 		String email = m_configuration.getEmail();
-
+		boolean isFirstExecutionApp = m_configuration.isFirstExecutionApp();
+		
+		if(isFirstExecutionApp){
+			Intent service = new Intent(this, com.lollotek.umessage.services.UMessageService.class);
+			startService(service);
+		}
+		
+		
 		if ((storedSerialSim.equals("")) || (storedSerialSim == null)
 				|| !(actualSerialSim.equals(storedSerialSim))) {
 			// Registrazione
