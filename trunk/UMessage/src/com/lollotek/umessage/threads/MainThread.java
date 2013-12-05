@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
@@ -146,31 +147,37 @@ public class MainThread extends Thread {
 						+ Settings.MY_PROFILE_IMAGE_SRC);
 
 				try {
-					JSONObject result = Utility.uploadImageProfile(
-							UMessageApplication.getContext(),
-							Settings.SERVER_URL,
-							myNewProfileImage,
-							Utility.getConfiguration(
-									UMessageApplication.getContext())
-									.getSessid());
+
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 
+					JSONObject result = Utility.uploadImageProfile(
+							UMessageApplication.getContext(),
+							Settings.SERVER_URL, myNewProfileImage,
+							configuration.getSessid());
+
+					Toast.makeText(UMessageApplication.getContext(), result.toString(), Toast.LENGTH_LONG).show();
 					if ((result == null)
 							|| (result.getString("errorCode").equals("KO"))) {
 						m = new Message();
 						m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
 						this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					} else if (result.getString("errorCode").equals("OK")
+							&& result.getBoolean("isSessionValid")) {
+						configuration.setProfileImageToUpload(false);
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
+
 					} else if (!result.getBoolean("isSessionValid")) {
 						configuration.setSessid("");
-					} else {
-						configuration.setProfileImageToUpload(false);
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
+						Toast.makeText(UMessageApplication.getContext(), "sessione non valida... azzerata!", Toast.LENGTH_LONG).show();
 					}
 
-					Utility.setConfiguration(UMessageApplication.getContext(),
-							configuration);
-
 				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
 					m = new Message();
 					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
 					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
@@ -338,7 +345,11 @@ public class MainThread extends Thread {
 					long newMessageId = p.insertNewMessage(value);
 
 					if (newMessageId != -1) {
-						SynchronizationManager.getInstance().onSynchronizationFinish();
+						Message syncMsg = new Message();
+						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+						SynchronizationManager.getInstance()
+								.onSynchronizationFinish(syncMsg);
+
 						b.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 

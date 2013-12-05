@@ -10,16 +10,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
+import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.PreviewChatAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
-import com.lollotek.umessage.utils.MessageTypes;
+import com.lollotek.umessage.utils.Utility;
 
 public class ConversationsList extends Activity {
 
@@ -149,10 +149,19 @@ public class ConversationsList extends Activity {
 		case R.id.profile:
 
 			i = new Intent(this, com.lollotek.umessage.activities.Profile.class);
-
 			startActivity(i);
 
 			break;
+
+		case R.id.logout:
+
+			Configuration configuration = Utility.getConfiguration(context);
+			configuration.setSessid("");
+			Utility.setConfiguration(context, configuration);
+
+			i = new Intent(this, com.lollotek.umessage.activities.Main.class);
+			startActivity(i);
+			finish();
 
 		}
 

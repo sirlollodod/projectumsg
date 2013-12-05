@@ -65,7 +65,6 @@ public class Provider {
 		return totalRowsUpdated;
 	}
 
-	// testing: return idNewMessage invece che true/false
 	public synchronized long insertNewMessage(ContentValues message) {
 		String prefix = message.getAsString(DatabaseHelper.KEY_PREFIX);
 		String num = message.getAsString(DatabaseHelper.KEY_NUM);
@@ -327,4 +326,19 @@ public class Provider {
 		return conversationsNewMessages;
 	}
 
+	public synchronized boolean eraseDatabase() {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+		try{
+		this.delete(DatabaseHelper.TABLE_SINGLECHAT, null, null);
+		this.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null);
+		this.delete(DatabaseHelper.TABLE_USER, null, null);
+		this.delete(DatabaseHelper.TABLE_TEMPSINGLECHATMESSAGES, null, null);
+
+		} catch (Exception e) {
+			return false;
+		}
+
+		return true;
+	}
 }
