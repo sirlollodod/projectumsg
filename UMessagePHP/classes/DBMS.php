@@ -414,7 +414,8 @@ class DBMS{
 				'errorCode' => '',
 				'prefix' => '',
 				'num' => '',
-				'sessionId' => $sessid
+				'sessionId' => $sessid,
+				'isRegistered' => false
 		);
 
 
@@ -432,6 +433,7 @@ class DBMS{
 			$stmt->bind_result($sPrefix, $sNum, $sEmail, $sSessionId, $sGcmId, $sImsSrc, $sDataImg);
 			$stmt->fetch();
 			$stmt->close();
+			$response['isRegistered'] = true;
 			$response['errorCode'] = 'OK';
 			$response['prefix'] = $sPrefix;
 			$response['num'] = $sNum;
@@ -440,7 +442,7 @@ class DBMS{
 		}
 		else{
 			$stmt->close();
-			return false;
+			return $response;
 		}
 	}
 
