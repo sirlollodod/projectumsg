@@ -110,7 +110,8 @@ switch ($_POST['action']){
 		 * return:
 		 * + sessionId: valore della sessione per l'utente richiesto se utente loggato
 		 * + imageProfileSrc: percorso preceduto da ./ relativo all'immagine profilo dell'utente, se immagine presente, vuoto altrimenti
-		 *
+		 * + prefix:
+		 * + num:
 		 */
 	case 'LOGIN_USER':
 		$result = $db->loginUser($_POST['prefix'], $_POST['num'], $_POST['emailCode'], $_POST['smsCode']);
@@ -123,6 +124,8 @@ switch ($_POST['action']){
 		}
 
 		$response['errorCode'] = 'OK';
+		$response['prefix'] = $_POST['prefix'];
+		$response['num'] = $_POST['num'];
 		$response['sessionId'] = $result['sessionId'];
 		$response['imageProfileSrc'] = $result['imageProfileSrc'];
 
