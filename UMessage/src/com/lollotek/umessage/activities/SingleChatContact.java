@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,36 +58,36 @@ public class SingleChatContact extends Activity {
 		syncListener = new SynchronizationListener() {
 
 			@Override
-			public void onStart() {
+			public void onStart(Message msg) {
 				// TODO Auto-generated method stub
 
 			}
 
 			@Override
-			public void onProgress() {
+			public void onProgress(Message msg) {
 				// TODO Auto-generated method stub
 
 			}
 
 			@Override
-			public void onFinish() {
-				try {
-					runOnUiThread(new Runnable() {
+			public void onFinish(final Message msg) {
 
-						@Override
-						public void run() {
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+						switch (msg.what) {
+						case MessageTypes.MESSAGE_UPDATE:
 							loadMessages(true);
-
+							break;
 						}
 
-					});
+					}
 
-				} catch (Exception e) {
-					Toast.makeText(context, e.toString(), Toast.LENGTH_LONG)
-							.show();
-				}
+				});
 
 			}
+
 		};
 
 		firstMessageDisplayed = -1;

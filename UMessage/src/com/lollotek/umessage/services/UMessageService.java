@@ -93,6 +93,10 @@ public class UMessageService extends Service {
 
 		switch (actionRequest) {
 
+		case MessageTypes.STARTED_FROM_FIRST_EXECUTION_APP:
+
+			break;
+
 		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
 			scheduleDownloadAllProfileImages();
 
@@ -182,6 +186,8 @@ public class UMessageService extends Service {
 				m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
 				m.obj = msg.obj;
 				try {
+					mainThreadHandler
+							.removeMessages(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
 					mainThreadHandler
 							.removeMessages(MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
 					mainThreadHandler.sendMessage(m);

@@ -16,7 +16,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final int DATABASE_VERSION = 3;
 
 	// Database Name
-	private static final String DATABASE_NAME = "UMessage";
+	public static final String DATABASE_NAME = "UMessage";
 
 	// Table names
 	public static final String TABLE_SINGLECHAT = "singlechat",
@@ -46,7 +46,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			KEY_IMGDATA = "imgData";
 
 	// Create table singlechat
-	private static final String CREATE_TABLE_SINGLECHAT = TABLE_SINGLECHAT
+	public static final String CREATE_TABLE_SINGLECHAT = TABLE_SINGLECHAT
 			+ "("
 			+ KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"// + KEY_IDCHAT +
@@ -56,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			+ KEY_PREFIXDEST + ", " + KEY_NUMDEST + "))";
 
 	// Create table singlechatmessages
-	private static final String CREATE_TABLE_SINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
+	public static final String CREATE_TABLE_SINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
 			+ "("
 			+ KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -81,7 +81,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	// + KEY_IDMESSAGE + ", " + KEY_IDCHAT + "))";
 
 	// Create table tempsinglechatmessages
-	private static final String CREATE_TABLE_TEMPSINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
+	public static final String CREATE_TABLE_TEMPSINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
 			+ "("
 			+ KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -98,7 +98,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	// + KEY_IDCHAT + "))";
 
 	// Create table user
-	private static final String CREATE_TABLE_USER = TABLE_USER + "(" + KEY_ID
+	public static final String CREATE_TABLE_USER = TABLE_USER + "(" + KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_PREFIX
 			+ " TEXT NOT NULL," + KEY_NUM + " TEXT NOT NULL," + KEY_NAME
 			+ " TEXT NOT NULL," + KEY_IMGSRC + " TEXT," + KEY_IMGDATA

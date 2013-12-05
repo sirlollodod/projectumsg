@@ -7,7 +7,8 @@ public class Configuration implements java.io.Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String prefix, num, sessId, gcmId, simSerial, email;
+	private String prefix, num, sessId, gcmId, simSerial, email, oldPrefix,
+			oldNum;
 	private boolean firstExecutionApp, simIsLogging, profileImageToUpload;
 
 	public Configuration() {
@@ -20,19 +21,9 @@ public class Configuration implements java.io.Serializable {
 		this.firstExecutionApp = true;
 		this.simIsLogging = false;
 		this.profileImageToUpload = false;
-		
-	}
+		this.oldPrefix = "";
+		this.oldNum = "";
 
-	public Configuration(String prefix, String num, String sessId, String gcmId,
-			String simSerial, boolean firstExecutionApp, boolean simIsLogging) {
-		super();
-		this.prefix = prefix;
-		this.num = num;
-		this.sessId = sessId;
-		this.gcmId = gcmId;
-		this.simSerial = simSerial;
-		this.firstExecutionApp = firstExecutionApp;
-		this.simIsLogging = simIsLogging;
 	}
 
 	public String getPrefix() {
@@ -105,6 +96,22 @@ public class Configuration implements java.io.Serializable {
 
 	public void setProfileImageToUpload(boolean profileImateToUpload) {
 		this.profileImageToUpload = profileImateToUpload;
+	}
+
+	public String getOldPrefix() {
+		return oldPrefix;
+	}
+
+	public void setOldPrefix(String oldPrefix) {
+		this.oldPrefix = oldPrefix;
+	}
+
+	public String getOldNum() {
+		return oldNum;
+	}
+
+	public void setOldNum(String oldNum) {
+		this.oldNum = oldNum;
 	}
 
 }

@@ -20,6 +20,7 @@ import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
@@ -47,6 +48,7 @@ public class Main extends Activity {
 		// testing
 		{
 			Utility.prepareDirectory(context);
+			Configuration configuration = Utility.getConfiguration(context);
 
 			Provider p = new Provider(UMessageApplication.getContext());
 			Cursor users = p.getTotalUser();
@@ -116,10 +118,6 @@ public class Main extends Activity {
 
 			}
 
-			// Toast.makeText(UMessageApplication.getContext(),
-			// "Singoli messaggi inseriti: " + totalNewMessages,
-			// Toast.LENGTH_SHORT).show();
-
 		}
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
@@ -131,23 +129,20 @@ public class Main extends Activity {
 				.getContext());
 		String prefix = m_configuration.getPrefix();
 		String num = m_configuration.getNum();
-		String email = m_configuration.getEmail();
 		boolean isFirstExecutionApp = m_configuration.isFirstExecutionApp();
 
 		if (isFirstExecutionApp) {
+			m_configuration.setFirstExecutionApp(false);
+			Utility.setConfiguration(context, m_configuration);
 			Intent service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
+			service.putExtra("action", MessageTypes.STARTED_FROM_FIRST_EXECUTION_APP);
 			startService(service);
 		}
 
 		if ((storedSerialSim.equals("")) || (storedSerialSim == null)
 				|| !(actualSerialSim.equals(storedSerialSim))) {
 			// Registrazione
-			Intent service = new Intent(this,
-					com.lollotek.umessage.services.UMessageService.class);
-			stopService(service);
-
-			// Qui dovrei resettare file locali dell'applicazione (file + DB)
 
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);
@@ -155,21 +150,14 @@ public class Main extends Activity {
 
 		} else if (simIsLogging) {
 			// Login
-			Intent service = new Intent(this,
-					com.lollotek.umessage.services.UMessageService.class);
-			stopService(service);
 
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.Login.class);
 
-			i.putExtra("prefix", m_configuration.getPrefix());
-			i.putExtra("num", m_configuration.getNum());
-			i.putExtra("serialSim", m_configuration.getSimserial());
-			i.putExtra("email", m_configuration.getEmail());
-
 			startActivity(i);
 
-		} else if ((prefix != "") && (num != "") && (sessionId != "")) {
+		} else if ((!prefix.equals("")) && (!num.equals(""))
+				&& (!sessionId.equals(""))) {
 			// Utente presumibilmente loggato, bisognerebbe assicurarsi che
 			// sessionId valida ed associata a numero attuale
 			Intent i = new Intent(UMessageApplication.getContext(),
@@ -177,9 +165,6 @@ public class Main extends Activity {
 			startActivity(i);
 		} else {
 			// Default: Registrazione
-			Intent service = new Intent(this,
-					com.lollotek.umessage.services.UMessageService.class);
-			stopService(service);
 
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);

@@ -1,5 +1,7 @@
 package com.lollotek.umessage.activities;
 
+import java.io.File;
+
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -26,7 +29,6 @@ public class Login extends Activity {
 
 	EditText smsCode, emailCode;
 	Button b1;
-	String prefix, num, email, serialSim;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,15 +40,11 @@ public class Login extends Activity {
 		emailCode = (EditText) findViewById(R.id.editText2);
 		b1 = (Button) findViewById(R.id.button1);
 
-		Intent params = getIntent();
-		prefix = params.getStringExtra("prefix");
-		num = params.getStringExtra("num");
-		email = params.getStringExtra("email");
-
-		Toast msg = Toast.makeText(UMessageApplication.getContext(), "email:"
-				+ email + "\nprefix:" + prefix + "\nnum:" + num,
-				Toast.LENGTH_SHORT);
-		msg.show();
+		Configuration configuration = Utility
+				.getConfiguration(UMessageApplication.getContext());
+		configuration.setSimIsLogging(true);
+		Utility.setConfiguration(UMessageApplication.getContext(),
+				configuration);
 
 		b1.setOnClickListener(new ButtonClickedListener());
 
@@ -63,7 +61,13 @@ public class Login extends Activity {
 		switch (item.getItemId()) {
 		case R.id.reset:
 
-			Configuration configuration = new Configuration();
+			Configuration configuration = Utility
+					.getConfiguration(UMessageApplication.getContext());
+			configuration.setSimIsLogging(false);
+			configuration.setEmail("");
+			configuration.setPrefix("");
+			configuration.setNum("");
+			configuration.setSessid("");
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
 
@@ -83,17 +87,55 @@ public class Login extends Activity {
 		return true;
 	}
 
+	private void deleteLocalUserInformation() {
+		Provider p = new Provider(UMessageApplication.getContext());
+		p.eraseDatabase();
+
+		File mainFolder = Utility.getMainFolder(UMessageApplication
+				.getContext());
+
+		File myProfileImage = new File(mainFolder.toString()
+				+ Settings.MY_PROFILE_IMAGE_SRC);
+
+		File contactsProfileImageFolder = new File(mainFolder.toString()
+				+ Settings.CONTACT_PROFILE_IMAGES_FOLDER);
+
+		if (myProfileImage.isFile()) {
+			myProfileImage.delete();
+		}
+
+		File[] contactsProfileImages = contactsProfileImageFolder.listFiles();
+		if (contactsProfileImages.length > 0) {
+			for (int i = 0; i < contactsProfileImages.length; i++) {
+				if (contactsProfileImages[i].isFile()) {
+					contactsProfileImages[i].delete();
+				}
+			}
+		}
+	}
+
 	public void userLogged(JSONObject result) {
 		Configuration configuration = Utility
 				.getConfiguration(UMessageApplication.getContext());
 		try {
+
 			configuration.setSessid(result.getString("sessionId"));
 			configuration.setSimIsLogging(false);
+			if ((!configuration.getOldPrefix()
+					.equals(configuration.getPrefix()))
+					|| (!configuration.getOldNum().equals(
+							configuration.getNum()))) {
+				deleteLocalUserInformation();
+				configuration.setOldPrefix(configuration.getPrefix());
+				configuration.setOldNum(configuration.getNum());
+
+			}
+
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
-			Toast msg = Toast.makeText(UMessageApplication.getContext(),
-					"Utente loggato!", Toast.LENGTH_SHORT);
-			msg.show();
+
+			Toast.makeText(UMessageApplication.getContext(),
+					"Utente loggato!\n", Toast.LENGTH_SHORT).show();
 
 			String myProfileImageUrl = result.getString("imageProfileSrc");
 			if (myProfileImageUrl.length() > 2) {
@@ -114,8 +156,6 @@ public class Login extends Activity {
 		} catch (Exception e) {
 			Toast.makeText(UMessageApplication.getContext(), e.toString(),
 					Toast.LENGTH_LONG).show();
-			Toast.makeText(UMessageApplication.getContext(), result.toString(),
-					Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -126,9 +166,13 @@ public class Login extends Activity {
 			String s = smsCode.getText().toString();
 			String e = emailCode.getText().toString();
 
+			Configuration configuration = Utility
+					.getConfiguration(UMessageApplication.getContext());
+
 			switch (v.getId()) {
 			case R.id.button1:
-				new LoginUserAsyncTask().execute(prefix, num, s, e);
+				new LoginUserAsyncTask().execute(configuration.getPrefix(),
+						configuration.getNum(), s, e);
 
 				break;
 

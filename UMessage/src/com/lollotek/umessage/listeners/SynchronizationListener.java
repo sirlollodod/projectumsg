@@ -1,10 +1,12 @@
 package com.lollotek.umessage.listeners;
 
+import android.os.Message;
+
 public interface SynchronizationListener {
 
-	void onStart();
+	void onStart(Message msg);
 
-	void onProgress();
+	void onProgress(Message msg);
 
-	void onFinish();
+	void onFinish(Message msg);
 }

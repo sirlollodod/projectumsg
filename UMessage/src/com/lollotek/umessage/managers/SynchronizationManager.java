@@ -2,6 +2,8 @@ package com.lollotek.umessage.managers;
 
 import java.util.List;
 
+import android.os.Message;
+
 import com.lollotek.umessage.listeners.SynchronizationListener;
 import com.lollotek.umessage.utils.Lists;
 
@@ -52,21 +54,21 @@ public class SynchronizationManager {
 		}
 	}
 
-	public void onSynchronizationStart() {
+	public void onSynchronizationStart(Message msg) {
 		for (SynchronizationListener listener : synchronizationListeners) {
-			listener.onStart();
+			listener.onStart(msg);
 		}
 	}
 
-	public void onSynchronizationProgress() {
+	public void onSynchronizationProgress(Message msg) {
 		for (SynchronizationListener listener : synchronizationListeners) {
-			listener.onProgress();
+			listener.onProgress(msg);
 		}
 	}
 
-	public void onSynchronizationFinish() {
+	public void onSynchronizationFinish(Message msg) {
 		for (SynchronizationListener listener : synchronizationListeners) {
-			listener.onFinish();
+			listener.onFinish(msg);
 		}
 	}
 

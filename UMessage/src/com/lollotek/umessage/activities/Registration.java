@@ -54,12 +54,11 @@ public class Registration extends Activity {
 		// all'account precedentemente loggato
 
 	}
-	
+
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.registration, menu);
 		return true;
 	}
-	
 
 	public void startLoginActivity(JSONObject userInfo) {
 		Intent i = new Intent(UMessageApplication.getContext(),
@@ -70,19 +69,12 @@ public class Registration extends Activity {
 			String num = userInfo.getString("num");
 			String email = userInfo.getString("email");
 
-			i.putExtra("prefix", prefix);
-			i.putExtra("num", num);
-			i.putExtra("email", email);
-
 			Configuration configuration = Utility
 					.getConfiguration(UMessageApplication.getContext());
-
 			configuration.setPrefix(prefix);
 			configuration.setNum(num);
-			configuration.setSimIsLogging(true);
-			configuration.setSimserial(serialSim);
 			configuration.setEmail(email);
-
+			configuration.setSimserial(Utility.getSerialSim(UMessageApplication.getContext()));
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
 
@@ -153,11 +145,9 @@ public class Registration extends Activity {
 				} else {
 					return result;
 				}
-			}
-			catch (HttpException e){
+			} catch (HttpException e) {
 				result = null;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				result = null;
 			}
 			return result;
@@ -223,11 +213,9 @@ public class Registration extends Activity {
 
 				result = Utility.doPostRequest(Settings.SERVER_URL, parameters);
 
-			}
-			catch(HttpException e){
+			} catch (HttpException e) {
 				result = null;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				result = null;
 			}
 			return result;
