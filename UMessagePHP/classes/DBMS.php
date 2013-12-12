@@ -1,5 +1,6 @@
 
 <?php
+
 class DBMS{
 	private $host = "mysql.netsons.com";
 	private $db = "wqicankh_umsg";
@@ -458,7 +459,8 @@ class DBMS{
 				'errorCode' => '',
 				'chatExists' => false,
 				'idChat' => '',
-				'syncChatRequired' => ''
+				'syncChatRequired' => '',
+				'chatVersion' => ''
 		);
 
 		$stmt->bind_param('ssss', $prefix1, $num1, $prefix2, $num2);
@@ -477,6 +479,7 @@ class DBMS{
 			$response['errorCode'] = 'OK';
 			$response['chatExists'] = true;
 			$response['idChat'] = $sChatId;
+			$response['chatVersion'] = $sVersChat;
 			if($sVersChat == $localChatVersion){
 				$response['syncChatRequired'] = false;
 			}
@@ -555,7 +558,7 @@ class DBMS{
 		}
 	}
 
-	//Ritorna 0 se sender è inserito come user1, 1 se sendere è inserito come user 2
+	//Ritorna 0 se sender è inserito come user1, 1 se sender è inserito come user 2
 	function getDirectionMessage($idChat, $senderPrefix, $senderNum){
 		$query = "SELECT * FROM singlechat WHERE id=?;";
 		if(!$stmt = $this->connection->prepare($query)){
@@ -599,14 +602,8 @@ class DBMS{
 		}
 	}
 
-
 	//Crea un nuovo messaggio tra i due utenti richiesti e ne ritorna l'id, in caso positivo aggiorna anche la versione della chat
-	function createNewSingleChatMessage($idChat, $direction, $msg, $type){
-		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type) VALUES (?, ?, ?, ?, ?, ?);";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
+	function createNewSingleChatMessage($idChat, $direction, $msg, $type, $messageTag){
 
 		$response = array(
 				'errorCode' => '',
@@ -614,13 +611,51 @@ class DBMS{
 				'dataNewMessage' => '',
 				'statusNewMessage' => '',
 				'chatVersionChanged' => false,
-				'newChatVersion' => ''
+				'newChatVersion' => '',
+				'messageTag' => ''
 		);
+
+		$query = "SELECT * FROM singlechatmessages WHERE idchat=? AND direction=? AND messageTag=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('iss', $idChat, $direction, $messageTag);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows == 1){
+
+			$stmt->bind_result($sId, $sIdChat, $sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
+			$stmt->fetch();
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['idNewMessage'] = $sId;
+			$response['dataNewMessage'] = $sData;
+			$response['statusNewMessage'] = $sStatus;
+			$response['messageTag'] = $sMessageTag;
+				
+			return $response;
+		}
+
+		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type) VALUES (?, ?, ?, ?, ?, ?, ?);";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+
 
 
 		$time =  $this->getMillis();
 		$status = '0';
-		$stmt->bind_param('isssis', $idChat, $direction, $msg, $status, $time , $type);
+		$stmt->bind_param('isssiss', $idChat, $direction, $msg, $status, $time , $type, $messageTag);
 
 		if(!$stmt->execute()){
 			$stmt->close();
@@ -636,6 +671,7 @@ class DBMS{
 			$response['idNewMessage'] = $newMessageId;
 			$response['dataNewMessage'] = $time;
 			$response['statusNewMessage'] = $status;
+			$response['messageTag'] = $messageTag;
 
 			{
 				$query = "SELECT vers FROM singlechat WHERE id=?;";
@@ -696,7 +732,6 @@ class DBMS{
 		}
 
 	}
-
 
 	//Aggiorna tabella utente, modificando l'immagine del profilo e la data di modifica.
 	function changeUserImage($sessid, $imgSrc, $data){
@@ -766,6 +801,57 @@ class DBMS{
 	//-----------------------------      OK    ---------------------------------------------
 
 
+	//Ritorna tutti i messaggi relativi a una conversazione
+	function getConversationMessages($idChat, $myPrefix, $myNum, $myDirection){
+		$response = array(
+				'errorCode' => '',
+				'numMessages' => 0,
+				'messages' => array()
+		);
+
+		$query = "SELECT direction, msg, status, data, type, messageTag FROM singlechatmessages WHERE idChat=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('i', $idChat);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows > 1){
+				
+			$response['errorCode'] = 'OK';
+			$response['numMessages'] = $stmt->num_rows;
+			$stmt->bind_result($sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
+				
+				
+			while($stmt->fetch()) {
+				if($myDirection == '1'){
+					if($sDirection == '0'){
+						$sDirection = '1';
+					}
+					else{
+						$sDirection = '0';
+					}
+				}
+				$message = new SingleChatMessage('', $idChat, $sDirection, $sMsg, $sStatus, $sData, $sType, $sTag);
+				$response['messages'][] = $message;
+			}
+				
+			return $response;
+		}
+		else{
+			$response['errorCode'] = 'OK';
+				
+			return $response;
+		}
+	}
 
 	//Controlla se un utente è in attesa di loggarsi sul terminale Android
 	function checkUserIsLogging($prefix, $num){
