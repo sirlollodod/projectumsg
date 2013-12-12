@@ -2,9 +2,10 @@
 
 class SingleChatMessage{
 
-	private $id, $idchat, $direction, $msg, $status, $data, $type;
+	private $id, $idchat;
+	public  $direction, $msg, $status, $data, $type, $tag;
 	 
-	function __construct($id, $idchat, $direction, $msg, $status, $data, $type){
+	function __construct($id, $idchat, $direction, $msg, $status, $data, $type, $tag){
 		$this->id = $id;
 		$this->idchat = $idchat;
 		$this->direction = $direction;
@@ -12,6 +13,7 @@ class SingleChatMessage{
 		$this->status = $status;
 		$this->data = $data;
 		$this->type = $type;
+		$this->tag = $tag;
 		
 	}
 
@@ -83,6 +85,14 @@ class SingleChatMessage{
 	public function setType($type)
 	{
 	    $this->type = $type;
+	}
+	
+	public function getTag(){
+		return $this->tag;
+	}
+	
+	public function setTag($tag){
+		$this->tag = $tag;
 	}
 }
 
