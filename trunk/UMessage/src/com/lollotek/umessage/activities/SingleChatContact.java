@@ -171,17 +171,38 @@ public class SingleChatContact extends Activity {
 
 				if (messageText.length() > 0) {
 					messageEditText.setText("");
-					Intent service = new Intent(
-							context,
-							com.lollotek.umessage.services.UMessageService.class);
 
-					service.putExtra("action",
-							MessageTypes.SEND_NEW_TEXT_MESSAGE);
-					service.putExtra("messageText", messageText);
-					service.putExtra("prefix", prefix);
-					service.putExtra("num", num);
+					try {
+						while ((messageText.length() > 0)
+								&& ((messageText.startsWith(" ") || messageText
+										.startsWith("\n")))) {
+							messageText = messageText.substring(1);
+						}
 
-					startService(service);
+						while ((messageText.length() > 0)
+								&& ((messageText.endsWith(" ") || messageText
+										.endsWith("\n")))) {
+							messageText = messageText.substring(0,
+									messageText.length() - 1);
+						}
+					} catch (IndexOutOfBoundsException e) {
+
+					}
+
+					if (messageText.length() > 0) {
+
+						Intent service = new Intent(
+								context,
+								com.lollotek.umessage.services.UMessageService.class);
+
+						service.putExtra("action",
+								MessageTypes.SEND_NEW_TEXT_MESSAGE);
+						service.putExtra("messageText", messageText);
+						service.putExtra("prefix", prefix);
+						service.putExtra("num", num);
+
+						startService(service);
+					}
 				}
 
 			}

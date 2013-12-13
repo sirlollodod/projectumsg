@@ -74,7 +74,8 @@ public class Registration extends Activity {
 			configuration.setPrefix(prefix);
 			configuration.setNum(num);
 			configuration.setEmail(email);
-			configuration.setSimserial(Utility.getSerialSim(UMessageApplication.getContext()));
+			configuration.setSimserial(Utility.getSerialSim(UMessageApplication
+					.getContext()));
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
 
@@ -93,13 +94,23 @@ public class Registration extends Activity {
 
 			switch (v.getId()) {
 			case R.id.button1:
-				new CheckUserAlreadyregisteredAsyncTask().execute(p, n);
+				if (isPhoneNumber(p) && isPhoneNumber(n)) {
+					new CheckUserAlreadyregisteredAsyncTask().execute(p, n);
+				} else {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Invalid phone number", Toast.LENGTH_SHORT).show();
+				}
 
 				break;
 
 			case R.id.button2:
 				String e = email.getText().toString();
-				new RegisterUserAsyncTask().execute(p, n, e);
+				if (isMail(e)) {
+					new RegisterUserAsyncTask().execute(p, n, e);
+				} else {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Email not valid.", Toast.LENGTH_SHORT).show();
+				}
 
 				break;
 			}
@@ -164,6 +175,11 @@ public class Registration extends Activity {
 							UMessageApplication.getContext(), "Errore:1",
 							Toast.LENGTH_SHORT);
 					msg.show();
+					prefix.setEnabled(true);
+					num.setEnabled(true);
+					b1.setText("Conferma");
+					b1.setEnabled(true);
+
 				} else if ((result.getString("errorCode").equals("OK"))
 						&& (result.getBoolean("isRegistered"))) {
 					// utente gia esistente, codici inviati a mail e per sms dal
@@ -183,6 +199,11 @@ public class Registration extends Activity {
 				Toast msg = Toast.makeText(UMessageApplication.getContext(),
 						"Errore:2", Toast.LENGTH_SHORT);
 				msg.show();
+				prefix.setEnabled(true);
+				num.setEnabled(true);
+				b1.setText("Conferma");
+				b1.setEnabled(true);
+
 			}
 
 		}
@@ -254,4 +275,24 @@ public class Registration extends Activity {
 
 	}
 
+	public boolean isMail(String str) {
+		str = str.trim();
+		if (str.length() == 0)
+			return false;
+		if (!str.matches(".+@.+\\.[a-z]+"))
+			return false;
+		return true;
+	}
+
+	public boolean isPhoneNumber(String str) {
+		str = str.trim();
+		if (str.length() == 0)
+			return false;
+
+		for (int i = 0; i < str.length(); i++) {
+			if (!Character.isDigit(str.charAt(i)))
+				return false;
+		}
+		return true;
+	}
 }

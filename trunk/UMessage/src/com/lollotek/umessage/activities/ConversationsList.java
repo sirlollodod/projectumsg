@@ -163,6 +163,11 @@ public class ConversationsList extends Activity {
 			startActivity(i);
 			finish();
 
+		case R.id.map:
+			i = new Intent(this, com.lollotek.umessage.activities.Map.class);
+			startActivity(i);
+			break;
+
 		}
 
 		return true;

@@ -199,6 +199,7 @@ public class Utility {
 			result = new JSONObject(response);
 
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
 			return null;
 		}
 

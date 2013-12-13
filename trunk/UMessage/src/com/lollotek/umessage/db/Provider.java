@@ -69,7 +69,7 @@ public class Provider {
 		String prefix = message.getAsString(DatabaseHelper.KEY_PREFIX);
 		String num = message.getAsString(DatabaseHelper.KEY_NUM);
 
-		Cursor chat = getIdChatDest(prefix, num);
+		Cursor chat = getInfoChat(prefix, num);
 		long idChat;
 		if (!chat.moveToNext()) {
 			ContentValues newChat = new ContentValues();
@@ -151,11 +151,14 @@ public class Provider {
 		return messages;
 	}
 
-	private Cursor getIdChatDest(String prefix, String num) {
+	public synchronized Cursor getChat(String prefix, String num) {
+		return getInfoChat(prefix, num);
+	}
+
+	private Cursor getInfoChat(String prefix, String num) {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor chat = db.query(DatabaseHelper.TABLE_SINGLECHAT,
-				new String[] { DatabaseHelper.KEY_ID },
+		Cursor chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
 				DatabaseHelper.KEY_PREFIXDEST + "=? AND "
 						+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
 						prefix, num }, null, null, null);
@@ -227,7 +230,7 @@ public class Provider {
 
 	public synchronized boolean markMessagesAsRed(String prefix, String num) {
 
-		Cursor chat = getIdChatDest(prefix, num);
+		Cursor chat = getInfoChat(prefix, num);
 
 		if (!chat.moveToNext()) {
 			return false;
@@ -326,14 +329,51 @@ public class Provider {
 		return conversationsNewMessages;
 	}
 
+	public synchronized boolean updateMessage(long idMessage, String newStatus,
+			long newData) {
+
+		ContentValues messageToUpdate = new ContentValues();
+
+		messageToUpdate.put(DatabaseHelper.KEY_STATUS, newStatus);
+		messageToUpdate.put(DatabaseHelper.KEY_DATA, newData);
+
+		int affectedRows = update(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
+				messageToUpdate, DatabaseHelper.KEY_ID + "=?",
+				new String[] { String.valueOf(idMessage) });
+
+		if (affectedRows > 1) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	public synchronized boolean updateChatVersion(int idChat,
+			String newChatVersion) {
+		ContentValues chatToUpdate = new ContentValues();
+
+		chatToUpdate.put(DatabaseHelper.KEY_VERSION, newChatVersion);
+
+		int affectedRows = update(DatabaseHelper.TABLE_SINGLECHAT,
+				chatToUpdate, DatabaseHelper.KEY_ID + "=?",
+				new String[] { String.valueOf(idChat) });
+
+		if (affectedRows > 1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	public synchronized boolean eraseDatabase() {
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-		try{
-		this.delete(DatabaseHelper.TABLE_SINGLECHAT, null, null);
-		this.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null);
-		this.delete(DatabaseHelper.TABLE_USER, null, null);
-		this.delete(DatabaseHelper.TABLE_TEMPSINGLECHATMESSAGES, null, null);
+		try {
+			this.delete(DatabaseHelper.TABLE_SINGLECHAT, null, null);
+			this.delete(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null, null);
+			this.delete(DatabaseHelper.TABLE_USER, null, null);
+			this.delete(DatabaseHelper.TABLE_TEMPSINGLECHATMESSAGES, null, null);
 
 		} catch (Exception e) {
 			return false;
