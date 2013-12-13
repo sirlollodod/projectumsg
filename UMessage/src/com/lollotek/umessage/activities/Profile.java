@@ -54,7 +54,8 @@ public class Profile extends Activity {
 		b = (Button) findViewById(R.id.button1);
 		ActionBar ab = getActionBar();
 		ab.setDisplayHomeAsUpEnabled(true);
-
+		Configuration configuration = Utility.getConfiguration(context);
+		ab.setSubtitle(configuration.getPrefix() + "  " + configuration.getNum());
 		b.setOnClickListener(new OnClickListener() {
 
 			@Override

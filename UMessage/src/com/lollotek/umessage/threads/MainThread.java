@@ -97,7 +97,8 @@ public class MainThread extends Thread {
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
 
-			Message m;
+			Message m, syncMsg;
+			Bundle b;
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
@@ -156,7 +157,8 @@ public class MainThread extends Thread {
 							Settings.SERVER_URL, myNewProfileImage,
 							configuration.getSessid());
 
-					Toast.makeText(UMessageApplication.getContext(), result.toString(), Toast.LENGTH_LONG).show();
+					Toast.makeText(UMessageApplication.getContext(),
+							result.toString(), Toast.LENGTH_LONG).show();
 					if ((result == null)
 							|| (result.getString("errorCode").equals("KO"))) {
 						m = new Message();
@@ -172,7 +174,9 @@ public class MainThread extends Thread {
 						configuration.setSessid("");
 						Utility.setConfiguration(
 								UMessageApplication.getContext(), configuration);
-						Toast.makeText(UMessageApplication.getContext(), "sessione non valida... azzerata!", Toast.LENGTH_LONG).show();
+						Toast.makeText(UMessageApplication.getContext(),
+								"sessione non valida... azzerata!",
+								Toast.LENGTH_LONG).show();
 					}
 
 				} catch (Exception e) {
@@ -322,7 +326,7 @@ public class MainThread extends Thread {
 
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
 				m = new Message();
-				Bundle b = msg.getData();
+				b = msg.getData();
 				m.setData(b);
 				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
 
@@ -345,7 +349,7 @@ public class MainThread extends Thread {
 					long newMessageId = p.insertNewMessage(value);
 
 					if (newMessageId != -1) {
-						Message syncMsg = new Message();
+						syncMsg = new Message();
 						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
 						SynchronizationManager.getInstance()
 								.onSynchronizationFinish(syncMsg);
@@ -366,6 +370,120 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
+
+				try {
+
+					b = msg.getData();
+					JSONObject parameters = new JSONObject();
+					JSONObject result = null;
+					Configuration configuration = Utility
+							.getConfiguration(UMessageApplication.getContext());
+					p = new Provider(UMessageApplication.getContext());
+					Cursor infoChat = p.getChat(b.getString("prefix"),
+							b.getString("num"));
+
+					infoChat.moveToNext();
+
+					parameters.accumulate("action", "SEND_NEW_MESSAGE");
+					parameters.accumulate("sessionId",
+							configuration.getSessid());
+					parameters.accumulate("destPrefix", b.getString("prefix"));
+					parameters.accumulate("destNum", b.getString("num"));
+					parameters
+							.accumulate(
+									"localChatVersion",
+									infoChat.getString(infoChat
+											.getColumnIndex(DatabaseHelper.KEY_VERSION)));
+
+					parameters
+							.accumulate("message", b.getString("messageText"));
+					parameters.accumulate("type", "text");
+					parameters.accumulate("messageTag",
+							b.getString("messageTag"));
+
+					result = Utility.doPostRequest(Settings.SERVER_URL,
+							parameters);
+
+					if (result == null) {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					} else if (result.getString("errorCode").equals("KO")) {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					} else if (result.getString("errorCode").equals("OK")) {
+						if (!result.getBoolean("isSessionValid")) {
+							configuration.setSessid("");
+							Utility.setConfiguration(
+									UMessageApplication.getContext(),
+									configuration);
+
+							break;
+						}
+
+						if (!result.getBoolean("isDestValid")) {
+							// bisognerebbe cancellare il messaggio dal db
+							// locale ?
+							Toast.makeText(UMessageApplication.getContext(),
+									"destination not valid", Toast.LENGTH_LONG)
+									.show();
+
+							break;
+						}
+
+						if (result.getBoolean("syncChatRequired")) {
+							Toast.makeText(UMessageApplication.getContext(),
+									"sync chat required", Toast.LENGTH_LONG)
+									.show();
+
+							m = new Message();
+							m.what = MessageTypes.SYNCHRONIZE_CHAT;
+							Bundle bnd = new Bundle();
+							bnd.putString("prefix", b.getString("prefix"));
+							bnd.putString("num", b.getString("num"));
+							m.setData(bnd);
+
+							mainThreadHandler.sendMessage(m);
+
+							break;
+						}
+
+						if (result.getBoolean("chatVersionChanged")) {
+							p.updateChatVersion(infoChat.getInt(infoChat
+									.getColumnIndex(DatabaseHelper.KEY_ID)),
+									result.getString("newChatVersion"));
+
+						}
+
+						if (p.updateMessage(b.getLong("messageId"), result
+								.getString("statusNewMessage"), Long
+								.parseLong(result.getString("dataNewMessage")))) {
+
+							syncMsg = new Message();
+							syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+							SynchronizationManager.getInstance()
+									.onSynchronizationFinish(syncMsg);
+
+							break;
+
+						}
+
+					} else {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					}
+
+				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
+					mainThreadHandler.sendMessageDelayed(msg,
+							TIME_MINUTE * 1000);
+				}
+
+				break;
+
+			case MessageTypes.SYNCHRONIZE_CHAT:
+				Toast.makeText(UMessageApplication.getContext(),
+						"SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
 
 				break;
 
