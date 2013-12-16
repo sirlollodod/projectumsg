@@ -411,37 +411,272 @@ switch ($_POST['action']){
 
 		$idChat = $result['idChat'];
 		$response['onlineChatVersion'] = $result['chatVersion'];
-		
+
 		$result = $db->getDirectionMessage($idChat, $myPrefix, $myNum);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
+
 		if($result['errorCode'] == 'OK'){
 			$myDirection = $result['direction'];
-		
+
 		}
 		else{
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error: checking direction';
 			break;
 		}
-		
+
 		$result = $db->getConversationMessages($idChat, $myPrefix, $myNum, $myDirection);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
+
 		$response['errorCode'] = 'OK';
 		$response['errorInfo'] = 'Messages download';
 		$response['numMessages'] = $result['numMessages'];
 		$response['messages'] = $result['messages'];
 
 		break;
+
+		/**
+		 * + action: UPDATE_MESSAGE_DOWNLOADED
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + destPrefix: prefisso internazionale comprensivo del '+' del destinatario
+		 * + destNum: numero di telefono del destinatario
+		 * + messageData: data del messaggio di cui si vuole modificare lo stato
+		 * + messageTag: tag del messaggio di cui si vuole modificare lo stato
+		 * + messageDirection: direzione del messaggio rispetto all'utente che invoca la richiesta
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 * + isDestValid: true o false, a seconda che il numero di telefono del destinatario sia già registrato al sistema online
+		 * + messageStatusUpdated: true o false, a seconda che lo stato del messaggio sia stato modificato come richiesto
+		 *
+		 */
+	case 'UPDATE_MESSAGE_DOWNLOADED':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['isSessionValid'] = true;
+			$myPrefix = $result['prefix'];
+			$myNum = $result['num'];
+		}
+		else{
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Session invalid';
+			$response['isSessionValid'] = false;
+			break;
+		}
+
+		$result = $db->checkUserRegistered($_POST['destPrefix'], $_POST['destNum']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if(!$result['isRegistered']){
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Destination not registered';
+			$response['isDestValid'] = false;
+			break;
+		}
+		else{
+			$response['isDestValid'] = true;
+		}
+
+		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum'], $_POST['localChatVersion']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if(!$result['chatExists']){
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Chat do not exists.';
+			$response['messageStatusUpdated'] = false;
+			break;
+		}
+
+		$idChat = $result['idChat'];
+
+		$result = $db->getDirectionMessage($idChat, $myPrefix, $myNum);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$myDirection = $result['direction'];
+
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error: checking direction';
+			break;
+		}
+
+		if($myDirection == "1"){
+			if($_POST['messageDirection'] == "0"){
+				$messageDirection = "1";
+			}
+			else{
+				$messageDirection = "0";
+			}
+		}
+		else{
+			$messageDirection = $_POST['messageDirection'];
+		}
+
+		$result = $db->updateMessageStatus($idChat, $messageDirection, $_POST['messageData'], $_POST['messageTag'], "3");
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['errorCode'] = 'OK';
+			$response['messageStatusUpdated'] = $result['messageStatusUpdated'];
+			break;
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error: changing message status';
+			$response['debugInfo'] = $result['debugInfo'];
+			$response['messageStatusUpdated'] = false;
+			break;
+		}
+
+		break;
+
+		/**
+		 * + action: UPDATE_MESSAGE_NOTIFICATION_DELIVERED
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + destPrefix: prefisso internazionale comprensivo del '+' del destinatario
+		 * + destNum: numero di telefono del destinatario
+		 * + messageData: data del messaggio di cui si vuole modificare lo stato
+		 * + messageTag: tag del messaggio di cui si vuole modificare lo stato
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 * + isDestValid: true o false, a seconda che il numero di telefono del destinatario sia già registrato al sistema online
+		 * + messageStatusUpdated: true o false, a seconda che lo stato del messaggio sia stato modificato come richiesto
+		 *
+		 */
+	case 'UPDATE_MESSAGE_NOTIFICATION_DELIVERED':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['isSessionValid'] = true;
+			$myPrefix = $result['prefix'];
+			$myNum = $result['num'];
+		}
+		else{
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Session invalid';
+			$response['isSessionValid'] = false;
+			break;
+		}
+
+		$result = $db->checkUserRegistered($_POST['destPrefix'], $_POST['destNum']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if(!$result['isRegistered']){
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Destination not registered';
+			$response['isDestValid'] = false;
+			break;
+		}
+		else{
+			$response['isDestValid'] = true;
+		}
+
+		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum'], $_POST['localChatVersion']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if(!$result['chatExists']){
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Chat do not exists.';
+			$response['messageStatusUpdated'] = false;
+			break;
+		}
+
+		$idChat = $result['idChat'];
+
+		$result = $db->getDirectionMessage($idChat, $myPrefix, $myNum);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$myDirection = $result['direction'];
+
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error: checking direction';
+			break;
+		}
+
+		if($myDirection == "1"){
+			if($_POST['messageDirection'] == "0"){
+				$messageDirection = "1";
+			}
+			else{
+				$messageDirection = "0";
+			}
+		}
+		else{
+			$messageDirection = $_POST['messageDirection'];
+		}
+
+		$result = $db->updateMessageStatus($idChat, $messageDirection, $_POST['messageData'], $_POST['messageTag'], "5");
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['errorCode'] = 'OK';
+			$response['messageStatusUpdated'] = $result['messageStatusUpdated'];
+			break;
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error: changing message status';
+			$response['messageStatusUpdated'] = false;
+			break;
+		}
+
+		break;
+
 		/**
 		 * Caso di default.
 		 *
