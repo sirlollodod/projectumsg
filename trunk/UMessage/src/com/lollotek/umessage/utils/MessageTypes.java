@@ -28,9 +28,13 @@ public class MessageTypes {
 	public static final int UPLOAD_NEW_MESSAGE = 76;
 	public static final int STARTED_FROM_FIRST_EXECUTION_APP = 77;
 	public static final int SYNCHRONIZE_CHAT = 78;
+	public static final int CHECK_MESSAGES_TO_UPLOAD = 79;
+	public static final int CHECK_CHATS_TO_SYNCHRONIZE = 80;
 	
 	// Tipi messaggio ricevuti da SynchronizationManager e SynchronizationListeners
 	public static final int MESSAGE_UPDATE = 100;
+	public static final int MESSAGE_UPLOADED = 101;
+	
 	
 	
 }

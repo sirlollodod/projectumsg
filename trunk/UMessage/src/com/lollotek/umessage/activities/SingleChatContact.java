@@ -12,10 +12,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -78,6 +80,10 @@ public class SingleChatContact extends Activity {
 					public void run() {
 						switch (msg.what) {
 						case MessageTypes.MESSAGE_UPDATE:
+							loadMessages(true);
+							break;
+
+						case MessageTypes.MESSAGE_UPLOADED:
 							loadMessages(true);
 							break;
 						}

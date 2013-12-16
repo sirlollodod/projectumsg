@@ -39,6 +39,10 @@ public class Main extends Activity {
 
 		context = this;
 
+		Intent service = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
+		startService(service);
+
 	}
 
 	@Override
@@ -49,7 +53,7 @@ public class Main extends Activity {
 		{
 			Utility.prepareDirectory(context);
 			Configuration configuration = Utility.getConfiguration(context);
-
+/*
 			Provider p = new Provider(UMessageApplication.getContext());
 			Cursor users = p.getTotalUser();
 			String[] messages = {
@@ -67,7 +71,7 @@ public class Main extends Activity {
 			Calendar c;
 			Random r = new Random();
 			int totalNewMessages = 0;
-			int newMessages = r.nextInt(10);
+			int newMessages = r.nextInt(0);
 			boolean unknownPhoneNumber, direction;
 			while (totalNewMessages < newMessages) {
 
@@ -110,14 +114,19 @@ public class Main extends Activity {
 				value.put(DatabaseHelper.KEY_TYPE, "text");
 				value.put(DatabaseHelper.KEY_MESSAGE, messages[r.nextInt(8)]);
 				value.put(DatabaseHelper.KEY_TOREAD, (direction ? "0" : "1"));
-				value.put(DatabaseHelper.KEY_TAG, "hashvalue");
+				value.put(DatabaseHelper.KEY_TAG, Utility.md5(users
+						.getString(users
+								.getColumnIndex(DatabaseHelper.KEY_PREFIX))
+						+ users.getString(users
+								.getColumnIndex(DatabaseHelper.KEY_NUM))
+						+ c.getTimeInMillis()));
 
 				if (p.insertNewMessage(value) != -1) {
 					totalNewMessages++;
 				}
 
 			}
-
+*/
 		}
 
 		m_configuration = Utility.getConfiguration(UMessageApplication
@@ -136,7 +145,8 @@ public class Main extends Activity {
 			Utility.setConfiguration(context, m_configuration);
 			Intent service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
-			service.putExtra("action", MessageTypes.STARTED_FROM_FIRST_EXECUTION_APP);
+			service.putExtra("action",
+					MessageTypes.STARTED_FROM_FIRST_EXECUTION_APP);
 			startService(service);
 		}
 

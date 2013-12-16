@@ -51,6 +51,7 @@
         android:layout_below="@+id/textView2"
         android:background="#E2DFF7"
         android:layout_marginTop="-3dp"
+        android:layout_marginRight="-15dp"
         android:text="time"
         android:textColor="#7D747C"
         android:textSize="10dp" />
