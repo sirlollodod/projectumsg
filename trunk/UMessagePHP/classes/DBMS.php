@@ -642,7 +642,7 @@ class DBMS{
 			$response['dataNewMessage'] = $sData;
 			$response['statusNewMessage'] = $sStatus;
 			$response['messageTag'] = $sMessageTag;
-				
+
 			return $response;
 		}
 
@@ -806,29 +806,29 @@ class DBMS{
 				'numMessages' => 0,
 				'messages' => array()
 		);
-	
+
 		$query = "SELECT direction, msg, status, data, type, messageTag FROM singlechatmessages WHERE idChat=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
 		}
-	
+
 		$stmt->bind_param('i', $idChat);
-	
+
 		if(!$stmt->execute()){
 			$stmt->close();
 			return false;
 		}
-	
+
 		$stmt->store_result();
-	
+
 		if($stmt->num_rows > 0){
-	
+
 			$response['errorCode'] = 'OK';
 			$response['numMessages'] = $stmt->num_rows;
 			$stmt->bind_result($sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
-	
-	
+
+
 			while($stmt->fetch()) {
 				if($myDirection == '1'){
 					if($sDirection == '0'){
@@ -841,22 +841,194 @@ class DBMS{
 				$message = new SingleChatMessage('', $idChat, $sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
 				$response['messages'][] = $message;
 			}
-	
+
 			return $response;
 		}
 		else{
 			$response['errorCode'] = 'OK';
-	
+
 			return $response;
 		}
 	}
-	
-	
+
+
 
 	//-----------------------------      OK    ---------------------------------------------
 
+	//Modifica lo stato del messaggio richiesto
+	// DA IMPLEMENTARE AGGIORNARE VERSIONE CHAT CASO STATO MESSAGGIO = 1 ---> 3
+	function updateMessageStatus($idChat, $messageDirection, $messageData, $messageTag, $newStatus){
+		$response = array(
+				'errorCode' => '',
+				'debugInfo' => '',
+				'messageStatusUpdated' => false
+		);
 
-	
+		$query = "SELECT id, status FROM singlechatmessages WHERE idChat=? AND direction=? AND data=? AND messageTag=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('isis', $idChat, $messageDirection, $messageData, $messageTag);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows > 0){
+				
+
+			$response['errorCode'] = 'OK';
+			$stmt->bind_result($sId, $sStatus);
+			$stmt->fetch();
+
+			switch($sStatus){
+				case '1':
+					if($newStatus == "3"){
+						$query = "UPDATE singlechatmessages SET status=? WHERE idChat=? AND direction=? AND data=? AND messageTag=?;";
+						if(!$stmt = $this->connection->prepare($query)){
+							$stmt->close();
+							return false;
+						}
+
+						$stmt->bind_param('sisis', $newStatus, $idChat, $messageDirection, $messageData, $messageTag);
+
+						if(!$stmt->execute()){
+							$stmt->close();
+							return false;
+						}
+
+						$stmt->store_result();
+
+						if($stmt->affected_rows > 0){
+							$response['messageStatusUpdated'] = true;
+								
+							// DA IMPLEMENTARE: aggiornare versione chat
+							{
+								$query = "SELECT vers FROM singlechat WHERE id=?;";
+								if(!$stmt = $this->connection->prepare($query)){
+									$stmt->close();
+									break;
+								}
+							
+								$stmt->bind_param('i', $idChat);
+							
+								if(!$stmt->execute()){
+									break;
+								}
+							
+								$stmt->store_result();
+							
+								if($stmt->num_rows == 1){
+									$stmt->bind_result($sVersion);
+									$stmt->fetch();
+									$stmt->close();
+								}
+								else{
+									$stmt->close();
+									break;
+								}
+							
+								$query = "UPDATE singlechat SET vers=? WHERE id=?;";
+								if(!$stmt = $this->connection->prepare($query)){
+									$stmt->close();
+									break;
+								}
+							
+								$newChatVersion = md5("" . $sVersion . time());
+							
+								$stmt->bind_param('si', $newChatVersion, $idChat);
+							
+								if(!$stmt->execute()){
+									$stmt->close();
+									break;
+								}
+							
+								if($stmt->affected_rows == 1){
+									$stmt->close();
+									break;
+								}
+								else{
+									$stmt->close();
+									break;
+								}
+							}
+							
+						}
+					}
+
+					break;
+				case '3':
+					if($newStatus == "5"){
+						$query = "UPDATE singlechatmessages SET status=? WHERE idChat=? AND direction=? AND data=? AND messageTag=?;";
+						if(!$stmt = $this->connection->prepare($query)){
+							$stmt->close();
+							return false;
+						}
+
+						$stmt->bind_param('sisis', $newStatus, $idChat, $messageDirection, $messageData, $messageTag);
+
+						if(!$stmt->execute()){
+							$stmt->close();
+							return false;
+						}
+
+						$stmt->store_result();
+
+						if($stmt->affected_rows > 0){
+							$response['messageStatusUpdated'] = true;
+								
+							$query = "DELETE FROM singlechatmessages WHERE  idChat=? AND direction=? AND data=? AND messageTag=?;";
+							if(!$stmt = $this->connection->prepare($query)){
+								$stmt->close();
+								break;
+							}
+
+							$stmt->bind_param('isis', $idChat, $messageDirection, $messageData, $messageTag);
+
+							if(!$stmt->execute()){
+								$stmt->close();
+								break;
+							}
+						}
+					}
+
+				case '5':
+					$query = "DELETE FROM singlechatmessages WHERE  idChat=? AND direction=? AND data=? AND messageTag=?;";
+					if(!$stmt = $this->connection->prepare($query)){
+						$stmt->close();
+						break;
+					}
+
+					$stmt->bind_param('isis', $idChat, $messageDirection, $messageData, $messageTag);
+
+					if(!$stmt->execute()){
+						$stmt->close();
+						break;
+					}
+
+					break;
+
+				default:
+					$response['errorCode'] = 'KO';
+					break;
+			}
+
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			return $response;
+		}
+
+		return $response;
+
+	}
+
+
 	//Controlla se un utente è in attesa di loggarsi sul terminale Android
 	function checkUserIsLogging($prefix, $num){
 		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=?;";
