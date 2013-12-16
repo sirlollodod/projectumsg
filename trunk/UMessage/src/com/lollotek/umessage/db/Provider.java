@@ -71,10 +71,18 @@ public class Provider {
 	private Cursor getInfoChat(String prefix, String num) {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
-				DatabaseHelper.KEY_PREFIXDEST + "=? AND "
-						+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
-						prefix, num }, null, null, null);
+		Cursor chat = null;
+
+		try {
+
+			chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
+					DatabaseHelper.KEY_PREFIXDEST + "=? AND "
+							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
+							prefix, num }, null, null, null);
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 		return chat;
 	}
 
@@ -85,9 +93,14 @@ public class Provider {
 	public synchronized Cursor getTotalUser() {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor c = db.query(DatabaseHelper.TABLE_USER, null, null, null, null,
-				null, DatabaseHelper.KEY_NAME);
-
+		Cursor c = null;
+		try {
+			c = db.query(DatabaseHelper.TABLE_USER, null, null, null, null,
+					null, DatabaseHelper.KEY_NAME);
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 		return c;
 	}
 
@@ -131,9 +144,9 @@ public class Provider {
 					DatabaseHelper.KEY_PREFIX + "=? AND "
 							+ DatabaseHelper.KEY_NUM + "=?", new String[] {
 							prefix, num }, null, null, null);
-
 		} catch (Exception e) {
-			userInfo = null;
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
 		}
 
 		return userInfo;
@@ -165,22 +178,29 @@ public class Provider {
 	public synchronized Cursor getAllChats() {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor chats = db.query(DatabaseHelper.TABLE_SINGLECHAT, null, null,
-				null, null, null, null);
-
+		Cursor chats = null;
+		try {
+			chats = db.query(DatabaseHelper.TABLE_SINGLECHAT, null, null, null,
+					null, null, null);
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 		return chats;
 
 	}
 
 	// -------------- SINGLE CHAT MESSAGES -------------------------
 
+	// DA RIVEDERE: aggiungere data ultimo messaggio e check per il messaggio
+	// più vecchio, e non l'ultimo inserito temporalmente
 	public synchronized long insertNewMessage(ContentValues message) {
 		String prefix = message.getAsString(DatabaseHelper.KEY_PREFIX);
 		String num = message.getAsString(DatabaseHelper.KEY_NUM);
 
 		Cursor chat = getInfoChat(prefix, num);
 		long idChat;
-		if (!chat.moveToNext()) {
+		if ((chat == null) || (!chat.moveToFirst())) {
 			ContentValues newChat = new ContentValues();
 			newChat.put(DatabaseHelper.KEY_PREFIXDEST, prefix);
 			newChat.put(DatabaseHelper.KEY_NUMDEST, num);
@@ -189,6 +209,7 @@ public class Provider {
 
 			idChat = insert(DatabaseHelper.TABLE_SINGLECHAT, null, newChat);
 		} else {
+			chat.moveToFirst();
 			idChat = chat.getLong(chat.getColumnIndex(DatabaseHelper.KEY_ID));
 		}
 
@@ -225,26 +246,45 @@ public class Provider {
 	public synchronized Cursor getMessages(String prefix, String num) {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor chat = db.query(DatabaseHelper.TABLE_SINGLECHAT,
-				new String[] { DatabaseHelper.KEY_ID },
-				DatabaseHelper.KEY_PREFIXDEST + "=? and "
-						+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
-						prefix, num }, null, null, null);
+		Cursor chat = null;
 
-		if (!chat.moveToNext()) {
-			return chat;
+		try {
+			chat = db.query(DatabaseHelper.TABLE_SINGLECHAT,
+					new String[] { DatabaseHelper.KEY_ID },
+					DatabaseHelper.KEY_PREFIXDEST + "=? and "
+							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
+							prefix, num }, null, null, null);
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+			return null;
 		}
 
+		if ((chat == null) || (!chat.moveToFirst())) {
+			return null;
+		}
+
+		chat.moveToFirst();
 		String idChat = chat.getString(chat
 				.getColumnIndex(DatabaseHelper.KEY_ID));
 
-		Cursor messages = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
-				new String[] { DatabaseHelper.KEY_ID,
-						DatabaseHelper.KEY_DIRECTION, DatabaseHelper.KEY_DATA,
-						DatabaseHelper.KEY_MESSAGE, DatabaseHelper.KEY_STATUS,
-						DatabaseHelper.KEY_TOREAD }, DatabaseHelper.KEY_IDCHAT
-						+ "=?", new String[] { idChat }, null, null,
-				DatabaseHelper.KEY_DATA);
+		Cursor messages = null;
+
+		try {
+			messages = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
+					new String[] { DatabaseHelper.KEY_ID,
+							DatabaseHelper.KEY_DIRECTION,
+							DatabaseHelper.KEY_DATA,
+							DatabaseHelper.KEY_MESSAGE,
+							DatabaseHelper.KEY_STATUS,
+							DatabaseHelper.KEY_TOREAD },
+					DatabaseHelper.KEY_IDCHAT + "=?", new String[] { idChat },
+					null, null, DatabaseHelper.KEY_DATA);
+
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 
 		return messages;
 	}
@@ -253,9 +293,11 @@ public class Provider {
 
 		Cursor chat = getInfoChat(prefix, num);
 
-		if (!chat.moveToNext()) {
+		if ((chat == null) || (!chat.moveToFirst())) {
 			return false;
 		}
+
+		chat.moveToFirst();
 
 		Long idChat = chat.getLong(chat.getColumnIndex(DatabaseHelper.KEY_ID));
 
@@ -293,44 +335,43 @@ public class Provider {
 
 	}
 
-	// CAZZATAAAAA: RIFARE!
 	public synchronized Cursor getMessageByTag(String prefix, String num,
 			String tag) {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
-				DatabaseHelper.KEY_PREFIXDEST + "=? AND "
-						+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
-						prefix, num }, null, null, null);
+		Cursor chat = null;
 
-		if (!chat.moveToNext()) {
+		try {
+			chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
+					DatabaseHelper.KEY_PREFIXDEST + "=? AND "
+							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
+							prefix, num }, null, null, null);
+
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
+
+		if ((chat == null) || (!chat.moveToFirst())) {
 			return null;
 		}
 
+		chat.moveToFirst();
+
 		int idChat = chat.getInt(chat.getColumnIndex(DatabaseHelper.KEY_ID));
 
-		/*
-		 * String query = "SELECT " + DatabaseHelper.TABLE_SINGLECHATMESSAGES +
-		 * "." + DatabaseHelper.KEY_ID + " AS " + DatabaseHelper.KEY_ID + ", " +
-		 * DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_IDCHAT + " AS " + DatabaseHelper.KEY_IDCHAT + ", "
-		 * + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_DIRECTION + " AS " + DatabaseHelper.KEY_DIRECTION
-		 * + ", " + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_STATUS + " AS " + DatabaseHelper.KEY_STATUS + ", "
-		 * + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_DATA + " AS " + DatabaseHelper.KEY_DATA + ", " +
-		 * DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_TYPE + " AS " + DatabaseHelper.KEY_TYPE + ", " +
-		 * DatabaseHelper.TABLE_SINGLECHATMESSAGES + "." +
-		 * DatabaseHelper.KEY_TAG + " AS " + DatabaseHelper.KEY_TAG + " FROM ";
-		 */
-		
-		Cursor message = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
-				null, DatabaseHelper.KEY_IDCHAT + "=? AND "
-						+ DatabaseHelper.KEY_TAG + "=?",
-				new String[] { String.valueOf(idChat), tag }, null, null,
-				DatabaseHelper.KEY_DATA + " DESC", "0, 1");
+		Cursor message = null;
+
+		try {
+			message = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null,
+					DatabaseHelper.KEY_IDCHAT + "=? AND "
+							+ DatabaseHelper.KEY_TAG + "=?", new String[] {
+							String.valueOf(idChat), tag }, null, null,
+					DatabaseHelper.KEY_DATA + " DESC", "0, 1");
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 
 		return message;
 	}
@@ -387,8 +428,10 @@ public class Provider {
 			conversations = db.rawQuery(query, null);
 
 		} catch (Exception e) {
-
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
 		}
+
 		return conversations;
 	}
 
@@ -414,7 +457,8 @@ public class Provider {
 			conversationsNewMessages = db.rawQuery(query, new String[] { "1" });
 
 		} catch (Exception e) {
-
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
 		}
 
 		return conversationsNewMessages;
@@ -423,33 +467,40 @@ public class Provider {
 	public synchronized Cursor getMessagesToUpload() {
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor messagesToUpload;
+		Cursor messagesToUpload = null;
 
-		String query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
-				+ DatabaseHelper.KEY_PREFIXDEST + " AS "
-				+ DatabaseHelper.KEY_PREFIX + ", "
-				+ DatabaseHelper.TABLE_SINGLECHAT + "."
-				+ DatabaseHelper.KEY_NUMDEST + " AS " + DatabaseHelper.KEY_NUM
-				+ ", " + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_ID + " AS " + DatabaseHelper.KEY_ID + ", "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_MESSAGE + " AS "
-				+ DatabaseHelper.KEY_MESSAGE + ", "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_TAG + " AS " + DatabaseHelper.KEY_TAG
-				+ " FROM " + DatabaseHelper.TABLE_SINGLECHAT + ", "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + " WHERE "
-				+ DatabaseHelper.TABLE_SINGLECHAT + "." + DatabaseHelper.KEY_ID
-				+ "=" + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_IDCHAT + " AND "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_STATUS + "=? AND "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_DIRECTION + "=? ORDER BY "
-				+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
-				+ DatabaseHelper.KEY_DATA;
+		try {
+			String query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_PREFIXDEST + " AS "
+					+ DatabaseHelper.KEY_PREFIX + ", "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_NUMDEST + " AS "
+					+ DatabaseHelper.KEY_NUM + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_ID + " AS " + DatabaseHelper.KEY_ID
+					+ ", " + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_MESSAGE + " AS "
+					+ DatabaseHelper.KEY_MESSAGE + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TAG + " AS " + DatabaseHelper.KEY_TAG
+					+ " FROM " + DatabaseHelper.TABLE_SINGLECHAT + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + " WHERE "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + "="
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_IDCHAT + " AND "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_STATUS + "=? AND "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DIRECTION + "=? ORDER BY "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DATA;
 
-		messagesToUpload = db.rawQuery(query, new String[] { "0", "0" });
+			messagesToUpload = db.rawQuery(query, new String[] { "0", "0" });
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+		}
 
 		return messagesToUpload;
 	}
@@ -466,6 +517,8 @@ public class Provider {
 			this.delete(DatabaseHelper.TABLE_TEMPSINGLECHATMESSAGES, null, null);
 
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
 			return false;
 		}
 
