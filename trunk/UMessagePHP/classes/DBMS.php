@@ -506,6 +506,7 @@ class DBMS{
 				$response['errorCode'] = 'OK';
 				$response['chatExists'] = true;
 				$response['idChat'] = $sChatId;
+				$response['chatVersion'] = $sVersChat;
 				if($sVersChat == $localChatVersion){
 					$response['syncChatRequired'] = false;
 				}
@@ -517,6 +518,7 @@ class DBMS{
 
 			$stmt->close();
 			$response['errorCode'] = 'OK';
+			$response['chatExists'] = false;
 			return $response;
 		}
 	}
@@ -644,7 +646,7 @@ class DBMS{
 			return $response;
 		}
 
-		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type) VALUES (?, ?, ?, ?, ?, ?, ?);";
+		$query = "INSERT INTO singlechatmessages (idchat, direction, msg, status, data, type, messageTag) VALUES (?, ?, ?, ?, ?, ?, ?);";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
@@ -654,7 +656,7 @@ class DBMS{
 
 
 		$time =  $this->getMillis();
-		$status = '0';
+		$status = '1';
 		$stmt->bind_param('isssiss', $idChat, $direction, $msg, $status, $time , $type, $messageTag);
 
 		if(!$stmt->execute()){
@@ -797,10 +799,6 @@ class DBMS{
 
 	}
 
-
-	//-----------------------------      OK    ---------------------------------------------
-
-
 	//Ritorna tutti i messaggi relativi a una conversazione
 	function getConversationMessages($idChat, $myPrefix, $myNum, $myDirection){
 		$response = array(
@@ -808,29 +806,29 @@ class DBMS{
 				'numMessages' => 0,
 				'messages' => array()
 		);
-
+	
 		$query = "SELECT direction, msg, status, data, type, messageTag FROM singlechatmessages WHERE idChat=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
 		}
-
+	
 		$stmt->bind_param('i', $idChat);
-
+	
 		if(!$stmt->execute()){
 			$stmt->close();
 			return false;
 		}
-
+	
 		$stmt->store_result();
-
-		if($stmt->num_rows > 1){
-				
+	
+		if($stmt->num_rows > 0){
+	
 			$response['errorCode'] = 'OK';
 			$response['numMessages'] = $stmt->num_rows;
 			$stmt->bind_result($sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
-				
-				
+	
+	
 			while($stmt->fetch()) {
 				if($myDirection == '1'){
 					if($sDirection == '0'){
@@ -840,19 +838,25 @@ class DBMS{
 						$sDirection = '0';
 					}
 				}
-				$message = new SingleChatMessage('', $idChat, $sDirection, $sMsg, $sStatus, $sData, $sType, $sTag);
+				$message = new SingleChatMessage('', $idChat, $sDirection, $sMsg, $sStatus, $sData, $sType, $sMessageTag);
 				$response['messages'][] = $message;
 			}
-				
+	
 			return $response;
 		}
 		else{
 			$response['errorCode'] = 'OK';
-				
+	
 			return $response;
 		}
 	}
+	
+	
 
+	//-----------------------------      OK    ---------------------------------------------
+
+
+	
 	//Controlla se un utente è in attesa di loggarsi sul terminale Android
 	function checkUserIsLogging($prefix, $num){
 		$query = "SELECT * FROM userlogin WHERE prefix=? AND num=?;";
