@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Calendar;
 
 import org.apache.http.HttpException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.ContentValues;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -52,6 +54,12 @@ public class MainThread extends Thread {
 		updateThread.start();
 		newMessageThread = new NewMessageThread(mainThreadHandler);
 		newMessageThread.start();
+
+		mainThreadHandler
+				.obtainMessage(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE)
+				.sendToTarget();
+		mainThreadHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
+				.sendToTarget();
 
 		Looper.loop();
 	}
@@ -98,7 +106,7 @@ public class MainThread extends Thread {
 			super.handleMessage(msg);
 
 			Message m, syncMsg;
-			Bundle b;
+			Bundle b, bnd;
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
@@ -192,7 +200,7 @@ public class MainThread extends Thread {
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
-				Bundle data = msg.getData();
+				bnd = msg.getData();
 
 				String userImageUrl = (String) msg.obj;
 				String newUserImageFileName = userImageUrl
@@ -209,8 +217,8 @@ public class MainThread extends Thread {
 
 				try {
 					p = new Provider(UMessageApplication.getContext());
-					Cursor userInfo = p.getUserInfo(data.getString("prefix"),
-							data.getString("num"));
+					Cursor userInfo = p.getUserInfo(bnd.getString("prefix"),
+							bnd.getString("num"));
 
 					if (!userInfo.moveToNext()) {
 						break;
@@ -227,8 +235,8 @@ public class MainThread extends Thread {
 						if (Utility.downloadFileFromUrl(
 								UMessageApplication.getContext(), userImage,
 								userImageUrl)) {
-							p.updateUserImage(data.getString("prefix"),
-									data.getString("num"), newImageName,
+							p.updateUserImage(bnd.getString("prefix"),
+									bnd.getString("num"), newImageName,
 									newImageData);
 						}
 					}
@@ -326,25 +334,27 @@ public class MainThread extends Thread {
 
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
 				m = new Message();
-				b = msg.getData();
-				m.setData(b);
+				bnd = msg.getData();
+				m.setData(bnd);
 				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
 
 				try {
 					p = new Provider(UMessageApplication.getContext());
 					Calendar c = Calendar.getInstance();
 					ContentValues value = new ContentValues();
-					value.put(DatabaseHelper.KEY_PREFIX, b.getString("prefix"));
-					value.put(DatabaseHelper.KEY_NUM, b.getString("num"));
+					value.put(DatabaseHelper.KEY_PREFIX,
+							bnd.getString("prefix"));
+					value.put(DatabaseHelper.KEY_NUM, bnd.getString("num"));
 					value.put(DatabaseHelper.KEY_DIRECTION, 0);
 					value.put(DatabaseHelper.KEY_STATUS, "0");
 					value.put(DatabaseHelper.KEY_DATA,
 							Double.parseDouble("" + c.getTimeInMillis()));
 					value.put(DatabaseHelper.KEY_TYPE, "text");
 					value.put(DatabaseHelper.KEY_MESSAGE,
-							b.getString("messageText"));
+							bnd.getString("messageText"));
 					value.put(DatabaseHelper.KEY_TOREAD, "0");
-					value.put(DatabaseHelper.KEY_TAG, b.getString("messageTag"));
+					value.put(DatabaseHelper.KEY_TAG,
+							bnd.getString("messageTag"));
 
 					long newMessageId = p.insertNewMessage(value);
 
@@ -354,7 +364,7 @@ public class MainThread extends Thread {
 						SynchronizationManager.getInstance()
 								.onSynchronizationFinish(syncMsg);
 
-						b.putLong("messageId", newMessageId);
+						bnd.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 
 						mainThreadHandler.sendMessage(m);
@@ -373,33 +383,34 @@ public class MainThread extends Thread {
 
 				try {
 
-					b = msg.getData();
+					bnd = msg.getData();
 					JSONObject parameters = new JSONObject();
 					JSONObject result = null;
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 					p = new Provider(UMessageApplication.getContext());
-					Cursor infoChat = p.getChat(b.getString("prefix"),
-							b.getString("num"));
+					Cursor infoChat = p.getChat(bnd.getString("prefix"),
+							bnd.getString("num"));
 
 					infoChat.moveToNext();
 
 					parameters.accumulate("action", "SEND_NEW_MESSAGE");
 					parameters.accumulate("sessionId",
 							configuration.getSessid());
-					parameters.accumulate("destPrefix", b.getString("prefix"));
-					parameters.accumulate("destNum", b.getString("num"));
+					parameters
+							.accumulate("destPrefix", bnd.getString("prefix"));
+					parameters.accumulate("destNum", bnd.getString("num"));
 					parameters
 							.accumulate(
 									"localChatVersion",
 									infoChat.getString(infoChat
 											.getColumnIndex(DatabaseHelper.KEY_VERSION)));
 
-					parameters
-							.accumulate("message", b.getString("messageText"));
+					parameters.accumulate("message",
+							bnd.getString("messageText"));
 					parameters.accumulate("type", "text");
 					parameters.accumulate("messageTag",
-							b.getString("messageTag"));
+							bnd.getString("messageTag"));
 
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
@@ -431,18 +442,15 @@ public class MainThread extends Thread {
 						}
 
 						if (result.getBoolean("syncChatRequired")) {
-							Toast.makeText(UMessageApplication.getContext(),
-									"sync chat required", Toast.LENGTH_LONG)
-									.show();
-
 							m = new Message();
 							m.what = MessageTypes.SYNCHRONIZE_CHAT;
-							Bundle bnd = new Bundle();
-							bnd.putString("prefix", b.getString("prefix"));
-							bnd.putString("num", b.getString("num"));
-							m.setData(bnd);
+							b = new Bundle();
+							b.putString("prefix", bnd.getString("prefix"));
+							b.putString("num", bnd.getString("num"));
+							b.putBoolean("messagesToUpload", true);
+							m.setData(b);
 
-							mainThreadHandler.sendMessage(m);
+							mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 							break;
 						}
@@ -454,12 +462,12 @@ public class MainThread extends Thread {
 
 						}
 
-						if (p.updateMessage(b.getLong("messageId"), result
+						if (p.updateMessage(bnd.getLong("messageId"), result
 								.getString("statusNewMessage"), Long
 								.parseLong(result.getString("dataNewMessage")))) {
 
 							syncMsg = new Message();
-							syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+							syncMsg.what = MessageTypes.MESSAGE_UPLOADED;
 							SynchronizationManager.getInstance()
 									.onSynchronizationFinish(syncMsg);
 
@@ -484,6 +492,244 @@ public class MainThread extends Thread {
 			case MessageTypes.SYNCHRONIZE_CHAT:
 				Toast.makeText(UMessageApplication.getContext(),
 						"SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
+
+				try {
+					bnd = msg.getData();
+					JSONObject parameters = new JSONObject();
+					JSONObject result = null;
+					Configuration configuration = Utility
+							.getConfiguration(UMessageApplication.getContext());
+					p = new Provider(UMessageApplication.getContext());
+					Cursor infoChat = p.getChat(bnd.getString("prefix"),
+							bnd.getString("num"));
+
+					infoChat.moveToNext();
+
+					parameters
+							.accumulate("action", "GET_CONVERSATION_MESSAGES");
+					parameters.accumulate("sessionId",
+							configuration.getSessid());
+					parameters
+							.accumulate("destPrefix", bnd.getString("prefix"));
+					parameters.accumulate("destNum", bnd.getString("num"));
+					parameters
+							.accumulate(
+									"localChatVersion",
+									infoChat.getString(infoChat
+											.getColumnIndex(DatabaseHelper.KEY_VERSION)));
+
+					result = Utility.doPostRequest(Settings.SERVER_URL,
+							parameters);
+
+					if (result == null) {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					} else if (result.getString("errorCode").equals("KO")) {
+						mainThreadHandler.sendMessageDelayed(msg,
+								TIME_MINUTE * 1000);
+					} else if (result.getString("errorCode").equals("OK")) {
+						if (!result.getBoolean("isSessionValid")) {
+							configuration.setSessid("");
+							Utility.setConfiguration(
+									UMessageApplication.getContext(),
+									configuration);
+
+							break;
+						}
+
+						if (!result.getBoolean("isDestValid")) {
+							// bisognerebbe cancellare i messaggi dal db
+							// locale ?
+							Toast.makeText(UMessageApplication.getContext(),
+									"destination not valid", Toast.LENGTH_LONG)
+									.show();
+
+							break;
+						}
+
+						if (result.getInt("numMessages") == 0) {
+							break;
+						}
+
+						boolean updatedSomething = false;
+						JSONArray messages = result.getJSONArray("messages");
+						Cursor localMessage;
+						for (int i = 0; i < messages.length(); i++) {
+							JSONObject message = messages.getJSONObject(i);
+
+							boolean isIncomingMessage = message.getString(
+									"direction").equals("0") ? false : true;
+
+							localMessage = p.getMessageByTag(
+									bnd.getString("prefix"),
+									bnd.getString("num"),
+									message.getString("tag"));
+
+							if (isIncomingMessage) {
+								if (!localMessage.moveToNext()) {
+									ContentValues incomingMessage = new ContentValues();
+									incomingMessage.put(
+											DatabaseHelper.KEY_PREFIX,
+											bnd.getString("prefix"));
+									incomingMessage.put(DatabaseHelper.KEY_NUM,
+											bnd.getString("num"));
+									incomingMessage.put(
+											DatabaseHelper.KEY_DIRECTION, 1);
+									incomingMessage.put(
+											DatabaseHelper.KEY_STATUS,
+											message.getString("status"));
+									incomingMessage.put(
+											DatabaseHelper.KEY_DATA,
+											message.getString("data"));
+									incomingMessage.put(
+											DatabaseHelper.KEY_TYPE, "text");
+									incomingMessage.put(
+											DatabaseHelper.KEY_MESSAGE,
+											message.getString("msg"));
+									incomingMessage.put(
+											DatabaseHelper.KEY_TOREAD, "1");
+									incomingMessage.put(DatabaseHelper.KEY_TAG,
+											message.getString("tag"));
+
+									long newMessageId = p
+											.insertNewMessage(incomingMessage);
+									updatedSomething = true;
+
+									// schedulare l'update dello stato online,
+									// cioè ricevuto
+								} else {
+									String onlineMessageStatus = message
+											.getString("status");
+									long onlineMessageData = message
+											.getLong("data");
+									long idLocalMessage = localMessage
+											.getLong(localMessage
+													.getColumnIndex(DatabaseHelper.KEY_ID));
+									if (!localMessage
+											.getString(
+													localMessage
+															.getColumnIndex(DatabaseHelper.KEY_STATUS))
+											.equals(onlineMessageStatus)) {
+										p.updateMessage(idLocalMessage,
+												onlineMessageStatus,
+												onlineMessageData);
+
+										updatedSomething = true;
+									}
+									// comunicare a db
+									// online
+									// stato messaggio cambiato
+								}
+							} else {
+								localMessage.moveToNext();
+								String onlineMessageStatus = message
+										.getString("status");
+								long onlineMessageData = message
+										.getLong("data");
+								long idLocalMessage = localMessage
+										.getLong(localMessage
+												.getColumnIndex(DatabaseHelper.KEY_ID));
+								if (!localMessage
+										.getString(
+												localMessage
+														.getColumnIndex(DatabaseHelper.KEY_STATUS))
+										.equals(onlineMessageStatus)) {
+									p.updateMessage(idLocalMessage,
+											onlineMessageStatus,
+											onlineMessageData);
+
+									updatedSomething = true;
+								}
+
+								// comunicare a db online
+								// stato messaggio cambiato
+							}
+
+						}
+
+						p = new Provider(UMessageApplication.getContext());
+						Cursor chatInfo = p.getChat(bnd.getString("prefix"),
+								bnd.getString("num"));
+						chatInfo.moveToNext();
+						p.updateChatVersion(chatInfo.getInt(chatInfo
+								.getColumnIndex(DatabaseHelper.KEY_ID)), result
+								.getString("onlineChatVersion"));
+
+						if (updatedSomething) {
+							syncMsg = new Message();
+							syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+							SynchronizationManager.getInstance()
+									.onSynchronizationFinish(syncMsg);
+						}
+
+						if (bnd.getBoolean("messagesToUpload")) {
+							m = new Message();
+							m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+							mainThreadHandler.sendMessage(m);
+						}
+
+					}
+
+				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
+				}
+				break;
+
+			case MessageTypes.CHECK_MESSAGES_TO_UPLOAD:
+
+				p = new Provider(UMessageApplication.getContext());
+				Cursor messagesToUpload = p.getMessagesToUpload();
+
+				if (messagesToUpload == null) {
+					break;
+				}
+
+				int errorCount = 0;
+				while (messagesToUpload.moveToNext()) {
+					try {
+						m = new Message();
+						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
+						b = new Bundle();
+						b.putString(
+								"prefix",
+								messagesToUpload.getString(messagesToUpload
+										.getColumnIndex(DatabaseHelper.KEY_PREFIX)));
+						b.putString(
+								"num",
+								messagesToUpload.getString(messagesToUpload
+										.getColumnIndex(DatabaseHelper.KEY_NUM)));
+						b.putString(
+								"messageText",
+								messagesToUpload.getString(messagesToUpload
+										.getColumnIndex(DatabaseHelper.KEY_MESSAGE)));
+						b.putString(
+								"messageTag",
+								messagesToUpload.getString(messagesToUpload
+										.getColumnIndex(DatabaseHelper.KEY_TAG)));
+						b.putLong("messageId", messagesToUpload
+								.getLong(messagesToUpload
+										.getColumnIndex(DatabaseHelper.KEY_ID)));
+						m.setData(b);
+
+						mainThreadHandler.sendMessage(m);
+
+					} catch (Exception e) {
+						errorCount++;
+
+					}
+
+				}
+
+				if (errorCount > 0) {
+					m = new Message();
+					m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+				}
+
+				break;
+
+			case MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE:
 
 				break;
 

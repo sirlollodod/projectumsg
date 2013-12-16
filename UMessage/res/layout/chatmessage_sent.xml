@@ -50,6 +50,7 @@
         android:layout_alignLeft="@+id/textView2"
         android:layout_below="@+id/textView2"
         android:layout_marginTop="-3dp"
+        android:layout_marginLeft="-15dp"
         android:background="#F7DFEC"
         android:text="time"
         android:textColor="#7D747C"
