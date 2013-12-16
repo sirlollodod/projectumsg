@@ -7,11 +7,6 @@ include './classes/SingleChatMessage.php';
 $imageContactFolder = "./UMessage/contactImages/";
 $db = new DBMS();
 
-//testing
-
-$_GET['destPrefix'] = '+' . $_GET['destPrefix'];
-//---------
-
 
 
 /**
@@ -23,13 +18,13 @@ $_GET['destPrefix'] = '+' . $_GET['destPrefix'];
  *
 */
 $response = array(
-		'request' => $_GET['action'],
+		'request' => $_POST['action'],
 		'errorCode' => '',
 		'errorInfo' => ''
 );
 
 
-switch ($_GET['action']){
+switch ($_POST['action']){
 
 	/**
 	 * + action: CHECK_USER_REGISTERED
@@ -44,7 +39,7 @@ switch ($_GET['action']){
 	 */
 
 	case 'CHECK_USER_REGISTERED':
-		$result = $db->checkUserRegistered($_GET['prefix'], $_GET['num']);
+		$result = $db->checkUserRegistered($_POST['prefix'], $_POST['num']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -56,7 +51,7 @@ switch ($_GET['action']){
 		if($result['isRegistered']){
 			$response['isRegistered'] = true;
 			$response['imageProfileSrc'] = $result['imageProfileSrc'];
-			if(!isset($_GET['anonymous']) || $_GET['anonymous'] != 'yes'){
+			if(!isset($_POST['anonymous']) || $_POST['anonymous'] != 'yes'){
 				$response['email'] = $result['email'];
 			}
 			else{
@@ -85,7 +80,7 @@ switch ($_GET['action']){
 		 *
 		 */
 	case 'REGISTER_USER':
-		$result = $db->registerUser($_GET['prefix'], $_GET['num'], $_GET['email']);
+		$result = $db->registerUser($_POST['prefix'], $_POST['num'], $_POST['email']);
 
 		if(!$result){
 			$response['errorCode'] = 'KO';
@@ -100,7 +95,7 @@ switch ($_GET['action']){
 		$response['num'] = $result['num'];
 		$response['email'] = $result['email'];
 
-		if($db->requestLoginUser($_GET['prefix'], $_GET['num'])){
+		if($db->requestLoginUser($_POST['prefix'], $_POST['num'])){
 			$response['verificationCodes'] = 'OK';
 		}
 		else{
@@ -122,7 +117,7 @@ switch ($_GET['action']){
 		 * + num: numero dell'utente loggato
 		 */
 	case 'LOGIN_USER':
-		$result = $db->loginUser($_GET['prefix'], $_GET['num'], $_GET['emailCode'], $_GET['smsCode']);
+		$result = $db->loginUser($_POST['prefix'], $_POST['num'], $_POST['emailCode'], $_POST['smsCode']);
 
 		if(!$result){
 			$response['errorCode'] = 'KO';
@@ -132,8 +127,8 @@ switch ($_GET['action']){
 		}
 
 		$response['errorCode'] = 'OK';
-		$response['prefix'] = $_GET['prefix'];
-		$response['num'] = $_GET['num'];
+		$response['prefix'] = $_POST['prefix'];
+		$response['num'] = $_POST['num'];
 		$response['sessionId'] = $result['sessionId'];
 		$response['imageProfileSrc'] = $result['imageProfileSrc'];
 
@@ -155,10 +150,12 @@ switch ($_GET['action']){
 		 * + dataNewMessage: timestamp (ms) associata al nuovo messaggio
 		 * + statusNewMessage: stato del nuovo messaggio
 		 * + syncChatRequired: true o false, a seconda che sia richiesta una sincronizzazione con la chat, prima di poter inserire il messaggio richiesto. Se true, la richiesta di creazione del nuovo messaggio viene scartata.
+		 * + chatVersionChanged: true o false, a seconda che la versione della chat sia stata modificata
+		 * + newChatVersion: la nuova versione della chat, se è stata aggiornata
 		 *
 		 */
 	case 'SEND_NEW_MESSAGE':
-		$result = $db->checkSessionId($_GET['sessionId']);
+		$result = $db->checkSessionId($_POST['sessionId']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -177,7 +174,7 @@ switch ($_GET['action']){
 			break;
 		}
 
-		$result = $db->checkUserRegistered($_GET['destPrefix'], $_GET['destNum']);
+		$result = $db->checkUserRegistered($_POST['destPrefix'], $_POST['destNum']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -194,7 +191,7 @@ switch ($_GET['action']){
 			$response['isDestValid'] = true;
 		}
 
-		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_GET['destPrefix'], $_GET['destNum'], $_GET['localChatVersion']);
+		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum'], $_POST['localChatVersion']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -213,10 +210,10 @@ switch ($_GET['action']){
 			$idChat = $result['idChat'];
 		}
 		else{
-			$result = $db->createNewSingleChat($myPrefix, $myNum, $_GET['destPrefix'], $_GET['destNum']);
+			$result = $db->createNewSingleChat($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum']);
 			if(!$result){
 				$response['errorCode'] = 'KO';
-				$response['errorInfo'] = 'PHP error';
+				$response['errorInfo'] = 'PHP error creating new single chat';
 				break;
 			}
 
@@ -229,7 +226,7 @@ switch ($_GET['action']){
 		$result = $db->getDirectionMessage($idChat, $myPrefix, $myNum);
 		if(!$result){
 			$response['errorCode'] = 'KO';
-			$response['errorInfo'] = 'PHP error';
+			$response['errorInfo'] = 'PHP error getting direction message';
 			break;
 		}
 
@@ -243,10 +240,10 @@ switch ($_GET['action']){
 			break;
 		}
 
-		$result = $db->createNewSingleChatMessage($idChat, $myDirection, $_GET['msg'], $_GET['type'], $_GET['messageTag']);
+		$result = $db->createNewSingleChatMessage($idChat, $myDirection, $_POST['message'], $_POST['type'], $_POST['messageTag']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
-			$response['errorInfo'] = 'PHP error';
+			$response['errorInfo'] = 'PHP error creating new single chat message';
 			break;
 		}
 
@@ -261,7 +258,7 @@ switch ($_GET['action']){
 		}
 		else{
 			$response['errorCode'] = 'KO';
-			$response['errorInfo'] = 'PHP error';
+			$response['errorInfo'] = 'PHP error: other';
 			break;
 		}
 
@@ -277,7 +274,7 @@ switch ($_GET['action']){
 		 *
 		 */
 	case 'SEND_NEW_PROFILE_IMAGE':
-		$result = $db->checkSessionId($_GET['sessionId']);
+		$result = $db->checkSessionId($_POST['sessionId']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -299,7 +296,7 @@ switch ($_GET['action']){
 		$imageName = $imageBaseName . ".jpg";
 
 		if(move_uploaded_file($_FILES['userProfileImage']['tmp_name'], $imageName)){
-			$result = $db->changeUserImage($_GET['sessionId'], $imageBaseName, $time);
+			$result = $db->changeUserImage($_POST['sessionId'], $imageBaseName, $time);
 			if(!$result){
 				$response['errorCode'] = 'KO';
 				$response['errorInfo'] = 'PHP error';
@@ -337,12 +334,21 @@ switch ($_GET['action']){
 		break;
 
 		/**
-		 *
-		 *
+		 * + action: GET_CONVERSATION_MESSAGES
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + destPrefix: prefisso internazionale comprensivo del '+' del destinatario
+		 * + destNum: numero di telefono del destinatario
+		 * + localChatVersion: versione locale (Android) della chat posseduta dal mittente
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 * + isDestValid: true o false, a seconda che il numero di telefono del destinatario sia già registrato al sistema online
+		 * + numMessages: numero di messaggi scaricati
+		 * + onlineChatVersion: versione online attuale della chat
+		 * + messages: [] contenente tutti i messaggi della chat selezionata presenti online
 		 *
 		 */
 	case 'GET_CONVERSATION_MESSAGES':
-		$result = $db->checkSessionId($_GET['sessionId']);
+		$result = $db->checkSessionId($_POST['sessionId']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -361,7 +367,7 @@ switch ($_GET['action']){
 			break;
 		}
 
-		$result = $db->checkUserRegistered($_GET['destPrefix'], $_GET['destNum']);
+		$result = $db->checkUserRegistered($_POST['destPrefix'], $_POST['destNum']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -378,7 +384,7 @@ switch ($_GET['action']){
 			$response['isDestValid'] = true;
 		}
 
-		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_GET['destPrefix'], $_GET['destNum'], $_GET['localChatVersion']);
+		$result = $db->checkSingleChatExists($myPrefix, $myNum, $_POST['destPrefix'], $_POST['destNum'], $_POST['localChatVersion']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
@@ -389,7 +395,7 @@ switch ($_GET['action']){
 			$response['errorCode'] = 'OK';
 			$response['errorInfo'] = 'No messages to download.';
 			$response['numMessages'] = 0;
-			$response['onlineChatVersion'] = $_GET['localChatVersion'];
+			$response['onlineChatVersion'] = $_POST['localChatVersion'];
 			$response['messages'] = '';
 			break;
 		}
@@ -398,7 +404,7 @@ switch ($_GET['action']){
 			$response['errorCode'] = 'OK';
 			$response['errorInfo'] = 'Chat synchronization not required';
 			$response['numMessages'] = 0;
-			$response['onlineChatVersion'] = $_GET['localChatVersion'];
+			$response['onlineChatVersion'] = $_POST['localChatVersion'];
 			$response['messages'] = '';
 			break;
 		}
@@ -431,6 +437,7 @@ switch ($_GET['action']){
 		}
 		
 		$response['errorCode'] = 'OK';
+		$response['errorInfo'] = 'Messages download';
 		$response['numMessages'] = $result['numMessages'];
 		$response['messages'] = $result['messages'];
 
