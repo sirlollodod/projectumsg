@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +20,9 @@ import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.PreviewChatAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.listeners.SynchronizationListener;
+import com.lollotek.umessage.managers.SynchronizationManager;
+import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Utility;
 
 public class ConversationsList extends Activity {
@@ -35,6 +39,8 @@ public class ConversationsList extends Activity {
 
 	private static int firstConversationDisplayed;
 
+	private SynchronizationListener syncListener;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -42,6 +48,41 @@ public class ConversationsList extends Activity {
 		setContentView(R.layout.activity_conversationslist);
 
 		context = this;
+
+		syncListener = new SynchronizationListener() {
+
+			@Override
+			public void onStart(Message msg) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onProgress(Message msg) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onFinish(final Message msg) {
+
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+						switch (msg.what) {
+						case MessageTypes.MESSAGE_UPDATE:
+							loadConversations();
+							break;
+						}
+
+					}
+
+				});
+
+			}
+
+		};
 
 		listView = (ListView) findViewById(R.id.listView1);
 
@@ -79,7 +120,11 @@ public class ConversationsList extends Activity {
 	protected void onResume() {
 		super.onResume();
 
+		SynchronizationManager.getInstance().registerSynchronizationListener(
+				syncListener);
+
 		loadConversations();
+
 	}
 
 	private void loadConversations() {
@@ -113,6 +158,9 @@ public class ConversationsList extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
+
+		SynchronizationManager.getInstance().unregisterSynchronizationListener(
+				syncListener);
 
 		firstConversationDisplayed = listView.getFirstVisiblePosition();
 	}
@@ -159,10 +207,16 @@ public class ConversationsList extends Activity {
 			configuration.setSessid("");
 			Utility.setConfiguration(context, configuration);
 
+			Intent service = new Intent(this,
+					com.lollotek.umessage.services.UMessageService.class);
+			stopService(service);
+
 			i = new Intent(this, com.lollotek.umessage.activities.Main.class);
 			startActivity(i);
 			finish();
 
+			break;
+			
 		case R.id.map:
 			i = new Intent(this, com.lollotek.umessage.activities.Map.class);
 			startActivity(i);

@@ -13,7 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getName();
 
 	// Database Version
-	private static final int DATABASE_VERSION = 4;
+	private static final int DATABASE_VERSION = 5;
 
 	// Database Name
 	public static final String DATABASE_NAME = "UMessage";
@@ -26,10 +26,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	// Table singlechat columns names
 	public static final String // KEY_IDCHAT = "idChat",
-			KEY_VERSION = "version",
+	KEY_VERSION = "version",
 			KEY_PREFIXDEST = "prefixDest",
 			KEY_NUMDEST = "numDest",
-			KEY_IDLASTMESSAGE = "idLastMessage";
+			KEY_IDLASTMESSAGE = "idLastMessage",
+			KEY_DATALASTMESSAGE = "dataLastMessage";
 
 	// Table singlechatmessages columns names
 	public static final String // KEY_IDMESSAGE = "idMessage",
@@ -52,8 +53,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"// + KEY_IDCHAT +
 													// " INTEGER UNIQUE,"
 			+ KEY_VERSION + " TEXT," + KEY_PREFIXDEST + " TEXT," + KEY_NUMDEST
-			+ " TEXT," + KEY_IDLASTMESSAGE + " INTEGER, UNIQUE("
-			+ KEY_PREFIXDEST + ", " + KEY_NUMDEST + "))";
+			+ " TEXT," + KEY_IDLASTMESSAGE + " INTEGER," + KEY_DATALASTMESSAGE
+			+ " INTEGER, UNIQUE(" + KEY_PREFIXDEST + ", " + KEY_NUMDEST + "))";
 
 	// Create table singlechatmessages
 	public static final String CREATE_TABLE_SINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES

@@ -127,7 +127,7 @@ public class SingleChatContact extends Activity {
 		p = new Provider(UMessageApplication.getContext());
 		Cursor userInfo = p.getUserInfo(prefix, num);
 
-		if ((userInfo != null) && (userInfo.moveToNext())) {
+		if ((userInfo != null) && (userInfo.moveToFirst())) {
 			name = userInfo.getString(userInfo
 					.getColumnIndex(DatabaseHelper.KEY_NAME));
 			iconSrc = userInfo.getString(userInfo
@@ -262,6 +262,10 @@ public class SingleChatContact extends Activity {
 
 		Cursor messages = p.getMessages(prefix, num);
 
+		if((messages == null) || (messages.getCount() == 0)){
+			return;
+		}
+		
 		int previousPosition = messages.getPosition();
 		int startPosition = messages.getCount();
 		boolean isSomeNewMessages = false;

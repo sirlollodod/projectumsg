@@ -93,12 +93,17 @@ public class UMessageService extends Service {
 
 		switch (actionRequest) {
 
-		case MessageTypes.STARTED_FROM_FIRST_EXECUTION_APP:
+		case MessageTypes.STARTED_FOR_INITIALIZE_SERVICE:
 
 			break;
 
 		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
 			scheduleDownloadAllProfileImages();
+			// da aggiungere check sync all chats & upload pending messages
+			serviceHandler.obtainMessage(
+					MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE).sendToTarget();
+			serviceHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
+					.sendToTarget();
 
 			break;
 
@@ -192,7 +197,7 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					this.sendMessageDelayed(m, 10 * 1000);
 				}
 				break;
 
@@ -204,7 +209,7 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					this.sendMessageDelayed(m, 10 * 1000);
 				}
 				break;
 
@@ -216,7 +221,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					this.sendMessageDelayed(m, 10 * 1000);
 				}
 
 				break;
@@ -230,8 +235,7 @@ public class UMessageService extends Service {
 							.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 				} catch (Exception e) {
 					this.sendEmptyMessageDelayed(
-							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES,
-							TIME_MINUTE * 1000);
+							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, 10 * 1000);
 				}
 				break;
 
@@ -243,8 +247,32 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					this.sendMessageDelayed(m, 10 * 1000);
 				}
+				break;
+
+			case MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE:
+				m = new Message();
+				m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.CHECK_MESSAGES_TO_UPLOAD:
+				m = new Message();
+				m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
+
 				break;
 			}
 		}

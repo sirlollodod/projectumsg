@@ -192,8 +192,6 @@ public class Provider {
 
 	// -------------- SINGLE CHAT MESSAGES -------------------------
 
-	// DA RIVEDERE: aggiungere data ultimo messaggio e check per il messaggio
-	// più vecchio, e non l'ultimo inserito temporalmente
 	public synchronized long insertNewMessage(ContentValues message) {
 		String prefix = message.getAsString(DatabaseHelper.KEY_PREFIX);
 		String num = message.getAsString(DatabaseHelper.KEY_NUM);
@@ -206,6 +204,7 @@ public class Provider {
 			newChat.put(DatabaseHelper.KEY_NUMDEST, num);
 			newChat.put(DatabaseHelper.KEY_VERSION, "0");
 			newChat.put(DatabaseHelper.KEY_IDLASTMESSAGE, "");
+			newChat.put(DatabaseHelper.KEY_DATALASTMESSAGE, 0);
 
 			idChat = insert(DatabaseHelper.TABLE_SINGLECHAT, null, newChat);
 		} else {
@@ -217,6 +216,10 @@ public class Provider {
 			return -1;
 		}
 
+		chat.close();
+		chat = getInfoChat(prefix, num);
+		chat.moveToFirst();
+
 		message.put(DatabaseHelper.KEY_IDCHAT, idChat);
 
 		message.remove(DatabaseHelper.KEY_PREFIX);
@@ -226,6 +229,7 @@ public class Provider {
 
 		idNewMessage = insert(DatabaseHelper.TABLE_SINGLECHATMESSAGES, null,
 				message);
+		long dataNewMessage = message.getAsLong(DatabaseHelper.KEY_DATA);
 
 		if ((idNewMessage == -1) || (idNewMessage == 0)) {
 			return -1;
@@ -233,13 +237,18 @@ public class Provider {
 
 		int affectedRows;
 
-		ContentValues chatToUpdate = new ContentValues();
+		if (dataNewMessage > chat.getLong(chat
+				.getColumnIndex(DatabaseHelper.KEY_DATALASTMESSAGE))) {
+			ContentValues chatToUpdate = new ContentValues();
 
-		chatToUpdate.put(DatabaseHelper.KEY_IDLASTMESSAGE, idNewMessage);
-		affectedRows = update(DatabaseHelper.TABLE_SINGLECHAT, chatToUpdate,
-				DatabaseHelper.KEY_ID + "=?",
-				new String[] { String.valueOf(idChat) });
+			chatToUpdate.put(DatabaseHelper.KEY_IDLASTMESSAGE, idNewMessage);
+			chatToUpdate
+					.put(DatabaseHelper.KEY_DATALASTMESSAGE, dataNewMessage);
+			affectedRows = update(DatabaseHelper.TABLE_SINGLECHAT,
+					chatToUpdate, DatabaseHelper.KEY_ID + "=?",
+					new String[] { String.valueOf(idChat) });
 
+		}
 		return idNewMessage;
 	}
 
@@ -317,6 +326,56 @@ public class Provider {
 
 	public synchronized boolean updateMessage(long idMessage, String newStatus,
 			long newData) {
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+		Cursor messageInfo = null;
+		try {
+			messageInfo = db.query(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
+					null, DatabaseHelper.KEY_ID + "=?",
+					new String[] { String.valueOf(idMessage) }, null, null,
+					null);
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+			return false;
+		}
+
+		if ((messageInfo == null) || (!messageInfo.moveToFirst())) {
+			return false;
+		}
+
+		messageInfo.moveToFirst();
+		int idChat = messageInfo.getInt(messageInfo
+				.getColumnIndex(DatabaseHelper.KEY_IDCHAT));
+
+		Cursor chatInfo = null;
+		try {
+			chatInfo = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
+					DatabaseHelper.KEY_ID + "=?",
+					new String[] { String.valueOf(idChat) }, null, null, null);
+
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(),
+					Toast.LENGTH_LONG).show();
+			return false;
+		}
+
+		if ((chatInfo == null) || (!chatInfo.moveToFirst())) {
+			return false;
+		}
+
+		chatInfo.moveToFirst();
+		if (newData > chatInfo.getLong(chatInfo
+				.getColumnIndex(DatabaseHelper.KEY_DATALASTMESSAGE))) {
+			ContentValues chatToUpdate = new ContentValues();
+			chatToUpdate.put(DatabaseHelper.KEY_IDLASTMESSAGE, idMessage);
+			chatToUpdate.put(DatabaseHelper.KEY_DATALASTMESSAGE, newData);
+
+			update(DatabaseHelper.TABLE_SINGLECHAT, chatToUpdate,
+					DatabaseHelper.KEY_ID + "=?",
+					new String[] { String.valueOf(idChat) });
+
+		}
 
 		ContentValues messageToUpdate = new ContentValues();
 
