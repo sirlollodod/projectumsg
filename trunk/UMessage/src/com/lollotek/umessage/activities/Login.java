@@ -138,16 +138,15 @@ public class Login extends Activity {
 					"Utente loggato!\n", Toast.LENGTH_SHORT).show();
 
 			String myProfileImageUrl = result.getString("imageProfileSrc");
+			Intent service = new Intent(UMessageApplication.getContext(),
+					com.lollotek.umessage.services.UMessageService.class);
 			if (myProfileImageUrl.length() > 2) {
-				Intent service = new Intent(UMessageApplication.getContext(),
-						com.lollotek.umessage.services.UMessageService.class);
-
 				service.putExtra("action",
 						MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
 				service.putExtra("imageUrl", myProfileImageUrl.substring(2));
-				startService(service);
-
 			}
+
+			startService(service);
 
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.ConversationsList.class);

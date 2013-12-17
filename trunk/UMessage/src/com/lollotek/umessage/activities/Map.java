@@ -97,4 +97,13 @@ public class Map extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	protected void onStop() {
+		super.onStop();
+		
+		finish();
+	}
+	
+	
+
 }

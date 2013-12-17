@@ -366,12 +366,17 @@ public class MainThread extends Thread {
 						mainThreadHandler.sendMessage(m);
 
 					} else {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 					}
 				} catch (Exception e) {
-					mainThreadHandler.sendMessageDelayed(msg,
-							TIME_MINUTE * 1000);
+					m = new Message();
+					m.setData(msg.getData());
+					m.what = msg.what;
+					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 
@@ -412,10 +417,16 @@ public class MainThread extends Thread {
 							parameters);
 
 					if (result == null) {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 					} else if (result.getString("errorCode").equals("KO")) {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 					} else if (result.getString("errorCode").equals("OK")) {
 						if (!result.getBoolean("isSessionValid")) {
@@ -472,14 +483,20 @@ public class MainThread extends Thread {
 						}
 
 					} else {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 					}
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							e.toString(), Toast.LENGTH_LONG).show();
-					mainThreadHandler.sendMessageDelayed(msg,
+					m = new Message();
+					m.setData(msg.getData());
+					m.what = msg.what;
+					mainThreadHandler.sendMessageDelayed(m,
 							TIME_MINUTE * 1000);
 				}
 
@@ -514,7 +531,10 @@ public class MainThread extends Thread {
 							parameters);
 
 					if (result == null) {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 
 						break;
@@ -524,7 +544,10 @@ public class MainThread extends Thread {
 							.getString("onlineChatVersion");
 
 					if (result.getString("errorCode").equals("KO")) {
-						mainThreadHandler.sendMessageDelayed(msg,
+						m = new Message();
+						m.setData(msg.getData());
+						m.what = msg.what;
+						mainThreadHandler.sendMessageDelayed(m,
 								TIME_MINUTE * 1000);
 
 						break;
@@ -569,6 +592,7 @@ public class MainThread extends Thread {
 						boolean updatedSomething = false;
 						JSONArray messages = result.getJSONArray("messages");
 						Cursor localMessage;
+						ContentValues newIncomingMessage;
 
 						for (int i = 0; i < messages.length(); i++) {
 							JSONObject message = messages.getJSONObject(i);
@@ -588,7 +612,7 @@ public class MainThread extends Thread {
 								if ((localMessage == null)
 										|| (!localMessage.moveToFirst())) {
 
-									ContentValues newIncomingMessage = new ContentValues();
+									newIncomingMessage = new ContentValues();
 									newIncomingMessage.put(
 											DatabaseHelper.KEY_PREFIX,
 											prefixDest);
@@ -615,6 +639,11 @@ public class MainThread extends Thread {
 									long newMessageId = p
 											.insertNewMessage(newIncomingMessage);
 									updatedSomething = true;
+
+									syncMsg = new Message();
+									syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+									SynchronizationManager.getInstance()
+											.onSynchronizationFinish(syncMsg);
 
 									parameters = new JSONObject();
 									parameters.accumulate("action",
@@ -701,10 +730,42 @@ public class MainThread extends Thread {
 
 								}
 							} else {
-								if (!localMessage.moveToFirst()) {
+								boolean newMyMessage = false;
+								if ((localMessage == null)
+										|| (!localMessage.moveToFirst())) {
 									// mio messaggio presente ancora online ma
 									// non localmente... lo devo inserire
 									// localmente
+
+									newIncomingMessage = new ContentValues();
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_PREFIX,
+											prefixDest);
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_NUM, numDest);
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_DIRECTION, 0);
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_STATUS,
+											message.getString("tag"));
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_DATA,
+											message.getString("data"));
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_TYPE, "text");
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_MESSAGE,
+											message.getString("msg"));
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_TOREAD, "0");
+									newIncomingMessage.put(
+											DatabaseHelper.KEY_TAG,
+											message.getString("tag"));
+
+									long newMessageId = p
+											.insertNewMessage(newIncomingMessage);
+									updatedSomething = true;
+									newMyMessage = true;
 
 								}
 
@@ -716,7 +777,8 @@ public class MainThread extends Thread {
 										.getString(
 												localMessage
 														.getColumnIndex(DatabaseHelper.KEY_STATUS))
-										.equals(onlineMessageStatus)) {
+										.equals(onlineMessageStatus)
+										|| (newMyMessage)) {
 									if (onlineMessageStatus.equals("3")) {
 
 										p.updateMessage(idLocalMessage, "4",
@@ -769,6 +831,7 @@ public class MainThread extends Thread {
 
 						}// fine for
 
+						infoChat.close();
 						infoChat = p.getChat(prefixDest, numDest);
 						infoChat.moveToFirst();
 						p.updateChatVersion(infoChat.getInt(infoChat
