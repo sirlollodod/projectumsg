@@ -69,6 +69,9 @@ public class Utility {
 			inputStream.close();
 			return configuration;
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
+
 			return null;
 		}
 
@@ -92,6 +95,9 @@ public class Utility {
 			outputStream.close();
 			return true;
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
+
 			return false;
 		}
 
@@ -147,6 +153,8 @@ public class Utility {
 		if (networkInfo != null && networkInfo.isConnected()) {
 			return true;
 		}
+		Toast.makeText(context, TAG + "Connessione non presente...",
+				Toast.LENGTH_LONG).show();
 		return false;
 	}
 
@@ -225,6 +233,8 @@ public class Utility {
 			imageFolder.mkdir();
 
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 
 		}
 	}
@@ -241,6 +251,8 @@ public class Utility {
 
 			mainFolder = context.getExternalFilesDir(null);
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 
 		}
 
@@ -294,6 +306,9 @@ public class Utility {
 			result = new JSONObject(responseString);
 
 		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
+
 			throw new HttpException("Errore upload immagine.");
 		}
 
@@ -354,7 +369,9 @@ public class Utility {
 			}
 			return sb.toString();
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
+
 		}
 		return null;
 	}
