@@ -1,15 +1,16 @@
 package com.lollotek.umessage.db;
 
-import com.lollotek.umessage.UMessageApplication;
-
-import android.app.DownloadManager.Query;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
+import com.lollotek.umessage.UMessageApplication;
+
 public class Provider {
+
+	private static final String TAG = Provider.class.getName();
 
 	private static DatabaseHelper dbHelper = null;
 
@@ -80,8 +81,8 @@ public class Provider {
 							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
 							prefix, num }, null, null, null);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 		return chat;
 	}
@@ -98,8 +99,8 @@ public class Provider {
 			c = db.query(DatabaseHelper.TABLE_USER, null, null, null, null,
 					null, DatabaseHelper.KEY_NAME);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 		return c;
 	}
@@ -145,8 +146,8 @@ public class Provider {
 							+ DatabaseHelper.KEY_NUM + "=?", new String[] {
 							prefix, num }, null, null, null);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return userInfo;
@@ -183,8 +184,8 @@ public class Provider {
 			chats = db.query(DatabaseHelper.TABLE_SINGLECHAT, null, null, null,
 					null, null, null);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 		return chats;
 
@@ -279,8 +280,8 @@ public class Provider {
 							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
 							prefix, num }, null, null, null);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 			return null;
 		}
 
@@ -306,8 +307,8 @@ public class Provider {
 					null, null, DatabaseHelper.KEY_DATA);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return messages;
@@ -350,8 +351,8 @@ public class Provider {
 					new String[] { String.valueOf(idMessage) }, null, null,
 					null);
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 			return false;
 		}
 
@@ -370,8 +371,8 @@ public class Provider {
 					new String[] { String.valueOf(idChat) }, null, null, null);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 			return false;
 		}
 
@@ -422,8 +423,8 @@ public class Provider {
 							prefix, num }, null, null, null);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		if ((chat == null) || (!chat.moveToFirst())) {
@@ -443,8 +444,8 @@ public class Provider {
 							String.valueOf(idChat), tag }, null, null,
 					DatabaseHelper.KEY_DATA + " DESC", "0, 1");
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return message;
@@ -502,8 +503,8 @@ public class Provider {
 			conversations = db.rawQuery(query, null);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return conversations;
@@ -531,8 +532,8 @@ public class Provider {
 			conversationsNewMessages = db.rawQuery(query, new String[] { "1" });
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return conversationsNewMessages;
@@ -572,8 +573,8 @@ public class Provider {
 
 			messagesToUpload = db.rawQuery(query, new String[] { "0", "0" });
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		return messagesToUpload;
@@ -591,8 +592,8 @@ public class Provider {
 			this.delete(DatabaseHelper.TABLE_TEMPSINGLECHATMESSAGES, null, null);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 			return false;
 		}
 

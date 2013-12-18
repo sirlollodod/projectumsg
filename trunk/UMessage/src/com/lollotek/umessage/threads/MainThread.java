@@ -28,6 +28,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class MainThread extends Thread {
 
+	private static final String TAG = MainThread.class.getName();
+
 	private Handler serviceThreadHandler = null, updateThreadHandler = null,
 			newMessageThreadHandler = null;
 	private MainThreadHandler mainThreadHandler = null;
@@ -168,7 +170,7 @@ public class MainThread extends Thread {
 							configuration.getSessid());
 
 					Toast.makeText(UMessageApplication.getContext(),
-							result.toString(), Toast.LENGTH_LONG).show();
+							TAG + result.toString(), Toast.LENGTH_LONG).show();
 					if ((result == null)
 							|| (result.getString("errorCode").equals("KO"))) {
 						m = new Message();
@@ -185,13 +187,13 @@ public class MainThread extends Thread {
 						Utility.setConfiguration(
 								UMessageApplication.getContext(), configuration);
 						Toast.makeText(UMessageApplication.getContext(),
-								"sessione non valida... azzerata!",
+								TAG + "sessione non valida... azzerata!",
 								Toast.LENGTH_LONG).show();
 					}
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 					m = new Message();
 					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
 					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
@@ -442,8 +444,8 @@ public class MainThread extends Thread {
 							// bisognerebbe cancellare il messaggio dal db
 							// locale ?
 							Toast.makeText(UMessageApplication.getContext(),
-									"destination not valid", Toast.LENGTH_LONG)
-									.show();
+									TAG + "destination not valid",
+									Toast.LENGTH_LONG).show();
 
 							break;
 						}
@@ -492,7 +494,7 @@ public class MainThread extends Thread {
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 					m = new Message();
 					m.setData(msg.getData());
 					m.what = msg.what;
@@ -511,6 +513,7 @@ public class MainThread extends Thread {
 					String sessionId = configuration.getSessid();
 					parameters = new JSONObject();
 					Cursor infoChat = p.getChat(prefixDest, numDest);
+					boolean updatedSomething = false;
 
 					if ((infoChat == null) || (!infoChat.moveToFirst())) {
 						p.createNewChat(prefixDest, numDest);
@@ -570,8 +573,8 @@ public class MainThread extends Thread {
 							// bisognerebbe cancellare i messaggi dal db
 							// locale ?
 							Toast.makeText(UMessageApplication.getContext(),
-									"destination not valid", Toast.LENGTH_LONG)
-									.show();
+									TAG + "destination not valid",
+									Toast.LENGTH_LONG).show();
 
 							break;
 						}
@@ -592,7 +595,6 @@ public class MainThread extends Thread {
 							break;
 						}
 
-						boolean updatedSomething = false;
 						JSONArray messages = result.getJSONArray("messages");
 						Cursor localMessage;
 						ContentValues newIncomingMessage;
@@ -642,11 +644,6 @@ public class MainThread extends Thread {
 									long newMessageId = p
 											.insertNewMessage(newIncomingMessage);
 									updatedSomething = true;
-
-									syncMsg = new Message();
-									syncMsg.what = MessageTypes.MESSAGE_UPDATE;
-									SynchronizationManager.getInstance()
-											.onSynchronizationFinish(syncMsg);
 
 									parameters = new JSONObject();
 									parameters.accumulate("action",
@@ -858,7 +855,7 @@ public class MainThread extends Thread {
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 				}
 
 				break;
@@ -947,7 +944,7 @@ public class MainThread extends Thread {
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 				}
 
 				mainThreadHandler
@@ -1034,7 +1031,7 @@ public class MainThread extends Thread {
 					}
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 				}
 
 				break;

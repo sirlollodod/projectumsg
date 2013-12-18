@@ -27,6 +27,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Login extends Activity {
 
+	private static final String TAG = Login.class.getName();
+
 	EditText smsCode, emailCode;
 	Button b1;
 
@@ -135,7 +137,7 @@ public class Login extends Activity {
 					configuration);
 
 			Toast.makeText(UMessageApplication.getContext(),
-					"Utente loggato!\n", Toast.LENGTH_SHORT).show();
+					TAG + "Utente loggato!\n", Toast.LENGTH_SHORT).show();
 
 			String myProfileImageUrl = result.getString("imageProfileSrc");
 			Intent service = new Intent(UMessageApplication.getContext(),
@@ -153,8 +155,8 @@ public class Login extends Activity {
 			startActivity(i);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 	}

@@ -20,6 +20,8 @@ import com.lollotek.umessage.R;
 
 public class Map extends Activity {
 
+	private static final String TAG = Map.class.getName();
+
 	private String provider;
 	private LocationManager locationManager;
 
@@ -58,7 +60,7 @@ public class Map extends Activity {
 			map.moveCamera(CameraUpdateFactory.newLatLngZoom(myPosition, 13));
 
 		} catch (Exception e) {
-			Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -89,7 +91,8 @@ public class Map extends Activity {
 								+ destPosition.longitude));
 				startActivity(i);
 			} catch (Exception e) {
-				Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+				Toast.makeText(this, TAG + e.toString(), Toast.LENGTH_LONG)
+						.show();
 			}
 			finish();
 			break;
@@ -100,10 +103,8 @@ public class Map extends Activity {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		
+
 		finish();
 	}
-	
-	
 
 }

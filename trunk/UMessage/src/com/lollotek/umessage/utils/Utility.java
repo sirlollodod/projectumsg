@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -50,6 +49,8 @@ import com.lollotek.umessage.UMessageApplication;
 public class Utility {
 
 	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
+	private static final String TAG = Utility.class.getName();
 
 	/**
 	 * Carica la configurazione dal file specificato.
@@ -199,7 +200,8 @@ public class Utility {
 			result = new JSONObject(response);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 			return null;
 		}
 
@@ -260,8 +262,8 @@ public class Utility {
 			in.close();
 			out.close();
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(),
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -329,7 +331,8 @@ public class Utility {
 			fos.close();
 
 		} catch (Exception e) {
-			// Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+			Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
+					.show();
 			return false;
 		}
 

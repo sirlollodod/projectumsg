@@ -19,6 +19,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class ContactAdapter extends SimpleCursorAdapter {
 
+	private static final String TAG = ContactAdapter.class.getName();
+	
 	private Cursor cursor;
 	private Context context;
 

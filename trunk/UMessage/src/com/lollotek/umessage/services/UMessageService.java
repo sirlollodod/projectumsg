@@ -20,6 +20,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class UMessageService extends Service {
 
+	private static final String TAG = UMessageService.class.getName();
+
 	private Context instance = null;
 	private ServiceHandler serviceHandler = null;
 	private MainThread mainThread = null;
@@ -47,7 +49,8 @@ public class UMessageService extends Service {
 				mainThread.start();
 			}
 		} catch (Exception e) {
-			Toast.makeText(instance, e.toString(), Toast.LENGTH_LONG).show();
+			Toast.makeText(instance, TAG + e.toString(), Toast.LENGTH_LONG)
+					.show();
 		}
 
 	}
@@ -240,7 +243,7 @@ public class UMessageService extends Service {
 				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
 
 				try {
-					mainThreadHandler.sendMessage(m);
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 10 * 1000);
 				}
