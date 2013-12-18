@@ -99,11 +99,6 @@ public class UMessageService extends Service {
 
 		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
 			scheduleDownloadAllProfileImages();
-			// da aggiungere check sync all chats & upload pending messages
-			serviceHandler.obtainMessage(
-					MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE).sendToTarget();
-			serviceHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
-					.sendToTarget();
 
 			break;
 

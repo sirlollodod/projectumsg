@@ -12,12 +12,11 @@ public class MessageTypes {
 	// Tipi messaggio ricevuti da UpdateThreadHandler
 
 	// Tipi messaggio ricevuti da NewMessageThreadHandler
-	
-	
+
 	// Tipi messaggio generali
 	public static final int DESTROY = 50;
 	public static final int ERROR = 51;
-	
+
 	// Tipi messaggio ricevuti da Service e/o Thread
 	public static final int DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC = 70;
 	public static final int UPLOAD_MY_PROFILE_IMAGE = 71;
@@ -30,11 +29,11 @@ public class MessageTypes {
 	public static final int SYNCHRONIZE_CHAT = 78;
 	public static final int CHECK_MESSAGES_TO_UPLOAD = 79;
 	public static final int CHECK_CHATS_TO_SYNCHRONIZE = 80;
-	
-	// Tipi messaggio ricevuti da SynchronizationManager e SynchronizationListeners
+	public static final int GET_CHATS_VERSION = 81;
+
+	// Tipi messaggio ricevuti da SynchronizationManager e
+	// SynchronizationListeners
 	public static final int MESSAGE_UPDATE = 100;
 	public static final int MESSAGE_UPLOADED = 101;
-	
-	
-	
+
 }

@@ -54,8 +54,7 @@ public class MainThread extends Thread {
 		newMessageThread = new NewMessageThread(mainThreadHandler);
 		newMessageThread.start();
 
-		mainThreadHandler
-				.obtainMessage(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE)
+		mainThreadHandler.obtainMessage(MessageTypes.GET_CHATS_VERSION)
 				.sendToTarget();
 		mainThreadHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
 				.sendToTarget();
@@ -106,6 +105,8 @@ public class MainThread extends Thread {
 
 			Message m, syncMsg;
 			Bundle b, bnd;
+
+			JSONObject parameters, result;
 
 			p = new Provider(UMessageApplication.getContext());
 
@@ -161,7 +162,7 @@ public class MainThread extends Thread {
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 
-					JSONObject result = Utility.uploadImageProfile(
+					result = Utility.uploadImageProfile(
 							UMessageApplication.getContext(),
 							Settings.SERVER_URL, myNewProfileImage,
 							configuration.getSessid());
@@ -266,8 +267,8 @@ public class MainThread extends Thread {
 
 					try {
 
-						JSONObject parameters = new JSONObject();
-						JSONObject result = new JSONObject();
+						parameters = new JSONObject();
+						result = new JSONObject();
 
 						parameters
 								.accumulate("action", "CHECK_USER_REGISTERED");
@@ -385,8 +386,7 @@ public class MainThread extends Thread {
 				try {
 
 					bnd = msg.getData();
-					JSONObject parameters = new JSONObject();
-					JSONObject result = null;
+					parameters = new JSONObject();
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 
@@ -496,8 +496,7 @@ public class MainThread extends Thread {
 					m = new Message();
 					m.setData(msg.getData());
 					m.what = msg.what;
-					mainThreadHandler.sendMessageDelayed(m,
-							TIME_MINUTE * 1000);
+					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 
 				break;
@@ -510,10 +509,14 @@ public class MainThread extends Thread {
 					String prefixDest = bnd.getString("prefix");
 					String numDest = bnd.getString("num");
 					String sessionId = configuration.getSessid();
-					JSONObject parameters = new JSONObject();
-					JSONObject result = null;
+					parameters = new JSONObject();
 					Cursor infoChat = p.getChat(prefixDest, numDest);
 
+					if ((infoChat == null) || (!infoChat.moveToFirst())) {
+						p.createNewChat(prefixDest, numDest);
+					}
+
+					infoChat = p.getChat(prefixDest, numDest);
 					infoChat.moveToFirst();
 
 					parameters
@@ -952,6 +955,87 @@ public class MainThread extends Thread {
 				m = new Message();
 				m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
 				mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+
+				break;
+
+			case MessageTypes.GET_CHATS_VERSION:
+
+				try {
+					m = new Message();
+					m.what = MessageTypes.GET_CHATS_VERSION;
+					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+
+					Configuration configuration = Utility
+							.getConfiguration(UMessageApplication.getContext());
+					String sessionId = configuration.getSessid();
+					parameters = new JSONObject();
+					parameters.accumulate("action", "GET_CHATS_VERSION");
+					parameters.accumulate("sessionId", sessionId);
+
+					result = null;
+					result = Utility.doPostRequest(Settings.SERVER_URL,
+							parameters);
+
+					if (result == null) {
+						mainThreadHandler.sendMessageDelayed(m,
+								TIME_MINUTE * 1000);
+						break;
+					} else if (result.getString("errorCode").equals("KO")) {
+						mainThreadHandler.sendMessageDelayed(m,
+								TIME_MINUTE * 1000);
+						break;
+					} else if (result.getString("errorCode").equals("OK")) {
+						if (result.getInt("numChats") == 0) {
+							mainThreadHandler.sendMessageDelayed(m,
+									TIME_MINUTE * 1000);
+							break;
+						}
+
+						JSONArray chatsInfo = result.getJSONArray("chatsInfo");
+						JSONObject onlineChat;
+						for (int i = 0; i < chatsInfo.length(); i++) {
+							onlineChat = chatsInfo.getJSONObject(i);
+							String prefixDest, numDest, version;
+							prefixDest = onlineChat.getString("prefixDest");
+							numDest = onlineChat.getString("numDest");
+							version = onlineChat.getString("version");
+							Cursor localChat = p.getChat(prefixDest, numDest);
+
+							if ((localChat == null)
+									|| (!localChat.moveToFirst())) {
+								m = new Message();
+								b = new Bundle();
+								b.putString("prefix", prefixDest);
+								b.putString("num", numDest);
+								m.what = MessageTypes.SYNCHRONIZE_CHAT;
+								m.setData(b);
+
+								mainThreadHandler.sendMessageAtFrontOfQueue(m);
+
+							} else {
+								localChat.moveToFirst();
+								String localVersion = localChat
+										.getString(localChat
+												.getColumnIndex(DatabaseHelper.KEY_VERSION));
+								if (!version.equals(localVersion)) {
+									m = new Message();
+									b = new Bundle();
+									b.putString("prefix", prefixDest);
+									b.putString("num", numDest);
+									m.what = MessageTypes.SYNCHRONIZE_CHAT;
+									m.setData(b);
+
+									mainThreadHandler
+											.sendMessageAtFrontOfQueue(m);
+								}
+							}
+
+						}
+					}
+				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
+				}
 
 				break;
 
