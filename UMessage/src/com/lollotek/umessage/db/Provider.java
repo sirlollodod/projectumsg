@@ -190,6 +190,21 @@ public class Provider {
 
 	}
 
+	public boolean createNewChat(String prefix, String num) {
+		ContentValues newChat = new ContentValues();
+		newChat.put(DatabaseHelper.KEY_PREFIXDEST, prefix);
+		newChat.put(DatabaseHelper.KEY_NUMDEST, num);
+		newChat.put(DatabaseHelper.KEY_VERSION, "0");
+		newChat.put(DatabaseHelper.KEY_IDLASTMESSAGE, "");
+		newChat.put(DatabaseHelper.KEY_DATALASTMESSAGE, 0);
+
+		if (insert(DatabaseHelper.TABLE_SINGLECHAT, null, newChat) != -1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	// -------------- SINGLE CHAT MESSAGES -------------------------
 
 	public synchronized long insertNewMessage(ContentValues message) {
