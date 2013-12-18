@@ -28,7 +28,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class MainThread extends Thread {
 
-	private static final String TAG = MainThread.class.getName();
+	private static final String TAG = MainThread.class.getName() + ":\n";
 
 	private Handler serviceThreadHandler = null, updateThreadHandler = null,
 			newMessageThreadHandler = null;

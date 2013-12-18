@@ -35,7 +35,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class SingleChatContact extends Activity {
 
-	private static final String TAG = SingleChatContact.class.getName();
+	private static final String TAG = SingleChatContact.class.getName() + ":\n";
 	
 	String[] fromColumns = {};
 	int[] toViews = {};

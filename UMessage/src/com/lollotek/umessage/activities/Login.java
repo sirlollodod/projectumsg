@@ -27,7 +27,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Login extends Activity {
 
-	private static final String TAG = Login.class.getName();
+	private static final String TAG = Login.class.getName() + ":\n";
 
 	EditText smsCode, emailCode;
 	Button b1;

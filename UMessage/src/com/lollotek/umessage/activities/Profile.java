@@ -38,7 +38,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Profile extends Activity {
 
-	private static final String TAG = Profile.class.getName();
+	private static final String TAG = Profile.class.getName() + ":\n";
 
 	private ImageView iv;
 	private Button b;

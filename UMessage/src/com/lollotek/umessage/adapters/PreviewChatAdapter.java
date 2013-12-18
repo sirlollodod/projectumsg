@@ -21,7 +21,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class PreviewChatAdapter extends SimpleCursorAdapter {
 
-	private static final String TAG = PreviewChatAdapter.class.getName();
+	private static final String TAG = PreviewChatAdapter.class.getName() + ":\n";
 	
 	private Cursor cursor;
 	private Context context;

@@ -27,7 +27,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class ConversationsList extends Activity {
 
-	private static final String TAG = ConversationsList.class.getName();
+	private static final String TAG = ConversationsList.class.getName() + ":\n";
 	
 	private Context context = null;
 

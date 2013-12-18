@@ -16,7 +16,7 @@ import com.lollotek.umessage.db.DatabaseHelper;
 
 public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 
-	private static final String TAG = SingleChatMessagesAdapter.class.getName();
+	private static final String TAG = SingleChatMessagesAdapter.class.getName() + ":\n";
 	
 	private Cursor cursor;
 	private Context context;

@@ -9,7 +9,7 @@ import com.lollotek.umessage.utils.Lists;
 
 public class SynchronizationManager {
 
-	private static final String TAG = SynchronizationManager.class.getName();
+	private static final String TAG = SynchronizationManager.class.getName() + ":\n";
 
 	private static SynchronizationManager instance;
 	private Object synRoot = new Object();

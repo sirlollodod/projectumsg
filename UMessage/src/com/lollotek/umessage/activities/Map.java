@@ -20,7 +20,7 @@ import com.lollotek.umessage.R;
 
 public class Map extends Activity {
 
-	private static final String TAG = Map.class.getName();
+	private static final String TAG = Map.class.getName() + ":\n";
 
 	private String provider;
 	private LocationManager locationManager;

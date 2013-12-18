@@ -23,7 +23,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Registration extends Activity {
 
-	private static final String TAG = Registration.class.getName();
+	private static final String TAG = Registration.class.getName() + ":\n";
 
 	TextView emailText;
 	EditText prefix, num, email;
