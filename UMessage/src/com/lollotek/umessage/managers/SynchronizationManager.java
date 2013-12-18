@@ -8,6 +8,7 @@ import com.lollotek.umessage.listeners.SynchronizationListener;
 import com.lollotek.umessage.utils.Lists;
 
 public class SynchronizationManager {
+
 	private static final String TAG = SynchronizationManager.class.getName();
 
 	private static SynchronizationManager instance;
@@ -32,7 +33,6 @@ public class SynchronizationManager {
 			return synchronizing;
 		}
 	}
-
 
 	public void stopSynchronizing() {
 		synchronized (synRoot) {

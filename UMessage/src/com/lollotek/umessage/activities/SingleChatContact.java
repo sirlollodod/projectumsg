@@ -12,18 +12,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
@@ -38,6 +35,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class SingleChatContact extends Activity {
 
+	private static final String TAG = SingleChatContact.class.getName();
+	
 	String[] fromColumns = {};
 	int[] toViews = {};
 	ListView listView;

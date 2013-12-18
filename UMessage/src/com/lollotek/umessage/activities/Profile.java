@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
@@ -36,6 +37,8 @@ import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
 public class Profile extends Activity {
+
+	private static final String TAG = Profile.class.getName();
 
 	private ImageView iv;
 	private Button b;
@@ -55,7 +58,8 @@ public class Profile extends Activity {
 		ActionBar ab = getActionBar();
 		ab.setDisplayHomeAsUpEnabled(true);
 		Configuration configuration = Utility.getConfiguration(context);
-		ab.setSubtitle(configuration.getPrefix() + "  " + configuration.getNum());
+		ab.setSubtitle(configuration.getPrefix() + "  "
+				+ configuration.getNum());
 		b.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -125,8 +129,8 @@ public class Profile extends Activity {
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
 			} catch (Exception e) {
-				// Toast.makeText(context, e.toString(),
-				// Toast.LENGTH_LONG).show();
+				Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
+						.show();
 			}
 			break;
 
@@ -158,7 +162,7 @@ public class Profile extends Activity {
 				Configuration configuration = Utility.getConfiguration(context);
 				configuration.setProfileImageToUpload(true);
 				Utility.setConfiguration(context, configuration);
-				
+
 				Intent service = new Intent(UMessageApplication.getContext(),
 						com.lollotek.umessage.services.UMessageService.class);
 				service.putExtra("action", MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
@@ -169,8 +173,8 @@ public class Profile extends Activity {
 				if (myNewProfileImageTemp.isFile()) {
 					myNewProfileImageTemp.delete();
 				}
-				// Toast.makeText(context, e.toString(),
-				// Toast.LENGTH_LONG).show();
+				Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
+						.show();
 			}
 			break;
 		}

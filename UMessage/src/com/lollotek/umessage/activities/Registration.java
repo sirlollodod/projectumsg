@@ -23,6 +23,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Registration extends Activity {
 
+	private static final String TAG = Registration.class.getName();
+
 	TextView emailText;
 	EditText prefix, num, email;
 	Button b1, b2;
@@ -98,7 +100,8 @@ public class Registration extends Activity {
 					new CheckUserAlreadyregisteredAsyncTask().execute(p, n);
 				} else {
 					Toast.makeText(UMessageApplication.getContext(),
-							"Invalid phone number", Toast.LENGTH_SHORT).show();
+							TAG + "Invalid phone number", Toast.LENGTH_SHORT)
+							.show();
 				}
 
 				break;
@@ -109,7 +112,8 @@ public class Registration extends Activity {
 					new RegisterUserAsyncTask().execute(p, n, e);
 				} else {
 					Toast.makeText(UMessageApplication.getContext(),
-							"Email not valid.", Toast.LENGTH_SHORT).show();
+							TAG + "Email not valid.", Toast.LENGTH_SHORT)
+							.show();
 				}
 
 				break;
@@ -171,10 +175,8 @@ public class Registration extends Activity {
 			try {
 
 				if (result == null) {
-					Toast msg = Toast.makeText(
-							UMessageApplication.getContext(), "Errore:1",
-							Toast.LENGTH_SHORT);
-					msg.show();
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "Errore:1", Toast.LENGTH_SHORT).show();
 					prefix.setEnabled(true);
 					num.setEnabled(true);
 					b1.setText("Conferma");
@@ -196,9 +198,9 @@ public class Registration extends Activity {
 
 				}
 			} catch (Exception e) {
-				Toast msg = Toast.makeText(UMessageApplication.getContext(),
-						"Errore:2", Toast.LENGTH_SHORT);
-				msg.show();
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "Errore:2", Toast.LENGTH_SHORT).show();
+
 				prefix.setEnabled(true);
 				num.setEnabled(true);
 				b1.setText("Conferma");
@@ -248,10 +250,8 @@ public class Registration extends Activity {
 
 			try {
 				if ((result == null)) {
-					Toast msg = Toast.makeText(
-							UMessageApplication.getContext(), "Errore:3",
-							Toast.LENGTH_SHORT);
-					msg.show();
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "Errore:3", Toast.LENGTH_SHORT).show();
 				} else if (result.getString("errorCode").equals("OK")) {
 					// utente registrato, codici inviati per sms e mail dal
 					// sistema
@@ -261,15 +261,14 @@ public class Registration extends Activity {
 					b2.setEnabled(true);
 					b2.setText("Conferma");
 
-					Toast msg = Toast.makeText(
-							UMessageApplication.getContext(),
-							"errore registrazione user", Toast.LENGTH_SHORT);
-					msg.show();
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "errore registrazione user",
+							Toast.LENGTH_SHORT).show();
 				}
 			} catch (Exception e) {
-				Toast msg = Toast.makeText(UMessageApplication.getContext(),
-						"Errore:4", Toast.LENGTH_SHORT);
-				msg.show();
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "Errore:4", Toast.LENGTH_SHORT).show();
+
 			}
 		}
 

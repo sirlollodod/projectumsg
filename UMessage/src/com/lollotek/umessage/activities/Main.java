@@ -16,6 +16,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
 
+	private static final String TAG = Main.class.getName();
+	
 	private Configuration m_configuration;
 
 	GoogleCloudMessaging gcm;

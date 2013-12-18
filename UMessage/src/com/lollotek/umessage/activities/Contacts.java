@@ -40,6 +40,8 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Contacts extends Activity {
 
+	private static final String TAG = Contacts.class.getName();
+
 	static TextView title, loading;
 	ListView listView;
 	String[] fromColumns = { DatabaseHelper.KEY_NAME,
@@ -303,8 +305,8 @@ public class Contacts extends Activity {
 			 * startService(service);
 			 */
 
-			Toast msg = Toast.makeText(UMessageApplication.getContext(),
-					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
+			Toast msg = Toast.makeText(UMessageApplication.getContext(), TAG
+					+ "Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
 
 			loading.setVisibility(View.GONE);
