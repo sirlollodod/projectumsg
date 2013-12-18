@@ -16,7 +16,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
 
-	private static final String TAG = Main.class.getName();
+	private static final String TAG = Main.class.getName() + ":\n";
 	
 	private Configuration m_configuration;
 

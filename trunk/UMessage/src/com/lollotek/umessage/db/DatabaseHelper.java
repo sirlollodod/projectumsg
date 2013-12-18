@@ -10,7 +10,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private Context mContext;
 
 	// Logcat tag
-	private static final String TAG = DatabaseHelper.class.getName();
+	private static final String TAG = DatabaseHelper.class.getName() + ":\n";
 
 	// Database Version
 	private static final int DATABASE_VERSION = 5;

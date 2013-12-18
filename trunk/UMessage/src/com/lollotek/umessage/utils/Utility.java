@@ -50,7 +50,7 @@ public class Utility {
 
 	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-	private static final String TAG = Utility.class.getName();
+	private static final String TAG = Utility.class.getName() + ":\n";
 
 	/**
 	 * Carica la configurazione dal file specificato.

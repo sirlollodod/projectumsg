@@ -40,7 +40,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class Contacts extends Activity {
 
-	private static final String TAG = Contacts.class.getName();
+	private static final String TAG = Contacts.class.getName() + ":\n";
 
 	static TextView title, loading;
 	ListView listView;

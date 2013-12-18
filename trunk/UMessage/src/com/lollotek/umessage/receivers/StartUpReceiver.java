@@ -8,7 +8,7 @@ import com.lollotek.umessage.utils.MessageTypes;
 
 public class StartUpReceiver extends BroadcastReceiver {
 
-	private static final String TAG = StartUpReceiver.class.getName();
+	private static final String TAG = StartUpReceiver.class.getName() + ":\n";
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {

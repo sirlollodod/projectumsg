@@ -10,7 +10,7 @@ import com.lollotek.umessage.UMessageApplication;
 
 public class Provider {
 
-	private static final String TAG = Provider.class.getName();
+	private static final String TAG = Provider.class.getName() + ":\n";
 
 	private static DatabaseHelper dbHelper = null;
 

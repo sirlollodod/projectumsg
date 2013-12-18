@@ -20,7 +20,7 @@ import com.lollotek.umessage.utils.Utility;
 
 public class UMessageService extends Service {
 
-	private static final String TAG = UMessageService.class.getName();
+	private static final String TAG = UMessageService.class.getName() + ":\n";
 
 	private Context instance = null;
 	private ServiceHandler serviceHandler = null;
