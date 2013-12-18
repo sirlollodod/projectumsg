@@ -114,14 +114,22 @@ public class MainThread extends Thread {
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "RECEIVE_UPDATE_THREAD_HANDLER",
+						Toast.LENGTH_LONG).show();
 				updateThreadHandler = (Handler) msg.obj;
 				break;
 
 			case MessageTypes.RECEIVE_NEW_MESSAGE_THREAD_HANDLER:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "RECEIVE_NEW_MESSAGE_THREAD_HANDLER",
+						Toast.LENGTH_LONG).show();
 				newMessageThreadHandler = (Handler) msg.obj;
 				break;
 
 			case MessageTypes.DESTROY:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "DESTROY", Toast.LENGTH_LONG).show();
 				updateThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
 				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY)
@@ -135,6 +143,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
+						Toast.LENGTH_LONG).show();
 				String imageUrl = (String) msg.obj;
 
 				mainFolder = Utility.getMainFolder(UMessageApplication
@@ -146,6 +157,8 @@ public class MainThread extends Thread {
 							UMessageApplication.getContext(),
 							myNewProfileImage, imageUrl);
 				} catch (HttpException e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 					this.sendEmptyMessageDelayed(
 							MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC,
 							TIME_MINUTE * 1000);
@@ -153,6 +166,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
+						.show();
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -201,6 +217,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC", Toast.LENGTH_LONG)
+						.show();
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -244,12 +263,16 @@ public class MainThread extends Thread {
 						}
 					}
 				} catch (Exception e) {
-
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 				}
 
 				break;
 
 			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "DOWNLOAD_ALL_USERS_IMAGES", Toast.LENGTH_LONG)
+						.show();
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -321,7 +344,8 @@ public class MainThread extends Thread {
 						}
 
 					} catch (Exception e) {
-
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
 					}
 
 				}
@@ -333,6 +357,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG)
+						.show();
 				m = new Message();
 				bnd = msg.getData();
 				m.setData(bnd);
@@ -366,7 +393,7 @@ public class MainThread extends Thread {
 						bnd.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 
-						mainThreadHandler.sendMessage(m);
+						mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 					} else {
 						m = new Message();
@@ -376,6 +403,8 @@ public class MainThread extends Thread {
 								TIME_MINUTE * 1000);
 					}
 				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + e.toString(), Toast.LENGTH_LONG).show();
 					m = new Message();
 					m.setData(msg.getData());
 					m.what = msg.what;
@@ -384,7 +413,8 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
-
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "UPLOAD_NEW_MESSAGE", Toast.LENGTH_LONG).show();
 				try {
 
 					bnd = msg.getData();
@@ -504,6 +534,8 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.SYNCHRONIZE_CHAT:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
 				try {
 					bnd = msg.getData();
 					Configuration configuration = Utility
@@ -861,7 +893,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.CHECK_MESSAGES_TO_UPLOAD:
-
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "CHECK_MESSAGES_TO_UPLOAD", Toast.LENGTH_LONG)
+						.show();
 				Cursor messagesToUpload = p.getMessagesToUpload();
 
 				if (messagesToUpload == null) {
@@ -898,21 +932,27 @@ public class MainThread extends Thread {
 						mainThreadHandler.sendMessage(m);
 
 					} catch (Exception e) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
 						errorCount++;
 
 					}
 
 				}
 
-				if (errorCount > 0) {
+				//if (errorCount > 0) {
 					m = new Message();
 					m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+					mainThreadHandler.removeMessages(MessageTypes.CHECK_MESSAGES_TO_UPLOAD);
 					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
-				}
+				//}
 
 				break;
 
 			case MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE:
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "CHECK_CHATS_TO_SYNCHRONIZE", Toast.LENGTH_LONG)
+						.show();
 				try {
 
 					Cursor chats = p.getAllChats();
@@ -956,10 +996,12 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.GET_CHATS_VERSION:
-
+				Toast.makeText(UMessageApplication.getContext(),
+						TAG + "GET_CHATS_VERSION", Toast.LENGTH_LONG).show();
 				try {
 					m = new Message();
 					m.what = MessageTypes.GET_CHATS_VERSION;
+					mainThreadHandler.removeMessages(MessageTypes.GET_CHATS_VERSION);
 					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
 
 					Configuration configuration = Utility

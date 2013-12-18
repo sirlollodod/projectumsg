@@ -56,6 +56,7 @@ public class SingleChatContact extends Activity {
 
 		context = this;
 
+		
 		syncListener = new SynchronizationListener() {
 
 			@Override
@@ -108,6 +109,12 @@ public class SingleChatContact extends Activity {
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
 
+		Intent syncChat = new Intent(this, com.lollotek.umessage.services.UMessageService.class);
+		syncChat.putExtra("action", MessageTypes.SYNCHRONIZE_CHAT);
+		syncChat.putExtra("prefix", prefix);
+		syncChat.putExtra("num", num);
+		startService(syncChat);
+		
 		TextView nameView, prefixView, numView;
 		nameView = (TextView) ab.getCustomView().findViewById(R.id.textView1);
 		prefixView = (TextView) ab.getCustomView().findViewById(R.id.textView2);

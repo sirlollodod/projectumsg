@@ -85,12 +85,16 @@ public class UMessageService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
 		int actionRequest;
+		Bundle b;
 
 		try {
 			actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
 		} catch (Exception e) {
 			actionRequest = MessageTypes.ERROR;
 		}
+
+		Toast.makeText(UMessageApplication.getContext(), TAG + actionRequest,
+				Toast.LENGTH_LONG).show();
 
 		Message m;
 
@@ -101,7 +105,7 @@ public class UMessageService extends Service {
 			break;
 
 		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
-			scheduleDownloadAllProfileImages();
+			// scheduleDownloadAllProfileImages();
 
 			break;
 
@@ -145,7 +149,7 @@ public class UMessageService extends Service {
 			break;
 
 		case MessageTypes.SEND_NEW_TEXT_MESSAGE:
-			Bundle b = new Bundle();
+			b = new Bundle();
 			b.putString("messageText", intent.getStringExtra("messageText"));
 			b.putString("prefix", intent.getStringExtra("prefix"));
 			b.putString("num", intent.getStringExtra("num"));
@@ -162,6 +166,16 @@ public class UMessageService extends Service {
 			serviceHandler.sendMessage(m);
 
 			break;
+
+		case MessageTypes.SYNCHRONIZE_CHAT:
+			b = new Bundle();
+			b.putString("prefix", intent.getStringExtra("prefix"));
+			b.putString("num", intent.getStringExtra("num"));
+			m = new Message();
+			m.setData(b);
+			m.what = MessageTypes.SYNCHRONIZE_CHAT;
+			serviceHandler.sendMessage(m);
+
 		case MessageTypes.ERROR:
 
 			break;
@@ -271,6 +285,18 @@ public class UMessageService extends Service {
 					this.sendMessageDelayed(m, 10 * 1000);
 				}
 
+				break;
+
+			case MessageTypes.SYNCHRONIZE_CHAT:
+				m = new Message();
+				m.what = MessageTypes.SYNCHRONIZE_CHAT;
+				m.setData(msg.getData());
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
 				break;
 			}
 		}
