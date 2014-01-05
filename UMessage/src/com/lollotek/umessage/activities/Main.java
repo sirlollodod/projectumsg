@@ -32,10 +32,10 @@ public class Main extends Activity {
 
 		context = this;
 
-		Configuration configuration = Utility.getConfiguration(context);
+		m_configuration = Utility.getConfiguration(UMessageApplication.getContext());
 		Intent service = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
-		if (configuration.getSessid().equals("")) {
+		if (m_configuration.getSessid().equals("")) {
 			stopService(service);
 		} else {
 			service.putExtra("action", MessageTypes.STARTED_FOR_INITIALIZE_SERVICE);

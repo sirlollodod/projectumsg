@@ -600,4 +600,13 @@ public class Provider {
 		return true;
 	}
 
+	// -------------- DEBUG  ---------------------------------------
+	public synchronized void insertError(String tag, String error){
+		ContentValues errore = new ContentValues();
+		errore.put("tag", tag);
+		errore.put("errore", error);
+		
+		insert("errori", null, errore);
+	}
+	
 }

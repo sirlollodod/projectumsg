@@ -49,8 +49,12 @@ public class UMessageService extends Service {
 				mainThread.start();
 			}
 		} catch (Exception e) {
+			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			/*if(Settings.debugMode){
 			Toast.makeText(instance, TAG + e.toString(), Toast.LENGTH_LONG)
 					.show();
+			}
+			*/
 		}
 
 	}
@@ -93,9 +97,11 @@ public class UMessageService extends Service {
 			actionRequest = MessageTypes.ERROR;
 		}
 
+		if(Settings.debugMode){
 		Toast.makeText(UMessageApplication.getContext(), TAG + actionRequest,
 				Toast.LENGTH_LONG).show();
-
+		}
+		
 		Message m;
 
 		switch (actionRequest) {
