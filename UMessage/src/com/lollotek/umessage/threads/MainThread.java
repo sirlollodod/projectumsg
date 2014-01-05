@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.classes.HttpResponse;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.managers.SynchronizationManager;
@@ -159,9 +160,10 @@ public class MainThread extends Thread {
 				} catch (HttpException e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					this.sendEmptyMessageDelayed(
-							MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC,
-							TIME_MINUTE * 1000);
+					addToQueue(msg, TIME_MINUTE, false, false);
+					// this.sendEmptyMessageDelayed(
+					// MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC,
+					// TIME_MINUTE * 1000);
 				}
 				break;
 
@@ -189,9 +191,10 @@ public class MainThread extends Thread {
 							TAG + result.toString(), Toast.LENGTH_LONG).show();
 					if ((result == null)
 							|| (result.getString("errorCode").equals("KO"))) {
-						m = new Message();
-						m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
-						this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
+						// this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 					} else if (result.getString("errorCode").equals("OK")
 							&& result.getBoolean("isSessionValid")) {
 						configuration.setProfileImageToUpload(false);
@@ -210,9 +213,10 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					m = new Message();
-					m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
-					this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					addToQueue(msg, TIME_MINUTE, false, false);
+					// m = new Message();
+					// m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
+					// this.sendMessageDelayed(m, TIME_MINUTE * 1000);
 				}
 				break;
 
@@ -393,22 +397,26 @@ public class MainThread extends Thread {
 						bnd.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 
-						mainThreadHandler.sendMessageAtFrontOfQueue(m);
+						addToQueue(m, 0, false, true);
+						// mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 					} else {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 					}
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					m = new Message();
-					m.setData(msg.getData());
-					m.what = msg.what;
-					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					addToQueue(msg, TIME_MINUTE, false, false);
+					// m = new Message();
+					// m.setData(msg.getData());
+					// m.what = msg.what;
+					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
+					// 1000);
 				}
 				break;
 
@@ -449,17 +457,19 @@ public class MainThread extends Thread {
 							parameters);
 
 					if (result == null) {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 					} else if (result.getString("errorCode").equals("KO")) {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 					} else if (result.getString("errorCode").equals("OK")) {
 						if (!result.getBoolean("isSessionValid")) {
 							configuration.setSessid("");
@@ -489,7 +499,8 @@ public class MainThread extends Thread {
 							b.putBoolean("messagesToUpload", true);
 							m.setData(b);
 
-							mainThreadHandler.sendMessageAtFrontOfQueue(m);
+							addToQueue(m, 0, false, true);
+							// mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 							break;
 						}
@@ -515,20 +526,23 @@ public class MainThread extends Thread {
 						}
 
 					} else {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 					}
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					m = new Message();
-					m.setData(msg.getData());
-					m.what = msg.what;
-					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					addToQueue(msg, TIME_MINUTE, false, false);
+					// m = new Message();
+					// m.setData(msg.getData());
+					// m.what = msg.what;
+					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
+					// 1000);
 				}
 
 				break;
@@ -546,34 +560,41 @@ public class MainThread extends Thread {
 					parameters = new JSONObject();
 					Cursor infoChat = p.getChat(prefixDest, numDest);
 					boolean updatedSomething = false;
+					boolean existsLocalChat = true;
 
+					// probabilmente qui errore: se chat non presente online,
+					// chat locale non ha messaggi e idlastmessage è null --->
+					// causa errore in load conversazioni locali
 					if ((infoChat == null) || (!infoChat.moveToFirst())) {
-						p.createNewChat(prefixDest, numDest);
+						// p.createNewChat(prefixDest, numDest);
+						existsLocalChat = false;
+					} else {
+						infoChat.moveToFirst();
 					}
 
-					infoChat = p.getChat(prefixDest, numDest);
-					infoChat.moveToFirst();
+					// infoChat = p.getChat(prefixDest, numDest);
 
 					parameters
 							.accumulate("action", "GET_CONVERSATION_MESSAGES");
 					parameters.accumulate("sessionId", sessionId);
 					parameters.accumulate("destPrefix", prefixDest);
 					parameters.accumulate("destNum", numDest);
-					parameters
-							.accumulate(
-									"localChatVersion",
-									infoChat.getString(infoChat
-											.getColumnIndex(DatabaseHelper.KEY_VERSION)));
+					String localChatVersion = (existsLocalChat ? infoChat
+							.getString(infoChat
+									.getColumnIndex(DatabaseHelper.KEY_VERSION))
+							: "0");
+					parameters.accumulate("localChatVersion", localChatVersion);
 
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
 
 					if (result == null) {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 
 						break;
 					}
@@ -582,11 +603,12 @@ public class MainThread extends Thread {
 							.getString("onlineChatVersion");
 
 					if (result.getString("errorCode").equals("KO")) {
-						m = new Message();
-						m.setData(msg.getData());
-						m.what = msg.what;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, false, false);
+						// m = new Message();
+						// m.setData(msg.getData());
+						// m.what = msg.what;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 
 						break;
 					}
@@ -612,6 +634,9 @@ public class MainThread extends Thread {
 						}
 
 						if (result.getInt("numMessages") == 0) {
+							if (!existsLocalChat) {
+								break;
+							}
 							infoChat = p.getChat(prefixDest, numDest);
 							infoChat.moveToFirst();
 							p.updateChatVersion(infoChat.getInt(infoChat
@@ -621,10 +646,19 @@ public class MainThread extends Thread {
 							if (bnd.getBoolean("messagesToUpload", false)) {
 								m = new Message();
 								m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-								mainThreadHandler.sendMessage(m);
+								addToQueue(m, 0, true, false);
+								// mainThreadHandler.sendMessage(m);
 							}
 
 							break;
+						}
+
+						// numMessages scaricati != 0: se existsLocalChat =
+						// false, allora creo prima la chat.
+						if (!existsLocalChat) {
+							p.createNewChat(prefixDest, numDest);
+							infoChat = p.getChat(prefixDest, numDest);
+							infoChat.moveToFirst();
 						}
 
 						JSONArray messages = result.getJSONArray("messages");
@@ -880,7 +914,8 @@ public class MainThread extends Thread {
 						if (bnd.getBoolean("messagesToUpload", false)) {
 							m = new Message();
 							m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-							mainThreadHandler.sendMessage(m);
+							addToQueue(m, 0, true, false);
+							// mainThreadHandler.sendMessage(m);
 						}
 
 					}
@@ -940,12 +975,14 @@ public class MainThread extends Thread {
 
 				}
 
-				//if (errorCount > 0) {
-					m = new Message();
-					m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-					mainThreadHandler.removeMessages(MessageTypes.CHECK_MESSAGES_TO_UPLOAD);
-					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
-				//}
+				// if (errorCount > 0) {
+				addToQueue(msg, TIME_MINUTE, true, false);
+				// m = new Message();
+				// m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+				// mainThreadHandler
+				// .removeMessages(MessageTypes.CHECK_MESSAGES_TO_UPLOAD);
+				// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+				// }
 
 				break;
 
@@ -958,12 +995,13 @@ public class MainThread extends Thread {
 					Cursor chats = p.getAllChats();
 
 					if (chats == null) {
-						mainThreadHandler
-								.removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
-						m = new Message();
-						m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, true, false);
+						// mainThreadHandler
+						// .removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
+						// m = new Message();
+						// m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 
 						break;
 					}
@@ -978,7 +1016,8 @@ public class MainThread extends Thread {
 						m.what = MessageTypes.SYNCHRONIZE_CHAT;
 						m.setData(b);
 
-						mainThreadHandler.sendMessageAtFrontOfQueue(m);
+						addToQueue(m, 0, false, true);
+						// mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 					}
 
@@ -987,11 +1026,12 @@ public class MainThread extends Thread {
 							TAG + e.toString(), Toast.LENGTH_LONG).show();
 				}
 
-				mainThreadHandler
-						.removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
-				m = new Message();
-				m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
-				mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+				addToQueue(msg, TIME_MINUTE, true, false);
+				// mainThreadHandler
+				// .removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
+				// m = new Message();
+				// m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
+				// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
 
 				break;
 
@@ -999,10 +1039,13 @@ public class MainThread extends Thread {
 				Toast.makeText(UMessageApplication.getContext(),
 						TAG + "GET_CHATS_VERSION", Toast.LENGTH_LONG).show();
 				try {
-					m = new Message();
-					m.what = MessageTypes.GET_CHATS_VERSION;
-					mainThreadHandler.removeMessages(MessageTypes.GET_CHATS_VERSION);
-					mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					addToQueue(msg, TIME_MINUTE, true, false);
+					// m = new Message();
+					// m.what = MessageTypes.GET_CHATS_VERSION;
+					// mainThreadHandler
+					// .removeMessages(MessageTypes.GET_CHATS_VERSION);
+					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
+					// 1000);
 
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
@@ -1016,17 +1059,20 @@ public class MainThread extends Thread {
 							parameters);
 
 					if (result == null) {
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, true, false);
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 						break;
 					} else if (result.getString("errorCode").equals("KO")) {
-						mainThreadHandler.sendMessageDelayed(m,
-								TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, true, false);
+						// mainThreadHandler.sendMessageDelayed(m,
+						// TIME_MINUTE * 1000);
 						break;
 					} else if (result.getString("errorCode").equals("OK")) {
 						if (result.getInt("numChats") == 0) {
-							mainThreadHandler.sendMessageDelayed(m,
-									TIME_MINUTE * 1000);
+							addToQueue(msg, TIME_MINUTE, true, false);
+							// mainThreadHandler.sendMessageDelayed(m,
+							// TIME_MINUTE * 1000);
 							break;
 						}
 
@@ -1049,7 +1095,8 @@ public class MainThread extends Thread {
 								m.what = MessageTypes.SYNCHRONIZE_CHAT;
 								m.setData(b);
 
-								mainThreadHandler.sendMessageAtFrontOfQueue(m);
+								addToQueue(m, 0, false, true);
+								// mainThreadHandler.sendMessageAtFrontOfQueue(m);
 
 							} else {
 								localChat.moveToFirst();
@@ -1064,8 +1111,9 @@ public class MainThread extends Thread {
 									m.what = MessageTypes.SYNCHRONIZE_CHAT;
 									m.setData(b);
 
-									mainThreadHandler
-											.sendMessageAtFrontOfQueue(m);
+									addToQueue(m, 0, false, true);
+									// mainThreadHandler
+									// .sendMessageAtFrontOfQueue(m);
 								}
 							}
 
@@ -1080,5 +1128,69 @@ public class MainThread extends Thread {
 
 			}
 		}
+
+		// Inserisce nel db locale un nuovo messaggio, ritornandone l'id (se id
+		// = -1 ----> errore, messaggio non inserito)
+		private long saveNewLocalMessage() {
+
+			return 0;
+		}
+
+		// Inoltra richiesta http post
+		// Se richiesta non è andata a buon fine, ne ritorna il risultato e flag
+		// toRepeat=true, altrimenti flag=false.
+		private HttpResponse doRequest(JSONObject parameters) {
+			HttpResponse result = new HttpResponse();
+
+			try {
+				result.result = Utility.doPostRequest(Settings.SERVER_URL,
+						parameters);
+				if ((result.result == null)
+						|| (result.result.getString("errorCode").equals("KO"))) {
+					result.error = true;
+				}
+			} catch (Exception e) {
+				result.error = true;
+			}
+
+			return result;
+		}
+
+		// Aggiunge il messaggio alla coda, specificando il messaggio, il tempo
+		// di delay in secondi (se = 0 nessun delay) e se rimuovere prima tutti
+		// i messaggi
+		// dello stesso tipo presenti in coda
+		private void addToQueue(Message msg, long timeDelay,
+				boolean removePendingMessages, boolean atFrontQueue) {
+
+			Message newMsg = new Message();
+			newMsg.what = msg.what;
+			newMsg.arg1 = msg.arg1;
+			newMsg.arg2 = msg.arg2;
+			newMsg.obj = msg.obj;
+			newMsg.replyTo = msg.replyTo;
+			newMsg.setData(msg.getData());
+
+			if (removePendingMessages) {
+				mainThreadHandler.removeMessages(msg.what);
+			}
+
+			if (timeDelay > 0) {
+				mainThreadHandler.sendMessageDelayed(newMsg, timeDelay * 1000);
+			} else {
+				if (atFrontQueue) {
+					mainThreadHandler.sendMessageAtFrontOfQueue(newMsg);
+				} else {
+					mainThreadHandler.sendMessage(newMsg);
+				}
+			}
+
+		}
+
+		// Invia notifica al NotificationManager
+		private void sendNotificationMessage() {
+
+		}
 	}
+
 }
