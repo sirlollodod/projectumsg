@@ -128,6 +128,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL("CREATE TABLE IF NOT EXISTS " + CREATE_TABLE_USER);
 		db.execSQL("CREATE TABLE IF NOT EXISTS "
 				+ CREATE_TABLE_TEMPSINGLECHATMESSAGES);
+		
+		//tabella debug messaggi di errore
+		db.execSQL("CREATE TABLE IF NOT EXISTS errori(_id INTEGER PRIMARY KEY AUTOINCREMENT, tag TEXT, errore TEXT)");
 
 	}
 

@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponse;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
@@ -38,11 +39,20 @@ public class MainThread extends Thread {
 	private NewMessageThread newMessageThread = null;
 
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
+	private ExponentialQueueTime timeQueue;
 
 	GoogleCloudMessaging gcm = null;
 
 	public MainThread(Handler handler) {
 		serviceThreadHandler = handler;
+
+		long[] time = new long[5];
+		time[0] = 1;
+		time[1] = 10;
+		time[2] = TIME_MINUTE;
+		time[3] = TIME_HOUR;
+		time[4] = TIME_DAY;
+		timeQueue = new ExponentialQueueTime(time);
 	}
 
 	public void run() {
@@ -108,29 +118,36 @@ public class MainThread extends Thread {
 
 			Message m, syncMsg;
 			Bundle b, bnd;
-
+			HttpResponse httpResult = new HttpResponse();
+			
 			JSONObject parameters, result;
 
 			p = new Provider(UMessageApplication.getContext());
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "RECEIVE_UPDATE_THREAD_HANDLER",
-						Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "RECEIVE_UPDATE_THREAD_HANDLER",
+							Toast.LENGTH_LONG).show();
+				}
 				updateThreadHandler = (Handler) msg.obj;
 				break;
 
 			case MessageTypes.RECEIVE_NEW_MESSAGE_THREAD_HANDLER:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "RECEIVE_NEW_MESSAGE_THREAD_HANDLER",
-						Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "RECEIVE_NEW_MESSAGE_THREAD_HANDLER",
+							Toast.LENGTH_LONG).show();
+				}
 				newMessageThreadHandler = (Handler) msg.obj;
 				break;
 
 			case MessageTypes.DESTROY:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "DESTROY", Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DESTROY", Toast.LENGTH_LONG).show();
+				}
 				updateThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
 				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY)
@@ -144,9 +161,11 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
-						Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
+							Toast.LENGTH_LONG).show();
+				}
 				String imageUrl = (String) msg.obj;
 
 				mainFolder = Utility.getMainFolder(UMessageApplication
@@ -158,19 +177,21 @@ public class MainThread extends Thread {
 							UMessageApplication.getContext(),
 							myNewProfileImage, imageUrl);
 				} catch (HttpException e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					addToQueue(msg, TIME_MINUTE, false, false);
-					// this.sendEmptyMessageDelayed(
-					// MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC,
-					// TIME_MINUTE * 1000);
+					if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
 			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
+							.show();
+				}
+				
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -187,14 +208,14 @@ public class MainThread extends Thread {
 							Settings.SERVER_URL, myNewProfileImage,
 							configuration.getSessid());
 
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + result.toString(), Toast.LENGTH_LONG).show();
+					if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + result.toString(), Toast.LENGTH_LONG)
+								.show();
+					}
 					if ((result == null)
 							|| (result.getString("errorCode").equals("KO"))) {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
-						// this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, 4, false, false);
 					} else if (result.getString("errorCode").equals("OK")
 							&& result.getBoolean("isSessionValid")) {
 						configuration.setProfileImageToUpload(false);
@@ -205,25 +226,31 @@ public class MainThread extends Thread {
 						configuration.setSessid("");
 						Utility.setConfiguration(
 								UMessageApplication.getContext(), configuration);
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + "sessione non valida... azzerata!",
-								Toast.LENGTH_LONG).show();
+						if (Settings.debugMode) {
+							Toast.makeText(UMessageApplication.getContext(),
+									TAG + "sessione non valida... azzerata!",
+									Toast.LENGTH_LONG).show();
+						}
+
 					}
 
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					addToQueue(msg, TIME_MINUTE, false, false);
-					// m = new Message();
-					// m.what = MessageTypes.UPLOAD_MY_PROFILE_IMAGE;
-					// this.sendMessageDelayed(m, TIME_MINUTE * 1000);
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
 			case MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC",
+							Toast.LENGTH_LONG).show();
+				}
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -267,16 +294,22 @@ public class MainThread extends Thread {
 						}
 					}
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
 				}
 
 				break;
 
 			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "DOWNLOAD_ALL_USERS_IMAGES", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DOWNLOAD_ALL_USERS_IMAGES",
+							Toast.LENGTH_LONG).show();
+				}
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -348,8 +381,13 @@ public class MainThread extends Thread {
 						}
 
 					} catch (Exception e) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
+						Utility.reportError(UMessageApplication.getContext(), e, TAG);
+						/*if (Settings.debugMode) {
+							Toast.makeText(UMessageApplication.getContext(),
+									TAG + e.toString(), Toast.LENGTH_LONG)
+									.show();
+						}
+						*/
 					}
 
 				}
@@ -361,9 +399,12 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG)
+							.show();
+				}
+
 				m = new Message();
 				bnd = msg.getData();
 				m.setData(bnd);
@@ -397,32 +438,28 @@ public class MainThread extends Thread {
 						bnd.putLong("messageId", newMessageId);
 						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
 
-						addToQueue(m, 0, false, true);
-						// mainThreadHandler.sendMessageAtFrontOfQueue(m);
+						addToQueue(m, 0, 4, false, true);
 
 					} else {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
+						addToQueue(msg, TIME_MINUTE, 4, false, false);
 					}
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					addToQueue(msg, TIME_MINUTE, false, false);
-					// m = new Message();
-					// m.setData(msg.getData());
-					// m.what = msg.what;
-					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
-					// 1000);
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "UPLOAD_NEW_MESSAGE", Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "UPLOAD_NEW_MESSAGE", Toast.LENGTH_LONG)
+							.show();
+				}
 				try {
 
 					bnd = msg.getData();
@@ -453,103 +490,86 @@ public class MainThread extends Thread {
 					parameters.accumulate("messageTag",
 							bnd.getString("messageTag"));
 
-					result = Utility.doPostRequest(Settings.SERVER_URL,
-							parameters);
+					httpResult = doRequest(parameters);
 
-					if (result == null) {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
-					} else if (result.getString("errorCode").equals("KO")) {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
-					} else if (result.getString("errorCode").equals("OK")) {
-						if (!result.getBoolean("isSessionValid")) {
-							configuration.setSessid("");
-							Utility.setConfiguration(
-									UMessageApplication.getContext(),
-									configuration);
+					if (httpResult.error) {
+						addToQueue(msg, TIME_MINUTE, 4, false, false);
+						break;
+					}
 
-							break;
-						}
+					if (!httpResult.result.getBoolean("isSessionValid")) {
+						configuration.setSessid("");
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
 
-						if (!result.getBoolean("isDestValid")) {
-							// bisognerebbe cancellare il messaggio dal db
-							// locale ?
+						break;
+					}
+
+					if (!httpResult.result.getBoolean("isDestValid")) {
+						// bisognerebbe cancellare il messaggio dal db
+						// locale ?
+						if (Settings.debugMode) {
 							Toast.makeText(UMessageApplication.getContext(),
 									TAG + "destination not valid",
 									Toast.LENGTH_LONG).show();
-
-							break;
 						}
+						break;
+					}
 
-						if (result.getBoolean("syncChatRequired")) {
-							m = new Message();
-							m.what = MessageTypes.SYNCHRONIZE_CHAT;
-							b = new Bundle();
-							b.putString("prefix", bnd.getString("prefix"));
-							b.putString("num", bnd.getString("num"));
-							b.putBoolean("messagesToUpload", true);
-							m.setData(b);
+					if (httpResult.result.getBoolean("syncChatRequired")) {
+						m = new Message();
+						m.what = MessageTypes.SYNCHRONIZE_CHAT;
+						b = new Bundle();
+						b.putString("prefix", bnd.getString("prefix"));
+						b.putString("num", bnd.getString("num"));
+						b.putBoolean("messagesToUpload", true);
+						m.setData(b);
 
-							addToQueue(m, 0, false, true);
-							// mainThreadHandler.sendMessageAtFrontOfQueue(m);
+						addToQueue(m, 0, 4, false, true);
 
-							break;
-						}
+						break;
+					}
 
-						if (result.getBoolean("chatVersionChanged")) {
-							p.updateChatVersion(infoChat.getInt(infoChat
-									.getColumnIndex(DatabaseHelper.KEY_ID)),
-									result.getString("newChatVersion"));
+					if (httpResult.result.getBoolean("chatVersionChanged")) {
+						p.updateChatVersion(infoChat.getInt(infoChat
+								.getColumnIndex(DatabaseHelper.KEY_ID)),
+								httpResult.result.getString("newChatVersion"));
 
-						}
+					}
 
-						if (p.updateMessage(bnd.getLong("messageId"), result
-								.getString("statusNewMessage"), Long
-								.parseLong(result.getString("dataNewMessage")))) {
+					if (p.updateMessage(bnd.getLong("messageId"),
+							httpResult.result.getString("statusNewMessage"),
+							Long.parseLong(httpResult.result
+									.getString("dataNewMessage")))) {
 
-							syncMsg = new Message();
-							syncMsg.what = MessageTypes.MESSAGE_UPLOADED;
-							SynchronizationManager.getInstance()
-									.onSynchronizationFinish(syncMsg);
+						syncMsg = new Message();
+						syncMsg.what = MessageTypes.MESSAGE_UPLOADED;
+						SynchronizationManager.getInstance()
+								.onSynchronizationFinish(syncMsg);
 
-							break;
+						break;
 
-						}
-
-					} else {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
 					}
 
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
-					addToQueue(msg, TIME_MINUTE, false, false);
-					// m = new Message();
-					// m.setData(msg.getData());
-					// m.what = msg.what;
-					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
-					// 1000);
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 
 				break;
 
+			// ---------------- DA QUI IN POI AGGIORNATI CON UTILIZZO METODI
+			// NUOVI
 			case MessageTypes.SYNCHRONIZE_CHAT:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
+				}
 				try {
 					bnd = msg.getData();
 					Configuration configuration = Utility
@@ -562,17 +582,11 @@ public class MainThread extends Thread {
 					boolean updatedSomething = false;
 					boolean existsLocalChat = true;
 
-					// probabilmente qui errore: se chat non presente online,
-					// chat locale non ha messaggi e idlastmessage è null --->
-					// causa errore in load conversazioni locali
 					if ((infoChat == null) || (!infoChat.moveToFirst())) {
-						// p.createNewChat(prefixDest, numDest);
 						existsLocalChat = false;
 					} else {
 						infoChat.moveToFirst();
 					}
-
-					// infoChat = p.getChat(prefixDest, numDest);
 
 					parameters
 							.accumulate("action", "GET_CONVERSATION_MESSAGES");
@@ -585,277 +599,149 @@ public class MainThread extends Thread {
 							: "0");
 					parameters.accumulate("localChatVersion", localChatVersion);
 
-					result = Utility.doPostRequest(Settings.SERVER_URL,
-							parameters);
+					httpResult = doRequest(parameters);
 
-					if (result == null) {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
+					if (httpResult.error) {
+						addToQueue(msg, TIME_MINUTE, 4, false, false);
+						break;
+					}
+
+					if (!httpResult.result.getBoolean("isSessionValid")) {
+						configuration.setSessid("");
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
 
 						break;
 					}
 
-					String newOnlineChatVersion = result
-							.getString("onlineChatVersion");
-
-					if (result.getString("errorCode").equals("KO")) {
-						addToQueue(msg, TIME_MINUTE, false, false);
-						// m = new Message();
-						// m.setData(msg.getData());
-						// m.what = msg.what;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
-
-						break;
-					}
-
-					if (result.getString("errorCode").equals("OK")) {
-						if (!result.getBoolean("isSessionValid")) {
-							configuration.setSessid("");
-							Utility.setConfiguration(
-									UMessageApplication.getContext(),
-									configuration);
-
-							break;
-						}
-
-						if (!result.getBoolean("isDestValid")) {
-							// bisognerebbe cancellare i messaggi dal db
-							// locale ?
+					if (!httpResult.result.getBoolean("isDestValid")) {
+						// bisognerebbe cancellare i messaggi dal db
+						// locale ?
+						if (Settings.debugMode) {
 							Toast.makeText(UMessageApplication.getContext(),
 									TAG + "destination not valid",
 									Toast.LENGTH_LONG).show();
-
-							break;
 						}
+						break;
+					}
 
-						if (result.getInt("numMessages") == 0) {
-							if (!existsLocalChat) {
-								break;
-							}
-							infoChat = p.getChat(prefixDest, numDest);
-							infoChat.moveToFirst();
-							p.updateChatVersion(infoChat.getInt(infoChat
-									.getColumnIndex(DatabaseHelper.KEY_ID)),
-									newOnlineChatVersion);
+					String newOnlineChatVersion = httpResult.result
+							.getString("onlineChatVersion");
 
-							if (bnd.getBoolean("messagesToUpload", false)) {
-								m = new Message();
-								m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-								addToQueue(m, 0, true, false);
-								// mainThreadHandler.sendMessage(m);
-							}
-
-							break;
-						}
-
-						// numMessages scaricati != 0: se existsLocalChat =
-						// false, allora creo prima la chat.
+					if (httpResult.result.getInt("numMessages") == 0) {
 						if (!existsLocalChat) {
-							p.createNewChat(prefixDest, numDest);
-							infoChat = p.getChat(prefixDest, numDest);
-							infoChat.moveToFirst();
+							break;
 						}
 
-						JSONArray messages = result.getJSONArray("messages");
-						Cursor localMessage;
-						ContentValues newIncomingMessage;
+						p.updateChatVersion(infoChat.getInt(infoChat
+								.getColumnIndex(DatabaseHelper.KEY_ID)),
+								newOnlineChatVersion);
 
-						for (int i = 0; i < messages.length(); i++) {
-							JSONObject message = messages.getJSONObject(i);
+						if (bnd.getBoolean("messagesToUpload", false)) {
+							m = new Message();
+							m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+							addToQueue(m, 0, 4, true, false);
+						}
 
-							boolean isIncomingMessage = message.getString(
-									"direction").equals("0") ? false : true;
+						break;
+					}
 
-							localMessage = p.getMessageByTag(prefixDest,
-									numDest, message.getString("tag"));
+					if (!existsLocalChat) {
+						p.createNewChat(prefixDest, numDest);
+						infoChat = p.getChat(prefixDest, numDest);
+						infoChat.moveToFirst();
+					}
 
-							String onlineMessageStatus = message
-									.getString("status");
-							long onlineMessageData = message.getLong("data");
-							long idLocalMessage;
+					JSONArray messages = httpResult.result
+							.getJSONArray("messages");
+					Cursor localMessage;
+					ContentValues newIncomingMessage;
 
-							if (isIncomingMessage) {
-								if ((localMessage == null)
-										|| (!localMessage.moveToFirst())) {
+					for (int i = 0; i < messages.length(); i++) {
+						JSONObject message = messages.getJSONObject(i);
 
-									newIncomingMessage = new ContentValues();
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_PREFIX,
-											prefixDest);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_NUM, numDest);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_DIRECTION, 1);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_STATUS, "2");
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_DATA,
-											message.getString("data"));
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TYPE, "text");
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_MESSAGE,
-											message.getString("msg"));
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TOREAD, "1");
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TAG,
-											message.getString("tag"));
+						boolean isIncomingMessage = message.getString(
+								"direction").equals("0") ? false : true;
 
-									long newMessageId = p
-											.insertNewMessage(newIncomingMessage);
-									updatedSomething = true;
+						localMessage = p.getMessageByTag(prefixDest, numDest,
+								message.getString("tag"));
 
-									parameters = new JSONObject();
-									parameters.accumulate("action",
-											"UPDATE_MESSAGE_DOWNLOADED");
-									parameters.accumulate("sessionId",
-											sessionId);
-									parameters.accumulate("destPrefix",
-											prefixDest);
-									parameters.accumulate("destNum", numDest);
-									parameters.accumulate("messageData",
-											message.getString("data"));
-									parameters.accumulate("messageTag",
-											message.get("tag"));
-									parameters.accumulate("messageDirection",
-											"1");
+						String onlineMessageStatus = message
+								.getString("status");
+						long onlineMessageData = message.getLong("data");
+						long idLocalMessage;
 
-									result = null;
-									result = Utility.doPostRequest(
-											Settings.SERVER_URL, parameters);
+						if (isIncomingMessage) {
+							if ((localMessage == null)
+									|| (!localMessage.moveToFirst())) {
+								// messaggio ricevuto e non ancora presente
+								// localmente, lo inserisco e aggiorno lo stato
+								// online come ricevuto
 
-									if (result == null) {
-										// niente
-									} else if (result.getString("errorCode")
-											.equals("KO")) {
-										// niente
-									} else if (result.getString("errorCode")
-											.equals("OK")) {
-										// update local message status ----> 3
-										p.updateMessage(newMessageId, "3",
-												onlineMessageData);
-									}
+								newIncomingMessage = new ContentValues();
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_PREFIX, prefixDest);
+								newIncomingMessage.put(DatabaseHelper.KEY_NUM,
+										numDest);
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_DIRECTION, 1);
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_STATUS, "2");
+								newIncomingMessage.put(DatabaseHelper.KEY_DATA,
+										message.getString("data"));
+								newIncomingMessage.put(DatabaseHelper.KEY_TYPE,
+										"text");
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_MESSAGE,
+										message.getString("msg"));
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_TOREAD, "1");
+								newIncomingMessage.put(DatabaseHelper.KEY_TAG,
+										message.getString("tag"));
 
-								} else {
-									localMessage.moveToFirst();
-									idLocalMessage = localMessage
-											.getLong(localMessage
-													.getColumnIndex(DatabaseHelper.KEY_ID));
-									if (!localMessage
-											.getString(
-													localMessage
-															.getColumnIndex(DatabaseHelper.KEY_STATUS))
-											.equals(onlineMessageStatus)) {
-										if (onlineMessageStatus.equals("1")) {
+								long newMessageId = p
+										.insertNewMessage(newIncomingMessage);
+								updatedSomething = true;
 
-											parameters = new JSONObject();
-											parameters
-													.accumulate("action",
-															"UPDATE_MESSAGE_DOWNLOADED");
-											parameters.accumulate("sessionId",
-													sessionId);
-											parameters.accumulate("destPrefix",
-													prefixDest);
-											parameters.accumulate("destNum",
-													numDest);
-											parameters.accumulate(
-													"messageData",
-													message.getString("data"));
-											parameters.accumulate("messageTag",
-													message.get("tag"));
-											parameters.accumulate(
-													"messageDirection", "1");
+								parameters = new JSONObject();
+								parameters.accumulate("action",
+										"UPDATE_MESSAGE_DOWNLOADED");
+								parameters.accumulate("sessionId", sessionId);
+								parameters.accumulate("destPrefix", prefixDest);
+								parameters.accumulate("destNum", numDest);
+								parameters.accumulate("messageData",
+										message.getString("data"));
+								parameters.accumulate("messageTag",
+										message.get("tag"));
+								parameters.accumulate("messageDirection", "1");
 
-											result = null;
-											result = Utility.doPostRequest(
-													Settings.SERVER_URL,
-													parameters);
+								httpResult = doRequest(parameters);
 
-											if (result == null) {
-												// niente
-											} else if (result.getString(
-													"errorCode").equals("KO")) {
-												// niente
-											} else if (result.getString(
-													"errorCode").equals("OK")) {
-												// update local message status
-												// ----> 3
-												p.updateMessage(idLocalMessage,
-														"3", onlineMessageData);
-											}
-
-											updatedSomething = true;
-										}
-									}
-
+								if (!httpResult.error) {
+									// update local message status ----> 3
+									p.updateMessage(newMessageId, "3",
+											onlineMessageData);
 								}
+
 							} else {
-								boolean newMyMessage = false;
-								if ((localMessage == null)
-										|| (!localMessage.moveToFirst())) {
-									// mio messaggio presente ancora online ma
-									// non localmente... lo devo inserire
-									// localmente
+								// messaggio ricevuto e gia presente localmente,
+								// aggiorno solamente lo stato locale e online
+								// se necessario
 
-									newIncomingMessage = new ContentValues();
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_PREFIX,
-											prefixDest);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_NUM, numDest);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_DIRECTION, 0);
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_STATUS,
-											message.getString("tag"));
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_DATA,
-											message.getString("data"));
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TYPE, "text");
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_MESSAGE,
-											message.getString("msg"));
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TOREAD, "0");
-									newIncomingMessage.put(
-											DatabaseHelper.KEY_TAG,
-											message.getString("tag"));
-
-									long newMessageId = p
-											.insertNewMessage(newIncomingMessage);
-									updatedSomething = true;
-									newMyMessage = true;
-
-								}
-
+								localMessage.moveToFirst();
 								idLocalMessage = localMessage
 										.getLong(localMessage
 												.getColumnIndex(DatabaseHelper.KEY_ID));
-
 								if (!localMessage
 										.getString(
 												localMessage
 														.getColumnIndex(DatabaseHelper.KEY_STATUS))
-										.equals(onlineMessageStatus)
-										|| (newMyMessage)) {
-									if (onlineMessageStatus.equals("3")) {
-
-										p.updateMessage(idLocalMessage, "4",
-												onlineMessageData);
-
-										updatedSomething = true;
+										.equals(onlineMessageStatus)) {
+									if (onlineMessageStatus.equals("1")) {
 
 										parameters = new JSONObject();
-										parameters
-												.accumulate("action",
-														"UPDATE_MESSAGE_NOTIFICATION_DELIVERED");
+										parameters.accumulate("action",
+												"UPDATE_MESSAGE_DOWNLOADED");
 										parameters.accumulate("sessionId",
 												sessionId);
 										parameters.accumulate("destPrefix",
@@ -867,77 +753,143 @@ public class MainThread extends Thread {
 										parameters.accumulate("messageTag",
 												message.get("tag"));
 										parameters.accumulate(
-												"messageDirection", "0");
+												"messageDirection", "1");
 
-										result = null;
-										result = Utility
-												.doPostRequest(
-														Settings.SERVER_URL,
-														parameters);
+										httpResult = doRequest(parameters);
 
-										if (result == null) {
-											// niente
-										} else if (result
-												.getString("errorCode").equals(
-														"KO")) {
-											// niente
-										} else if (result
-												.getString("errorCode").equals(
-														"OK")) {
-											// niente, messaggio locale gia
-											// segnato come notifica lettura
-
+										if (!httpResult.error) {
+											// update local message status
+											// ----> 3
+											p.updateMessage(idLocalMessage,
+													"3", onlineMessageData);
 										}
 
+										updatedSomething = true;
 									}
-
 								}
 
 							}
+						} else {
+							boolean newMyMessage = false;
+							if ((localMessage == null)
+									|| (!localMessage.moveToFirst())) {
+								// mio messaggio presente ancora online ma
+								// non localmente... lo devo inserire
+								// localmente
 
-						}// fine for
+								newIncomingMessage = new ContentValues();
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_PREFIX, prefixDest);
+								newIncomingMessage.put(DatabaseHelper.KEY_NUM,
+										numDest);
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_DIRECTION, 0);
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_STATUS,
+										message.getString("tag"));
+								newIncomingMessage.put(DatabaseHelper.KEY_DATA,
+										message.getString("data"));
+								newIncomingMessage.put(DatabaseHelper.KEY_TYPE,
+										"text");
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_MESSAGE,
+										message.getString("msg"));
+								newIncomingMessage.put(
+										DatabaseHelper.KEY_TOREAD, "0");
+								newIncomingMessage.put(DatabaseHelper.KEY_TAG,
+										message.getString("tag"));
 
-						infoChat.close();
-						infoChat = p.getChat(prefixDest, numDest);
-						infoChat.moveToFirst();
-						p.updateChatVersion(infoChat.getInt(infoChat
-								.getColumnIndex(DatabaseHelper.KEY_ID)),
-								newOnlineChatVersion);
+								long newMessageId = p
+										.insertNewMessage(newIncomingMessage);
+								updatedSomething = true;
+								newMyMessage = true;
 
-						if (updatedSomething) {
-							syncMsg = new Message();
-							syncMsg.what = MessageTypes.MESSAGE_UPDATE;
-							SynchronizationManager.getInstance()
-									.onSynchronizationFinish(syncMsg);
+							}
+
+							idLocalMessage = localMessage.getLong(localMessage
+									.getColumnIndex(DatabaseHelper.KEY_ID));
+
+							if ((newMyMessage)
+									|| !localMessage
+											.getString(
+													localMessage
+															.getColumnIndex(DatabaseHelper.KEY_STATUS))
+											.equals(onlineMessageStatus)) {
+								if (onlineMessageStatus.equals("3")) {
+
+									p.updateMessage(idLocalMessage, "4",
+											onlineMessageData);
+
+									updatedSomething = true;
+
+									parameters = new JSONObject();
+									parameters
+											.accumulate("action",
+													"UPDATE_MESSAGE_NOTIFICATION_DELIVERED");
+									parameters.accumulate("sessionId",
+											sessionId);
+									parameters.accumulate("destPrefix",
+											prefixDest);
+									parameters.accumulate("destNum", numDest);
+									parameters.accumulate("messageData",
+											message.getString("data"));
+									parameters.accumulate("messageTag",
+											message.get("tag"));
+									parameters.accumulate("messageDirection",
+											"0");
+
+									httpResult = doRequest(parameters);
+
+								}
+							}
 						}
 
-						if (bnd.getBoolean("messagesToUpload", false)) {
-							m = new Message();
-							m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-							addToQueue(m, 0, true, false);
-							// mainThreadHandler.sendMessage(m);
-						}
+					}// fine for
 
+					infoChat.close();
+					infoChat = p.getChat(prefixDest, numDest);
+					infoChat.moveToFirst();
+					p.updateChatVersion(infoChat.getInt(infoChat
+							.getColumnIndex(DatabaseHelper.KEY_ID)),
+							newOnlineChatVersion);
+
+					if (updatedSomething) {
+						syncMsg = new Message();
+						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
+						SynchronizationManager.getInstance()
+								.onSynchronizationFinish(syncMsg);
+					}
+
+					if (bnd.getBoolean("messagesToUpload", false)) {
+						m = new Message();
+						m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
+						addToQueue(m, 0, 4, true, false);
 					}
 
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
 				}
 
 				break;
 
 			case MessageTypes.CHECK_MESSAGES_TO_UPLOAD:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "CHECK_MESSAGES_TO_UPLOAD", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "CHECK_MESSAGES_TO_UPLOAD", Toast.LENGTH_LONG)
+							.show();
+				}
 				Cursor messagesToUpload = p.getMessagesToUpload();
 
 				if (messagesToUpload == null) {
 					break;
 				}
 
-				int errorCount = 0;
+				boolean errors = false;
 				while (messagesToUpload.moveToNext()) {
 					try {
 						m = new Message();
@@ -964,45 +916,39 @@ public class MainThread extends Thread {
 										.getColumnIndex(DatabaseHelper.KEY_ID)));
 						m.setData(b);
 
-						mainThreadHandler.sendMessage(m);
+						addToQueue(m, 0, 4, false, false);
 
 					} catch (Exception e) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-						errorCount++;
-
+						Utility.reportError(UMessageApplication.getContext(), e, TAG);
+						/*if (Settings.debugMode) {
+							Toast.makeText(UMessageApplication.getContext(),
+									TAG + e.toString(), Toast.LENGTH_LONG)
+									.show();
+						}
+						*/
+						errors = true;
 					}
 
 				}
 
-				// if (errorCount > 0) {
-				addToQueue(msg, TIME_MINUTE, true, false);
-				// m = new Message();
-				// m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-				// mainThreadHandler
-				// .removeMessages(MessageTypes.CHECK_MESSAGES_TO_UPLOAD);
-				// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
-				// }
+				if (errors) {
+					addToQueue(msg, TIME_MINUTE, 4, true, false);
+				}
 
 				break;
 
 			case MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "CHECK_CHATS_TO_SYNCHRONIZE", Toast.LENGTH_LONG)
-						.show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "CHECK_CHATS_TO_SYNCHRONIZE",
+							Toast.LENGTH_LONG).show();
+				}
 				try {
 
 					Cursor chats = p.getAllChats();
 
 					if (chats == null) {
-						addToQueue(msg, TIME_MINUTE, true, false);
-						// mainThreadHandler
-						// .removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
-						// m = new Message();
-						// m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
-
+						addToQueue(msg, TIME_MINUTE, 4, true, false);
 						break;
 					}
 
@@ -1016,36 +962,28 @@ public class MainThread extends Thread {
 						m.what = MessageTypes.SYNCHRONIZE_CHAT;
 						m.setData(b);
 
-						addToQueue(m, 0, false, true);
-						// mainThreadHandler.sendMessageAtFrontOfQueue(m);
-
+						addToQueue(m, 0, 4, false, true);
 					}
-
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
 				}
 
-				addToQueue(msg, TIME_MINUTE, true, false);
-				// mainThreadHandler
-				// .removeMessages(MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE);
-				// m = new Message();
-				// m.what = MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE;
-				// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE * 1000);
-
+				addToQueue(msg, TIME_MINUTE, 4, true, false);
 				break;
 
 			case MessageTypes.GET_CHATS_VERSION:
-				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "GET_CHATS_VERSION", Toast.LENGTH_LONG).show();
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "GET_CHATS_VERSION", Toast.LENGTH_LONG)
+							.show();
+				}
 				try {
-					addToQueue(msg, TIME_MINUTE, true, false);
-					// m = new Message();
-					// m.what = MessageTypes.GET_CHATS_VERSION;
-					// mainThreadHandler
-					// .removeMessages(MessageTypes.GET_CHATS_VERSION);
-					// mainThreadHandler.sendMessageDelayed(m, TIME_MINUTE *
-					// 1000);
+					addToQueue(msg, TIME_MINUTE, 4, true, false);
 
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
@@ -1054,86 +992,67 @@ public class MainThread extends Thread {
 					parameters.accumulate("action", "GET_CHATS_VERSION");
 					parameters.accumulate("sessionId", sessionId);
 
-					result = null;
-					result = Utility.doPostRequest(Settings.SERVER_URL,
-							parameters);
+					httpResult = doRequest(parameters);
 
-					if (result == null) {
-						addToQueue(msg, TIME_MINUTE, true, false);
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
+					if (httpResult.error) {
+						addToQueue(msg, TIME_MINUTE, 4, true, false);
 						break;
-					} else if (result.getString("errorCode").equals("KO")) {
-						addToQueue(msg, TIME_MINUTE, true, false);
-						// mainThreadHandler.sendMessageDelayed(m,
-						// TIME_MINUTE * 1000);
-						break;
-					} else if (result.getString("errorCode").equals("OK")) {
-						if (result.getInt("numChats") == 0) {
-							addToQueue(msg, TIME_MINUTE, true, false);
-							// mainThreadHandler.sendMessageDelayed(m,
-							// TIME_MINUTE * 1000);
-							break;
-						}
-
-						JSONArray chatsInfo = result.getJSONArray("chatsInfo");
-						JSONObject onlineChat;
-						for (int i = 0; i < chatsInfo.length(); i++) {
-							onlineChat = chatsInfo.getJSONObject(i);
-							String prefixDest, numDest, version;
-							prefixDest = onlineChat.getString("prefixDest");
-							numDest = onlineChat.getString("numDest");
-							version = onlineChat.getString("version");
-							Cursor localChat = p.getChat(prefixDest, numDest);
-
-							if ((localChat == null)
-									|| (!localChat.moveToFirst())) {
-								m = new Message();
-								b = new Bundle();
-								b.putString("prefix", prefixDest);
-								b.putString("num", numDest);
-								m.what = MessageTypes.SYNCHRONIZE_CHAT;
-								m.setData(b);
-
-								addToQueue(m, 0, false, true);
-								// mainThreadHandler.sendMessageAtFrontOfQueue(m);
-
-							} else {
-								localChat.moveToFirst();
-								String localVersion = localChat
-										.getString(localChat
-												.getColumnIndex(DatabaseHelper.KEY_VERSION));
-								if (!version.equals(localVersion)) {
-									m = new Message();
-									b = new Bundle();
-									b.putString("prefix", prefixDest);
-									b.putString("num", numDest);
-									m.what = MessageTypes.SYNCHRONIZE_CHAT;
-									m.setData(b);
-
-									addToQueue(m, 0, false, true);
-									// mainThreadHandler
-									// .sendMessageAtFrontOfQueue(m);
-								}
-							}
-
-						}
 					}
+
+					if (httpResult.result.getInt("numChats") == 0) {
+						addToQueue(msg, TIME_MINUTE, 4, true, false);
+						break;
+					}
+
+					JSONArray chatsInfo = httpResult.result
+							.getJSONArray("chatsInfo");
+					JSONObject onlineChat;
+					for (int i = 0; i < chatsInfo.length(); i++) {
+						onlineChat = chatsInfo.getJSONObject(i);
+						String prefixDest, numDest, version;
+						prefixDest = onlineChat.getString("prefixDest");
+						numDest = onlineChat.getString("numDest");
+						version = onlineChat.getString("version");
+						Cursor localChat = p.getChat(prefixDest, numDest);
+						boolean chatToSync = false;
+
+						if ((localChat == null) || (!localChat.moveToFirst())) {
+							chatToSync = true;
+						} else {
+							localChat.moveToFirst();
+							String localVersion = localChat
+									.getString(localChat
+											.getColumnIndex(DatabaseHelper.KEY_VERSION));
+							if (!version.equals(localVersion)) {
+								chatToSync = true;
+							}
+						}
+
+						if (chatToSync) {
+							m = new Message();
+							b = new Bundle();
+							b.putString("prefix", prefixDest);
+							b.putString("num", numDest);
+							m.what = MessageTypes.SYNCHRONIZE_CHAT;
+							m.setData(b);
+
+							addToQueue(m, 0, 4, false, true);
+						}
+
+					}
+
 				} catch (Exception e) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + e.toString(), Toast.LENGTH_LONG).show();
+					Utility.reportError(UMessageApplication.getContext(), e, TAG);
+					/*if (Settings.debugMode) {
+						Toast.makeText(UMessageApplication.getContext(),
+								TAG + e.toString(), Toast.LENGTH_LONG).show();
+					}
+					*/
 				}
 
 				break;
 
 			}
-		}
-
-		// Inserisce nel db locale un nuovo messaggio, ritornandone l'id (se id
-		// = -1 ----> errore, messaggio non inserito)
-		private long saveNewLocalMessage() {
-
-			return 0;
 		}
 
 		// Inoltra richiesta http post
@@ -1149,7 +1068,9 @@ public class MainThread extends Thread {
 						|| (result.result.getString("errorCode").equals("KO"))) {
 					result.error = true;
 				}
+
 			} catch (Exception e) {
+				Utility.reportError(UMessageApplication.getContext(), e, TAG);
 				result.error = true;
 			}
 
@@ -1157,11 +1078,16 @@ public class MainThread extends Thread {
 		}
 
 		// Aggiunge il messaggio alla coda, specificando il messaggio, il tempo
-		// di delay in secondi (se = 0 nessun delay) e se rimuovere prima tutti
+		// di delay in secondi (se = 0 nessun delay, se = -1 delay deciso dalla
+		// scala temporale a seconda del parametro arg1, arg2 conta quante volte
+		// si è tentata esecuzione su attuale valore temporale, senza successo)
+		// e se rimuovere prima
+		// tutti
 		// i messaggi
 		// dello stesso tipo presenti in coda
 		private void addToQueue(Message msg, long timeDelay,
-				boolean removePendingMessages, boolean atFrontQueue) {
+				int maxTimeDelayQueue, boolean removePendingMessages,
+				boolean atFrontQueue) {
 
 			Message newMsg = new Message();
 			newMsg.what = msg.what;
@@ -1175,7 +1101,18 @@ public class MainThread extends Thread {
 				mainThreadHandler.removeMessages(msg.what);
 			}
 
-			if (timeDelay > 0) {
+			if (timeDelay == -1) {
+				if ((++newMsg.arg2) > 4) {
+					newMsg.arg2 = 0;
+					newMsg.arg1 = timeQueue.toNext(newMsg.arg1);
+				}
+				if (newMsg.arg1 > maxTimeDelayQueue) {
+					newMsg.arg1 = maxTimeDelayQueue;
+				}
+
+				mainThreadHandler.sendMessageDelayed(newMsg,
+						timeQueue.getTime(newMsg.arg1) * 1000);
+			} else if (timeDelay > 0) {
 				mainThreadHandler.sendMessageDelayed(newMsg, timeDelay * 1000);
 			} else {
 				if (atFrontQueue) {
@@ -1187,10 +1124,6 @@ public class MainThread extends Thread {
 
 		}
 
-		// Invia notifica al NotificationManager
-		private void sendNotificationMessage() {
-
-		}
 	}
 
 }

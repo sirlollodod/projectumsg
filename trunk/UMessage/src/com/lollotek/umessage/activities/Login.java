@@ -106,11 +106,14 @@ public class Login extends Activity {
 			myProfileImage.delete();
 		}
 
-		File[] contactsProfileImages = contactsProfileImageFolder.listFiles();
-		if (contactsProfileImages.length > 0) {
-			for (int i = 0; i < contactsProfileImages.length; i++) {
-				if (contactsProfileImages[i].isFile()) {
-					contactsProfileImages[i].delete();
+		if (contactsProfileImageFolder.isDirectory()) {
+			File[] contactsProfileImages = contactsProfileImageFolder
+					.listFiles();
+			if (contactsProfileImages.length > 0) {
+				for (int i = 0; i < contactsProfileImages.length; i++) {
+					if (contactsProfileImages[i].isFile()) {
+						contactsProfileImages[i].delete();
+					}
 				}
 			}
 		}
@@ -155,8 +158,12 @@ public class Login extends Activity {
 			startActivity(i);
 
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(),
-					TAG + e.toString(), Toast.LENGTH_LONG).show();
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": userLogged()");
+			/*
+			 * Toast.makeText(UMessageApplication.getContext(), TAG +
+			 * e.toString(), Toast.LENGTH_LONG).show();
+			 */
 		}
 
 	}
