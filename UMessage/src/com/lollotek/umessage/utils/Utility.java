@@ -39,13 +39,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.Provider;
 
 public class Utility {
@@ -71,7 +71,8 @@ public class Utility {
 			inputStream.close();
 			return configuration;
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": loadConfiguration()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -99,7 +100,8 @@ public class Utility {
 			outputStream.close();
 			return true;
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": saveConfiguration()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -160,8 +162,10 @@ public class Utility {
 		if (networkInfo != null && networkInfo.isConnected()) {
 			return true;
 		}
-		Toast.makeText(context, TAG + "Connessione non presente...",
-				Toast.LENGTH_LONG).show();
+		if (Settings.debugMode) {
+			Toast.makeText(context, TAG + "Connessione non presente...",
+					Toast.LENGTH_LONG).show();
+		}
 		return false;
 	}
 
@@ -215,7 +219,8 @@ public class Utility {
 			result = new JSONObject(response);
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			//Utility.reportError(UMessageApplication.getContext(), e, TAG
+			//		+ ": doPostRequest()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -243,7 +248,8 @@ public class Utility {
 			imageFolder.mkdir();
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": prepareDirectory()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -263,7 +269,8 @@ public class Utility {
 
 			mainFolder = context.getExternalFilesDir(null);
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": getMainFolder()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -288,7 +295,8 @@ public class Utility {
 			in.close();
 			out.close();
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": copyFile()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -323,7 +331,8 @@ public class Utility {
 			result = new JSONObject(responseString);
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": uploadImageProfile()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -365,7 +374,8 @@ public class Utility {
 			fos.close();
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": downloadFileFromUrl()");
 			/*
 			 * Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
 			 * .show();
@@ -391,7 +401,8 @@ public class Utility {
 			}
 			return sb.toString();
 		} catch (NoSuchAlgorithmException e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": md5()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();
@@ -406,8 +417,34 @@ public class Utility {
 					.show();
 		}
 		Provider p = new Provider(context);
-		p.insertError(classTag, e.toString());
+		long newErrorId = p.insertError(classTag, e.toString());
+		HttpResponseUmsg result = new HttpResponseUmsg();
 
-		Log.v(classTag, e.toString());
+		if (newErrorId != -1) {
+			try {
+				JSONObject parameters = new JSONObject();
+				parameters.accumulate("action", "REPORT_ERROR");
+				parameters.accumulate("sessionId",
+						Utility.getConfiguration(context).getSessid());
+				parameters.accumulate("tag", classTag);
+				parameters.accumulate("info", e.toString());
+
+				result.result = Utility.doPostRequest(Settings.SERVER_URL,
+						parameters);
+
+				if ((result.result == null)
+						|| (result.result.getString("errorCode").equals("KO"))) {
+					result.error = true;
+				}
+
+			} catch (Exception exc) {
+				result.error = true;
+			}
+
+			if (!result.error) {
+				p.removeError(newErrorId);
+			}
+		}
+
 	}
 }

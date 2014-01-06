@@ -49,7 +49,7 @@ public class UMessageService extends Service {
 				mainThread.start();
 			}
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onCreate()");
 			/*if(Settings.debugMode){
 			Toast.makeText(instance, TAG + e.toString(), Toast.LENGTH_LONG)
 					.show();

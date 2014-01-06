@@ -272,7 +272,7 @@ public class Contacts extends Activity {
 					} catch (HttpException e) {
 						return numMobileContactsLoaded;
 					} catch (Exception e) {
-
+						Utility.reportError(UMessageApplication.getContext(), e, TAG + ": doInBackground()");
 					}
 
 				} else {

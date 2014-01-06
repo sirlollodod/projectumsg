@@ -20,7 +20,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
-import com.lollotek.umessage.classes.HttpResponse;
+import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.managers.SynchronizationManager;
@@ -118,8 +118,8 @@ public class MainThread extends Thread {
 
 			Message m, syncMsg;
 			Bundle b, bnd;
-			HttpResponse httpResult = new HttpResponse();
-			
+			HttpResponseUmsg httpResult = new HttpResponseUmsg();
+
 			JSONObject parameters, result;
 
 			p = new Provider(UMessageApplication.getContext());
@@ -177,10 +177,13 @@ public class MainThread extends Thread {
 							UMessageApplication.getContext(),
 							myNewProfileImage, imageUrl);
 				} catch (HttpException e) {
-					if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():DOWNLOAD_MY_PROFILE_IMAGE");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
@@ -191,7 +194,7 @@ public class MainThread extends Thread {
 							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
 							.show();
 				}
-				
+
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -235,12 +238,13 @@ public class MainThread extends Thread {
 					}
 
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():UPLOAD_MY_PROFILE_IMAGE");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
@@ -294,12 +298,16 @@ public class MainThread extends Thread {
 						}
 					}
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(
+							UMessageApplication.getContext(),
+							e,
+							TAG
+									+ ": handleMessage():DOWNLOAD_USER_IMAGE_FROM_SRC");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 				}
 
 				break;
@@ -381,13 +389,16 @@ public class MainThread extends Thread {
 						}
 
 					} catch (Exception e) {
-						Utility.reportError(UMessageApplication.getContext(), e, TAG);
-						/*if (Settings.debugMode) {
-							Toast.makeText(UMessageApplication.getContext(),
-									TAG + e.toString(), Toast.LENGTH_LONG)
-									.show();
-						}
-						*/
+						Utility.reportError(
+								UMessageApplication.getContext(),
+								e,
+								TAG
+										+ ": handleMessage():DOWNLOAD_ALL_USERS_IMAGES");
+						/*
+						 * if (Settings.debugMode) {
+						 * Toast.makeText(UMessageApplication.getContext(), TAG
+						 * + e.toString(), Toast.LENGTH_LONG) .show(); }
+						 */
 					}
 
 				}
@@ -444,12 +455,13 @@ public class MainThread extends Thread {
 						addToQueue(msg, TIME_MINUTE, 4, false, false);
 					}
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():SEND_NEW_TEXT_MESSAGE");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
@@ -552,12 +564,13 @@ public class MainThread extends Thread {
 					}
 
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():UPLOAD_NEW_MESSAGE");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 
@@ -867,12 +880,13 @@ public class MainThread extends Thread {
 					}
 
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():SYNCHRONIZE_CHAT");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 				}
 
 				break;
@@ -919,13 +933,16 @@ public class MainThread extends Thread {
 						addToQueue(m, 0, 4, false, false);
 
 					} catch (Exception e) {
-						Utility.reportError(UMessageApplication.getContext(), e, TAG);
-						/*if (Settings.debugMode) {
-							Toast.makeText(UMessageApplication.getContext(),
-									TAG + e.toString(), Toast.LENGTH_LONG)
-									.show();
-						}
-						*/
+						Utility.reportError(
+								UMessageApplication.getContext(),
+								e,
+								TAG
+										+ ": handleMessage():CHECK_MESSAGES_TO_UPLOAD");
+						/*
+						 * if (Settings.debugMode) {
+						 * Toast.makeText(UMessageApplication.getContext(), TAG
+						 * + e.toString(), Toast.LENGTH_LONG) .show(); }
+						 */
 						errors = true;
 					}
 
@@ -965,12 +982,16 @@ public class MainThread extends Thread {
 						addToQueue(m, 0, 4, false, true);
 					}
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(
+							UMessageApplication.getContext(),
+							e,
+							TAG
+									+ ": handleMessage():CHECK_CHATS_TO_SYNCHRONIZE");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 				}
 
 				addToQueue(msg, TIME_MINUTE, 4, true, false);
@@ -1042,12 +1063,13 @@ public class MainThread extends Thread {
 					}
 
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e, TAG);
-					/*if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + e.toString(), Toast.LENGTH_LONG).show();
-					}
-					*/
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():GET_CHATS_VERSION");
+					/*
+					 * if (Settings.debugMode) {
+					 * Toast.makeText(UMessageApplication.getContext(), TAG +
+					 * e.toString(), Toast.LENGTH_LONG).show(); }
+					 */
 				}
 
 				break;
@@ -1058,8 +1080,8 @@ public class MainThread extends Thread {
 		// Inoltra richiesta http post
 		// Se richiesta non è andata a buon fine, ne ritorna il risultato e flag
 		// toRepeat=true, altrimenti flag=false.
-		private HttpResponse doRequest(JSONObject parameters) {
-			HttpResponse result = new HttpResponse();
+		private HttpResponseUmsg doRequest(JSONObject parameters) {
+			HttpResponseUmsg result = new HttpResponseUmsg();
 
 			try {
 				result.result = Utility.doPostRequest(Settings.SERVER_URL,
@@ -1070,7 +1092,8 @@ public class MainThread extends Thread {
 				}
 
 			} catch (Exception e) {
-				Utility.reportError(UMessageApplication.getContext(), e, TAG);
+				Utility.reportError(UMessageApplication.getContext(), e, TAG
+						+ "doRequest()");
 				result.error = true;
 			}
 

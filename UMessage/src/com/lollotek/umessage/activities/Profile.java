@@ -129,8 +129,10 @@ public class Profile extends Activity {
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
 			} catch (Exception e) {
-				Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
+				Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onActivityResult:TAKE_IMAGE");
+				/*Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
 						.show();
+				*/		
 			}
 			break;
 
@@ -173,8 +175,10 @@ public class Profile extends Activity {
 				if (myNewProfileImageTemp.isFile()) {
 					myNewProfileImageTemp.delete();
 				}
-				Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
+				Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onActivityResult:CROP_IMAGE");
+				/*Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
 						.show();
+				*/
 			}
 			break;
 		}
