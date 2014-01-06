@@ -3,6 +3,7 @@
 include './classes/DBMS.php';
 include './classes/SingleChat.php';
 include './classes/SingleChatMessage.php';
+include './functions/functions.php';
 
 $imageContactFolder = "./UMessage/contactImages/";
 $db = new DBMS();
@@ -95,8 +96,11 @@ switch ($_POST['action']){
 		$response['num'] = $result['num'];
 		$response['email'] = $result['email'];
 
-		if($db->requestLoginUser($_POST['prefix'], $_POST['num'])){
+		$result = $db->requestLoginUser($_POST['prefix'], $_POST['num']);
+
+		if($result['verificationCodesGenerated']){
 			$response['verificationCodes'] = 'OK';
+			sendEmail($response['email'], $result['smsCode'], $result['emailCode']);
 		}
 		else{
 			$response['verificationCodes'] = 'KO';
@@ -134,7 +138,6 @@ switch ($_POST['action']){
 
 		break;
 
-		// DA IMPLEMENTARE MESSAGETAG
 		/**
 		 * + action: SEND_NEW_MESSAGE
 		 * + sessionId: id di sessione utente che invoca la richiesta
@@ -396,7 +399,7 @@ switch ($_POST['action']){
 			$response['errorInfo'] = 'No messages to download.';
 			$response['numMessages'] = 0;
 			$response['onlineChatVersion'] = $_POST['localChatVersion'];
-			$response['messages'] = '';
+			$response['messages'] = array();
 			break;
 		}
 
@@ -405,7 +408,7 @@ switch ($_POST['action']){
 			$response['errorInfo'] = 'Chat synchronization not required';
 			$response['numMessages'] = 0;
 			$response['onlineChatVersion'] = $_POST['localChatVersion'];
-			$response['messages'] = '';
+			$response['messages'] = array();
 			break;
 		}
 
@@ -676,6 +679,97 @@ switch ($_POST['action']){
 		}
 
 		break;
+
+		/**
+		 * + action: GET_CHATS_VERSION
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 * + numChats: numero delle chat relative all'utente
+		 * + chatsInfo: [] contenente tutte le chat registrate relative all'utente che invoca la richiesta
+		 *
+		 */
+	case 'GET_CHATS_VERSION':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['isSessionValid'] = true;
+			$myPrefix = $result['prefix'];
+			$myNum = $result['num'];
+		}
+		else{
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Session invalid';
+			$response['isSessionValid'] = false;
+			break;
+		}
+
+		$result = $db->getAllChats($myPrefix, $myNum);
+		if($result['errorCode'] == 'KO'){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'Error getting all chats info';
+			$response['chatsInfo'] = array();
+			break;
+		}
+		else{
+			$response['errorCode'] = 'OK';
+			$response['numChats'] = $result['numChats'];
+			$response['chatsInfo'] = $result['chatsInfo'];
+		}
+
+		break;
+
+		/**
+		 * + action: REPORT_ERROR
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + tag: classe che ha generato l'errore
+		 * + info: messaggio di errore
+		 * return:
+		 * 
+		 */
+	case 'REPORT_ERROR':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+		
+		if($result['errorCode'] == 'OK'){
+			$myPrefix = $result['prefix'];
+			$myNum = $result['num'];
+		}
+		else{
+			$myPrefix = "N/A";
+			$myNum = "N/A";
+			break;
+		}
+		
+		$result = $db->insertError($myPrefix, $myNum, $_POST['tag'], $_POST['info']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+		
+		if($result['errorCode'] == 'OK'){
+			$response['errorCode'] = 'OK';
+			break;
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+		
+		
+		break;
+
 
 		/**
 		 * Caso di default.
