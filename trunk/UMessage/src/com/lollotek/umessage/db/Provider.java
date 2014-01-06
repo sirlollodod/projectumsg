@@ -382,7 +382,8 @@ public class Provider {
 
 		chatInfo.moveToFirst();
 		if (newData > chatInfo.getLong(chatInfo
-				.getColumnIndex(DatabaseHelper.KEY_DATALASTMESSAGE))) {
+				.getColumnIndex(DatabaseHelper.KEY_DATALASTMESSAGE))
+				|| (newStatus.equals("1"))) {
 			ContentValues chatToUpdate = new ContentValues();
 			chatToUpdate.put(DatabaseHelper.KEY_IDLASTMESSAGE, idMessage);
 			chatToUpdate.put(DatabaseHelper.KEY_DATALASTMESSAGE, newData);
@@ -600,13 +601,17 @@ public class Provider {
 		return true;
 	}
 
-	// -------------- DEBUG  ---------------------------------------
-	public synchronized void insertError(String tag, String error){
+	// -------------- DEBUG ---------------------------------------
+	public synchronized long insertError(String tag, String error) {
 		ContentValues errore = new ContentValues();
 		errore.put("tag", tag);
 		errore.put("errore", error);
-		
-		insert("errori", null, errore);
+
+		return insert("errori", null, errore);
 	}
-	
+
+	public synchronized void removeError(long idError) {
+		delete("errori", "_id=?", new String[] { String.valueOf(idError) });
+	}
+
 }

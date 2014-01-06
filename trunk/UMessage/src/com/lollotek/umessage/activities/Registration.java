@@ -82,7 +82,7 @@ public class Registration extends Activity {
 					configuration);
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG);
+			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": startLoginActivity()");
 		}
 
 		startActivity(i);
