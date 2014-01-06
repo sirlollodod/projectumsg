@@ -363,6 +363,12 @@ class DBMS{
 
 		*/
 
+		$response = array(
+				'verificationCodesGenerated' => false,
+				'smsCode' => '',
+				'emailCode' => ''
+		);
+
 		$query = "DELETE FROM userlogin WHERE prefix=? AND num=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
@@ -393,13 +399,17 @@ class DBMS{
 		}
 
 		$stmt->store_result();
-		if($stmt->affected_rows == 1){		// ATTENZIONE!!!  FORSE VA AFFECTED_ROWS (invece che num_rows)
+		if($stmt->affected_rows == 1){
 			$stmt->close();
-			return true;
+			$response['verificationCodesGenerated'] = true;
+			$response['smsCode'] = $newSmsver;
+			$response['emailCode'] = $newEmailver;
+			return $response;
 		}
 		else{
 			$stmt->close();
-			return false;
+			$response['verificationCodesGenerated'] = false;
+			return $response;
 		}
 	}
 
@@ -851,12 +861,7 @@ class DBMS{
 		}
 	}
 
-
-
-	//-----------------------------      OK    ---------------------------------------------
-
 	//Modifica lo stato del messaggio richiesto
-	// DA IMPLEMENTARE AGGIORNARE VERSIONE CHAT CASO STATO MESSAGGIO = 1 ---> 3
 	function updateMessageStatus($idChat, $messageDirection, $messageData, $messageTag, $newStatus){
 		$response = array(
 				'errorCode' => '',
@@ -880,7 +885,7 @@ class DBMS{
 		$stmt->store_result();
 
 		if($stmt->num_rows > 0){
-				
+
 
 			$response['errorCode'] = 'OK';
 			$stmt->bind_result($sId, $sStatus);
@@ -906,7 +911,7 @@ class DBMS{
 
 						if($stmt->affected_rows > 0){
 							$response['messageStatusUpdated'] = true;
-								
+
 							// DA IMPLEMENTARE: aggiornare versione chat
 							{
 								$query = "SELECT vers FROM singlechat WHERE id=?;";
@@ -914,15 +919,15 @@ class DBMS{
 									$stmt->close();
 									break;
 								}
-							
+									
 								$stmt->bind_param('i', $idChat);
-							
+									
 								if(!$stmt->execute()){
 									break;
 								}
-							
+									
 								$stmt->store_result();
-							
+									
 								if($stmt->num_rows == 1){
 									$stmt->bind_result($sVersion);
 									$stmt->fetch();
@@ -932,22 +937,22 @@ class DBMS{
 									$stmt->close();
 									break;
 								}
-							
+									
 								$query = "UPDATE singlechat SET vers=? WHERE id=?;";
 								if(!$stmt = $this->connection->prepare($query)){
 									$stmt->close();
 									break;
 								}
-							
+									
 								$newChatVersion = md5("" . $sVersion . time());
-							
+									
 								$stmt->bind_param('si', $newChatVersion, $idChat);
-							
+									
 								if(!$stmt->execute()){
 									$stmt->close();
 									break;
 								}
-							
+									
 								if($stmt->affected_rows == 1){
 									$stmt->close();
 									break;
@@ -957,7 +962,7 @@ class DBMS{
 									break;
 								}
 							}
-							
+
 						}
 					}
 
@@ -981,7 +986,7 @@ class DBMS{
 
 						if($stmt->affected_rows > 0){
 							$response['messageStatusUpdated'] = true;
-								
+
 							$query = "DELETE FROM singlechatmessages WHERE  idChat=? AND direction=? AND data=? AND messageTag=?;";
 							if(!$stmt = $this->connection->prepare($query)){
 								$stmt->close();
@@ -1028,6 +1033,116 @@ class DBMS{
 
 	}
 
+	//-----------------------------      OK    ---------------------------------------------
+
+	// Inserisce l'errore ricevuto
+	function insertError($prefix, $num, $tag, $info){
+		$query = "INSERT INTO errors(prefix, num, tag, info) VALUES (?, ?, ?, ?)";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+		
+		$response = array(
+				'errorCode' => ''
+		);
+		
+		$stmt->bind_param('ssss', $prefix, $num, $tag, $info);
+		
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+		
+		$stmt->store_result();
+		
+		if($stmt->affected_rows == 1){
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			return $response;
+		}
+		else{
+			$stmt->close();
+			return false;
+		}
+	}
+
+
+	// Ritorna tutte le chat del numero richiesto
+	function getAllChats($prefix, $num){
+		$response = array(
+				'errorCode' => '',
+				'numChats' => 0,
+				'chatsInfo' => array()
+		);
+
+		$query = "SELECT vers, prefix2, num2 FROM singlechat WHERE prefix1=? AND num1=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('ss', $prefix, $num);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows > 0){
+
+			$response['numChats'] = $stmt->num_rows;
+			$stmt->bind_result($sVers, $sPrefixDest, $sNumDest);
+
+
+			while($stmt->fetch()) {
+				$chat = array(
+						'version' => $sVers,
+						'prefixDest' => $sPrefixDest,
+						'numDest' => $sNumDest
+				);
+					
+				$response['chatsInfo'][] = $chat;
+			}
+		}
+
+		$query = "SELECT vers, prefix1, num1 FROM singlechat WHERE prefix2=? AND num2=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->bind_param('ss', $prefix, $num);
+
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+
+		$stmt->store_result();
+
+		if($stmt->num_rows > 0){
+
+			$response['numChats'] += $stmt->num_rows;
+			$stmt->bind_result($sVers, $sPrefixDest, $sNumDest);
+
+
+			while($stmt->fetch()) {
+				$chat = array(
+						'version' => $sVers,
+						'prefixDest' => $sPrefixDest,
+						'numDest' => $sNumDest
+				);
+					
+				$response['chatsInfo'][] = $chat;
+			}
+		}
+
+		return $response;
+
+	}
 
 	//Controlla se un utente è in attesa di loggarsi sul terminale Android
 	function checkUserIsLogging($prefix, $num){
