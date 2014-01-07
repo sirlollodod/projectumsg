@@ -51,10 +51,6 @@ public class Registration extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		// Bisognerebbe cancellare il db locale contenente tutti i dati relativi
-		// all'account precedentemente loggato
-
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -82,7 +78,8 @@ public class Registration extends Activity {
 					configuration);
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": startLoginActivity()");
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": startLoginActivity()");
 		}
 
 		startActivity(i);

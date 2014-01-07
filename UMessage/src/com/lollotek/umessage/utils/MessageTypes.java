@@ -6,10 +6,10 @@ public class MessageTypes {
 	public static final int RECEIVE_MAIN_THREAD_HANDLER = 0;
 
 	// Tipi messaggio ricevuti da MainThreadHandler
-	public static final int RECEIVE_UPDATE_THREAD_HANDLER = 10;
+	public static final int RECEIVE_LOW_PRIORITY_THREAD_HANDLER = 10;
 	public static final int RECEIVE_NEW_MESSAGE_THREAD_HANDLER = 11;
 
-	// Tipi messaggio ricevuti da UpdateThreadHandler
+	// Tipi messaggio ricevuti da LowPriorityThreadHandler
 
 	// Tipi messaggio ricevuti da NewMessageThreadHandler
 
