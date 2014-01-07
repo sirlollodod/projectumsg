@@ -140,7 +140,7 @@ public class Login extends Activity {
 					configuration);
 
 			Toast.makeText(UMessageApplication.getContext(),
-					TAG + "Utente loggato!\n", Toast.LENGTH_SHORT).show();
+					"Utente loggato!\n", Toast.LENGTH_SHORT).show();
 
 			String myProfileImageUrl = result.getString("imageProfileSrc");
 			Intent service = new Intent(UMessageApplication.getContext(),

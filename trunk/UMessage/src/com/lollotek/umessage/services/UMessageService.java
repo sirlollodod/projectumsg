@@ -49,14 +49,27 @@ public class UMessageService extends Service {
 				mainThread.start();
 			}
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onCreate()");
-			/*if(Settings.debugMode){
-			Toast.makeText(instance, TAG + e.toString(), Toast.LENGTH_LONG)
-					.show();
-			}
-			*/
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": onCreate()");
 		}
 
+	}
+
+	private void checkMainThreadStarted() {
+		if (serviceHandler == null) {
+			serviceHandler = new ServiceHandler();
+		}
+
+		if (mainThread == null) {
+			if (Settings.debugMode) {
+				Toast.makeText(UMessageApplication.getContext(),
+						"MainThread null, reinizializzo... ", Toast.LENGTH_LONG)
+						.show();
+			}
+
+			mainThread = new MainThread(serviceHandler);
+			mainThread.start();
+		}
 	}
 
 	// Inizializzazione base del service
@@ -91,17 +104,19 @@ public class UMessageService extends Service {
 		int actionRequest;
 		Bundle b;
 
+		checkMainThreadStarted();
+
 		try {
 			actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
 		} catch (Exception e) {
 			actionRequest = MessageTypes.ERROR;
 		}
 
-		if(Settings.debugMode){
-		Toast.makeText(UMessageApplication.getContext(), TAG + actionRequest,
-				Toast.LENGTH_LONG).show();
+		if (Settings.debugMode) {
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + actionRequest, Toast.LENGTH_LONG).show();
 		}
-		
+
 		Message m;
 
 		switch (actionRequest) {
@@ -111,7 +126,6 @@ public class UMessageService extends Service {
 			break;
 
 		case MessageTypes.STARTED_FROM_BOOT_RECEIVER:
-			// scheduleDownloadAllProfileImages();
 
 			break;
 

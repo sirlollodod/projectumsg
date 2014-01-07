@@ -1,10 +1,8 @@
 package com.lollotek.umessage.threads;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
-import org.apache.http.HttpException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -32,10 +30,10 @@ public class MainThread extends Thread {
 
 	private static final String TAG = MainThread.class.getName() + ":\n";
 
-	private Handler serviceThreadHandler = null, updateThreadHandler = null,
-			newMessageThreadHandler = null;
+	private Handler serviceThreadHandler = null,
+			lowPriorityThreadHandler = null, newMessageThreadHandler = null;
 	private MainThreadHandler mainThreadHandler = null;
-	private UpdateThread updateThread = null;
+	private LowPriorityThread lowPriorityThread = null;
 	private NewMessageThread newMessageThread = null;
 
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
@@ -62,8 +60,8 @@ public class MainThread extends Thread {
 		serviceThreadHandler.obtainMessage(
 				MessageTypes.RECEIVE_MAIN_THREAD_HANDLER, mainThreadHandler)
 				.sendToTarget();
-		updateThread = new UpdateThread(mainThreadHandler);
-		updateThread.start();
+		lowPriorityThread = new LowPriorityThread(mainThreadHandler);
+		lowPriorityThread.start();
 		newMessageThread = new NewMessageThread(mainThreadHandler);
 		newMessageThread.start();
 
@@ -109,7 +107,6 @@ public class MainThread extends Thread {
 
 	private class MainThreadHandler extends Handler {
 
-		private File mainFolder, myNewProfileImage;
 		private Provider p;
 
 		@Override
@@ -120,18 +117,18 @@ public class MainThread extends Thread {
 			Bundle b, bnd;
 			HttpResponseUmsg httpResult = new HttpResponseUmsg();
 
-			JSONObject parameters, result;
+			JSONObject parameters;
 
 			p = new Provider(UMessageApplication.getContext());
 
 			switch (msg.what) {
-			case MessageTypes.RECEIVE_UPDATE_THREAD_HANDLER:
+			case MessageTypes.RECEIVE_LOW_PRIORITY_THREAD_HANDLER:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "RECEIVE_UPDATE_THREAD_HANDLER",
+							TAG + "RECEIVE_LOW_PRIORITY_THREAD_HANDLER",
 							Toast.LENGTH_LONG).show();
 				}
-				updateThreadHandler = (Handler) msg.obj;
+				lowPriorityThreadHandler = (Handler) msg.obj;
 				break;
 
 			case MessageTypes.RECEIVE_NEW_MESSAGE_THREAD_HANDLER:
@@ -148,43 +145,30 @@ public class MainThread extends Thread {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DESTROY", Toast.LENGTH_LONG).show();
 				}
-				updateThreadHandler.obtainMessage(MessageTypes.DESTROY)
+				lowPriorityThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
 				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
-				updateThreadHandler = null;
+				lowPriorityThreadHandler = null;
 				newMessageThreadHandler = null;
 				serviceThreadHandler = null;
-				updateThread = null;
+				lowPriorityThread = null;
 				newMessageThread = null;
 				Looper.myLooper().quit();
 				break;
 
+			// ------------------- METODI BASSA PRIORITA' --------------------
 			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
 							Toast.LENGTH_LONG).show();
 				}
-				String imageUrl = (String) msg.obj;
 
-				mainFolder = Utility.getMainFolder(UMessageApplication
-						.getContext());
-				myNewProfileImage = new File(mainFolder.toString()
-						+ Settings.MY_PROFILE_IMAGE_SRC);
 				try {
-					Utility.downloadFileFromUrl(
-							UMessageApplication.getContext(),
-							myNewProfileImage, imageUrl);
-				} catch (HttpException e) {
-					Utility.reportError(UMessageApplication.getContext(), e,
-							TAG + ": handleMessage():DOWNLOAD_MY_PROFILE_IMAGE");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
-					addToQueue(msg, TIME_MINUTE, 4, false, false);
+					sendToLowPriorityThreadHandler(msg);
+				} catch (Exception e) {
+					addToQueue(msg, TIME_DAY, 4, false, false);
 				}
 				break;
 
@@ -195,57 +179,10 @@ public class MainThread extends Thread {
 							.show();
 				}
 
-				mainFolder = Utility.getMainFolder(UMessageApplication
-						.getContext());
-
-				myNewProfileImage = new File(mainFolder.toString()
-						+ Settings.MY_PROFILE_IMAGE_SRC);
-
 				try {
-
-					Configuration configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
-
-					result = Utility.uploadImageProfile(
-							UMessageApplication.getContext(),
-							Settings.SERVER_URL, myNewProfileImage,
-							configuration.getSessid());
-
-					if (Settings.debugMode) {
-						Toast.makeText(UMessageApplication.getContext(),
-								TAG + result.toString(), Toast.LENGTH_LONG)
-								.show();
-					}
-					if ((result == null)
-							|| (result.getString("errorCode").equals("KO"))) {
-						addToQueue(msg, TIME_MINUTE, 4, false, false);
-					} else if (result.getString("errorCode").equals("OK")
-							&& result.getBoolean("isSessionValid")) {
-						configuration.setProfileImageToUpload(false);
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
-
-					} else if (!result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
-						if (Settings.debugMode) {
-							Toast.makeText(UMessageApplication.getContext(),
-									TAG + "sessione non valida... azzerata!",
-									Toast.LENGTH_LONG).show();
-						}
-
-					}
-
+					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e,
-							TAG + ": handleMessage():UPLOAD_MY_PROFILE_IMAGE");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
-					addToQueue(msg, TIME_MINUTE, 4, false, false);
+					addToQueue(msg, TIME_DAY, 4, false, false);
 				}
 				break;
 
@@ -255,59 +192,11 @@ public class MainThread extends Thread {
 							TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC",
 							Toast.LENGTH_LONG).show();
 				}
-				mainFolder = Utility.getMainFolder(UMessageApplication
-						.getContext());
-
-				bnd = msg.getData();
-
-				String userImageUrl = (String) msg.obj;
-				String newUserImageFileName = userImageUrl
-						.substring(userImageUrl.indexOf("+"));
-				int posNumDataSeparator = newUserImageFileName.indexOf("_");
-				String newImageName = "/"
-						+ newUserImageFileName
-								.substring(0, posNumDataSeparator) + ".jpg";
-				long newImageData = Long.parseLong(newUserImageFileName
-						.substring(posNumDataSeparator + 1,
-								newUserImageFileName.length() - 4));
-				File userImage = new File(mainFolder.toString()
-						+ Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
 
 				try {
-					Cursor userInfo = p.getUserInfo(bnd.getString("prefix"),
-							bnd.getString("num"));
-
-					if (!userInfo.moveToNext()) {
-						break;
-					}
-
-					String imageSrc = userInfo.getString(userInfo
-							.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
-
-					long imageData = Long.parseLong(userInfo.getString(userInfo
-							.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
-
-					if ((imageSrc.equals("0")) || (imageData == 0)
-							|| (imageData != newImageData)) {
-						if (Utility.downloadFileFromUrl(
-								UMessageApplication.getContext(), userImage,
-								userImageUrl)) {
-							p.updateUserImage(bnd.getString("prefix"),
-									bnd.getString("num"), newImageName,
-									newImageData);
-						}
-					}
+					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					Utility.reportError(
-							UMessageApplication.getContext(),
-							e,
-							TAG
-									+ ": handleMessage():DOWNLOAD_USER_IMAGE_FROM_SRC");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
+					addToQueue(msg, TIME_DAY, 4, false, false);
 				}
 
 				break;
@@ -318,97 +207,16 @@ public class MainThread extends Thread {
 							TAG + "DOWNLOAD_ALL_USERS_IMAGES",
 							Toast.LENGTH_LONG).show();
 				}
-				mainFolder = Utility.getMainFolder(UMessageApplication
-						.getContext());
 
-				Cursor users = p.getTotalUser();
-
-				while (users.moveToNext()) {
-
-					String prefix = users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_PREFIX));
-					String num = users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_NUM));
-					String imageSrc = users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_IMGSRC));
-
-					long imageData = Long.parseLong(users.getString(users
-							.getColumnIndex(DatabaseHelper.KEY_IMGDATA)));
-
-					try {
-
-						parameters = new JSONObject();
-						result = new JSONObject();
-
-						parameters
-								.accumulate("action", "CHECK_USER_REGISTERED");
-						parameters.accumulate("prefix", prefix);
-						parameters.accumulate("num", num);
-						parameters.accumulate("anonymous", "yes");
-
-						result = Utility.doPostRequest(Settings.SERVER_URL,
-								parameters);
-
-						String newUserImageUrl;
-						if (!result.getString("errorCode").equals("OK")) {
-							continue;
-						}
-
-						newUserImageUrl = result.getString("imageProfileSrc");
-
-						if (newUserImageUrl.length() == 0) {
-							continue;
-						}
-
-						newUserImageUrl = newUserImageUrl.substring(2);
-
-						newUserImageFileName = newUserImageUrl
-								.substring(newUserImageUrl.indexOf("+"));
-
-						posNumDataSeparator = newUserImageFileName.indexOf("_");
-						newImageName = "/"
-								+ newUserImageFileName.substring(0,
-										posNumDataSeparator) + ".jpg";
-						newImageData = Long.parseLong(newUserImageFileName
-								.substring(posNumDataSeparator + 1,
-										newUserImageFileName.length() - 4));
-						userImage = new File(mainFolder.toString()
-								+ Settings.CONTACT_PROFILE_IMAGES_FOLDER
-								+ newImageName);
-
-						if ((imageSrc.equals("0")) || (imageData == 0)
-								|| (imageData != newImageData)) {
-							if (Utility.downloadFileFromUrl(
-									UMessageApplication.getContext(),
-									userImage, Settings.SERVER_URL
-											+ newUserImageUrl)) {
-								p.updateUserImage(prefix, num, newImageName,
-										newImageData);
-							}
-
-						}
-
-					} catch (Exception e) {
-						Utility.reportError(
-								UMessageApplication.getContext(),
-								e,
-								TAG
-										+ ": handleMessage():DOWNLOAD_ALL_USERS_IMAGES");
-						/*
-						 * if (Settings.debugMode) {
-						 * Toast.makeText(UMessageApplication.getContext(), TAG
-						 * + e.toString(), Toast.LENGTH_LONG) .show(); }
-						 */
-					}
-
+				try {
+					sendToLowPriorityThreadHandler(msg);
+				} catch (Exception e) {
+					addToQueue(msg, TIME_DAY, 4, false, false);
 				}
-
-				// Schedulo aggiornamento immagini tra 1gg
-				this.sendEmptyMessageDelayed(
-						MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, TIME_DAY * 1000);
 
 				break;
 
+			// ----------------- FINE METODI BASSA PRIORITA' -------------------
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
@@ -457,11 +265,6 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():SEND_NEW_TEXT_MESSAGE");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
@@ -566,11 +369,6 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():UPLOAD_NEW_MESSAGE");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 
@@ -882,11 +680,6 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():SYNCHRONIZE_CHAT");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
 				}
 
 				break;
@@ -938,11 +731,6 @@ public class MainThread extends Thread {
 								e,
 								TAG
 										+ ": handleMessage():CHECK_MESSAGES_TO_UPLOAD");
-						/*
-						 * if (Settings.debugMode) {
-						 * Toast.makeText(UMessageApplication.getContext(), TAG
-						 * + e.toString(), Toast.LENGTH_LONG) .show(); }
-						 */
 						errors = true;
 					}
 
@@ -987,11 +775,6 @@ public class MainThread extends Thread {
 							e,
 							TAG
 									+ ": handleMessage():CHECK_CHATS_TO_SYNCHRONIZE");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
 				}
 
 				addToQueue(msg, TIME_MINUTE, 4, true, false);
@@ -1004,8 +787,6 @@ public class MainThread extends Thread {
 							.show();
 				}
 				try {
-					addToQueue(msg, TIME_MINUTE, 4, true, false);
-
 					Configuration configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 					String sessionId = configuration.getSessid();
@@ -1065,12 +846,9 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():GET_CHATS_VERSION");
-					/*
-					 * if (Settings.debugMode) {
-					 * Toast.makeText(UMessageApplication.getContext(), TAG +
-					 * e.toString(), Toast.LENGTH_LONG).show(); }
-					 */
 				}
+
+				addToQueue(msg, TIME_MINUTE, 4, true, false);
 
 				break;
 
@@ -1145,6 +923,16 @@ public class MainThread extends Thread {
 				}
 			}
 
+		}
+
+		private void sendToLowPriorityThreadHandler(Message msg) {
+			Message m = new Message();
+			m.what = msg.what;
+			m.arg1 = msg.arg1;
+			m.arg2 = msg.arg2;
+			m.obj = msg.obj;
+			m.setData(msg.getData());
+			lowPriorityThreadHandler.sendMessage(m);
 		}
 
 	}
