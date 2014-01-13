@@ -129,8 +129,8 @@ public class UMessageService extends Service {
 
 			break;
 
-		case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
-			String myProfileImageUrl = intent.getStringExtra("imageUrl");
+		case MessageTypes.USER_LOGGED:
+			String myProfileImageUrl = intent.getStringExtra("myImageUrl");
 
 			m = new Message();
 			m.what = MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC;
@@ -157,6 +157,18 @@ public class UMessageService extends Service {
 			m.setData(data);
 			m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
 			m.obj = Settings.SERVER_URL + userImageUrl;
+			serviceHandler.sendMessage(m);
+
+			break;
+
+		case MessageTypes.DOWNLOAD_USER_IMAGE:
+			b = new Bundle();
+			b.putString("prefix", intent.getStringExtra("prefix"));
+			b.putString("num", intent.getStringExtra("num"));
+
+			m = new Message();
+			m.setData(b);
+			m.what = MessageTypes.DOWNLOAD_USER_IMAGE;
 			serviceHandler.sendMessage(m);
 
 			break;
@@ -317,6 +329,19 @@ public class UMessageService extends Service {
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 10 * 1000);
 				}
+				break;
+
+			case MessageTypes.DOWNLOAD_USER_IMAGE:
+				m = new Message();
+				m.setData(msg.getData());
+				m.what = MessageTypes.DOWNLOAD_USER_IMAGE;
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
+
 				break;
 			}
 		}

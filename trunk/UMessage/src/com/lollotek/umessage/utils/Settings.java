@@ -9,5 +9,5 @@ public class Settings {
 	public static final String MY_PROFILE_IMAGE_SRC = "/me.jpg";
 	public static final String MY_PROFILE_IMAGE_SRC_TEMP = "/temp_me.jpg";
 	
-	public static final boolean debugMode = true;
+	public static final boolean debugMode = false;
 }

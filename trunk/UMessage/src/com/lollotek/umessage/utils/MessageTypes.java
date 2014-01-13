@@ -30,6 +30,8 @@ public class MessageTypes {
 	public static final int CHECK_MESSAGES_TO_UPLOAD = 79;
 	public static final int CHECK_CHATS_TO_SYNCHRONIZE = 80;
 	public static final int GET_CHATS_VERSION = 81;
+	public static final int USER_LOGGED = 82;
+	public static final int DOWNLOAD_USER_IMAGE = 83;
 
 	// Tipi messaggio ricevuti da SynchronizationManager e
 	// SynchronizationListeners
