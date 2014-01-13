@@ -216,6 +216,20 @@ public class MainThread extends Thread {
 
 				break;
 
+			case MessageTypes.DOWNLOAD_USER_IMAGE:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DOWNLOAD_USER_IMAGE", Toast.LENGTH_LONG)
+							.show();
+				}
+
+				try {
+					sendToLowPriorityThreadHandler(msg);
+				} catch (Exception e) {
+					addToQueue(msg, TIME_DAY, 4, false, false);
+				}
+				break;
+
 			// ----------------- FINE METODI BASSA PRIORITA' -------------------
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
 				if (Settings.debugMode) {
@@ -797,12 +811,20 @@ public class MainThread extends Thread {
 					httpResult = doRequest(parameters);
 
 					if (httpResult.error) {
-						addToQueue(msg, TIME_MINUTE, 4, true, false);
+						addToQueue(msg, TIME_HOUR, 4, true, false);
+						break;
+					}
+
+					if (!httpResult.result.getBoolean("isSessionValid")) {
+						configuration.setSessid("");
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
+
 						break;
 					}
 
 					if (httpResult.result.getInt("numChats") == 0) {
-						addToQueue(msg, TIME_MINUTE, 4, true, false);
+						addToQueue(msg, TIME_HOUR, 4, true, false);
 						break;
 					}
 
@@ -848,7 +870,7 @@ public class MainThread extends Thread {
 							TAG + ": handleMessage():GET_CHATS_VERSION");
 				}
 
-				addToQueue(msg, TIME_MINUTE, 4, true, false);
+				addToQueue(msg, TIME_HOUR, 4, true, false);
 
 				break;
 

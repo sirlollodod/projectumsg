@@ -63,6 +63,7 @@ int drawable ic_plusone_small_off_client 0x7f02001c
 int drawable ic_plusone_standard_off_client 0x7f02001d
 int drawable ic_plusone_tall_off_client 0x7f02001e
 int drawable not_available 0x7f02001f
+int id addUser 0x7f06001c
 int id bottomBar 0x7f060013
 int id button1 0x7f06000e
 int id button2 0x7f060012

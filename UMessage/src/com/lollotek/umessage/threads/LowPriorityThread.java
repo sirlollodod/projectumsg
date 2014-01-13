@@ -5,6 +5,8 @@ import java.io.File;
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
+import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -47,9 +49,9 @@ public class LowPriorityThread extends Thread {
 		Looper.prepare();
 
 		lowPriorityThreadHandler = new LowPriorityThreadHandler();
-		mainThreadHandler
-				.obtainMessage(MessageTypes.RECEIVE_LOW_PRIORITY_THREAD_HANDLER,
-						lowPriorityThreadHandler).sendToTarget();
+		mainThreadHandler.obtainMessage(
+				MessageTypes.RECEIVE_LOW_PRIORITY_THREAD_HANDLER,
+				lowPriorityThreadHandler).sendToTarget();
 
 		Looper.loop();
 	}
@@ -99,7 +101,7 @@ public class LowPriorityThread extends Thread {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():DOWNLOAD_MY_PROFILE_IMAGE");
 
-					addToQueue(msg, TIME_MINUTE, 4, false, false);
+					addToQueue(msg, TIME_HOUR, 4, false, false);
 				}
 				break;
 
@@ -156,7 +158,7 @@ public class LowPriorityThread extends Thread {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():UPLOAD_MY_PROFILE_IMAGE");
 
-					addToQueue(msg, TIME_MINUTE, 4, false, false);
+					addToQueue(msg, TIME_HOUR, 4, false, false);
 				}
 				break;
 
@@ -214,9 +216,53 @@ public class LowPriorityThread extends Thread {
 							e,
 							TAG
 									+ ": handleMessage():DOWNLOAD_USER_IMAGE_FROM_SRC");
-
+					addToQueue(msg, TIME_HOUR, 4, false, false);
 				}
 
+				break;
+
+			case MessageTypes.DOWNLOAD_USER_IMAGE:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "DOWNLOAD_USER_IMAGE", Toast.LENGTH_LONG)
+							.show();
+				}
+				bnd = msg.getData();
+
+				try {
+
+					parameters = new JSONObject();
+					parameters.accumulate("action", "CHECK_USER_REGISTERED");
+					parameters.accumulate("prefix", bnd.getString("prefix"));
+					parameters.accumulate("num", bnd.getString("num"));
+					parameters.accumulate("anonymous", "yes");
+
+					result = Utility.doPostRequest(Settings.SERVER_URL,
+							parameters);
+
+					if ((!result.getString("errorCode").equals("OK"))
+							|| !result.getBoolean("isRegistered")) {
+						break;
+					}
+
+					// Controllo adesso singolo contatto se immagine profilo
+					// da scaricare/aggiornare
+					userImageUrl = result.getString("imageProfileSrc");
+					if (userImageUrl.length() > 2) {
+						userImageUrl = userImageUrl.substring(2);
+						m = new Message();
+						m.what = MessageTypes.DOWNLOAD_USER_IMAGE_FROM_SRC;
+						m.obj = Settings.SERVER_URL + userImageUrl;
+						m.setData(bnd);
+
+						lowPriorityThreadHandler.sendMessage(m);
+					}
+
+				} catch (Exception e) {
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": handleMessage():DOWNLOAD_USER_IMAGE");
+					addToQueue(msg, TIME_HOUR, 4, false, false);
+				}
 				break;
 
 			case MessageTypes.DOWNLOAD_ALL_USERS_IMAGES:
@@ -306,8 +352,7 @@ public class LowPriorityThread extends Thread {
 
 				}
 
-				this.sendEmptyMessageDelayed(
-						MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, TIME_DAY * 1000);
+				addToQueue(msg, TIME_DAY, 4, true, false);
 
 				break;
 			}
@@ -349,8 +394,8 @@ public class LowPriorityThread extends Thread {
 				lowPriorityThreadHandler.sendMessageDelayed(newMsg,
 						timeQueue.getTime(newMsg.arg1) * 1000);
 			} else if (timeDelay > 0) {
-				lowPriorityThreadHandler
-						.sendMessageDelayed(newMsg, timeDelay * 1000);
+				lowPriorityThreadHandler.sendMessageDelayed(newMsg,
+						timeDelay * 1000);
 			} else {
 				if (atFrontQueue) {
 					lowPriorityThreadHandler.sendMessageAtFrontOfQueue(newMsg);

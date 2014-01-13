@@ -226,6 +226,14 @@ public class Contacts extends Activity {
 				if (phoneUtil.getNumberType(num) == PhoneNumberType.MOBILE) {
 
 					try {
+						// Controllo che user non sia gia inserito nel db locale
+						Cursor localUser = p.getUserInfo(prefixNum, phoneNum);
+						if ((localUser != null) && (localUser.moveToFirst())) {
+							continue;
+						}
+
+						// User non presente nel db locale, controllo se è
+						// registrato online
 						parameters
 								.accumulate("action", "CHECK_USER_REGISTERED");
 						parameters.accumulate("prefix", prefixNum);
@@ -272,7 +280,8 @@ public class Contacts extends Activity {
 					} catch (HttpException e) {
 						return numMobileContactsLoaded;
 					} catch (Exception e) {
-						Utility.reportError(UMessageApplication.getContext(), e, TAG + ": doInBackground()");
+						Utility.reportError(UMessageApplication.getContext(),
+								e, TAG + ": doInBackground()");
 					}
 
 				} else {

@@ -5,12 +5,14 @@ import java.util.Calendar;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,7 +23,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.SingleChatMessagesAdapter;
@@ -36,7 +43,7 @@ import com.lollotek.umessage.utils.Utility;
 public class SingleChatContact extends Activity {
 
 	private static final String TAG = SingleChatContact.class.getName() + ":\n";
-	
+
 	String[] fromColumns = {};
 	int[] toViews = {};
 	ListView listView;
@@ -50,13 +57,14 @@ public class SingleChatContact extends Activity {
 
 	private SynchronizationListener syncListener;
 
+	Cursor userInfo = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		context = this;
 
-		
 		syncListener = new SynchronizationListener() {
 
 			@Override
@@ -109,12 +117,13 @@ public class SingleChatContact extends Activity {
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
 
-		Intent syncChat = new Intent(this, com.lollotek.umessage.services.UMessageService.class);
+		Intent syncChat = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
 		syncChat.putExtra("action", MessageTypes.SYNCHRONIZE_CHAT);
 		syncChat.putExtra("prefix", prefix);
 		syncChat.putExtra("num", num);
 		startService(syncChat);
-		
+
 		TextView nameView, prefixView, numView;
 		nameView = (TextView) ab.getCustomView().findViewById(R.id.textView1);
 		prefixView = (TextView) ab.getCustomView().findViewById(R.id.textView2);
@@ -131,7 +140,7 @@ public class SingleChatContact extends Activity {
 				.findViewById(R.id.imageView1);
 
 		p = new Provider(UMessageApplication.getContext());
-		Cursor userInfo = p.getUserInfo(prefix, num);
+		userInfo = p.getUserInfo(prefix, num);
 
 		if ((userInfo != null) && (userInfo.moveToFirst())) {
 			name = userInfo.getString(userInfo
@@ -268,10 +277,10 @@ public class SingleChatContact extends Activity {
 
 		Cursor messages = p.getMessages(prefix, num);
 
-		if((messages == null) || (messages.getCount() == 0)){
+		if ((messages == null) || (messages.getCount() == 0)) {
 			return;
 		}
-		
+
 		int previousPosition = messages.getPosition();
 		int startPosition = messages.getCount();
 		boolean isSomeNewMessages = false;
@@ -361,12 +370,97 @@ public class SingleChatContact extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+
+		switch (item.getItemId()) {
+		case R.id.addUser:
+			boolean contactFound = false;
+			Cursor phones = getContentResolver().query(
+					ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+					null, null, null);
+
+			PhoneNumber numPhone;
+			PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+			String nameContact = "";
+
+			while (phones.moveToNext()) {
+				nameContact = phones
+						.getString(phones
+								.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+
+				String phoneNumber = phones
+						.getString(phones
+								.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+				numPhone = null;
+
+				try {
+					numPhone = phoneUtil
+							.parseAndKeepRawInput(phoneNumber, "IT");
+				} catch (NumberParseException e) {
+					continue;
+				}
+
+				phoneUtil.format(numPhone, PhoneNumberFormat.INTERNATIONAL);
+				String prefixNum = "+" + numPhone.getCountryCode();
+				String phoneNum = (numPhone.isItalianLeadingZero() ? "0" : "")
+						+ numPhone.getNationalNumber();
+
+				if (prefix.equals(prefixNum) && num.equals(phoneNum)) {
+					Provider p = new Provider(UMessageApplication.getContext());
+
+					ContentValues value = new ContentValues();
+
+					value.put(DatabaseHelper.KEY_PREFIX, prefixNum);
+					value.put(DatabaseHelper.KEY_NUM, phoneNum);
+					value.put(DatabaseHelper.KEY_NAME, nameContact);
+					value.put(DatabaseHelper.KEY_IMGSRC, "0");
+					value.put(DatabaseHelper.KEY_IMGDATA, "0");
+
+					if (p.insertNewUser(value)) {
+						contactFound = true;
+						ActionBar ab = getActionBar();
+						TextView nameView = (TextView) ab.getCustomView()
+								.findViewById(R.id.textView1);
+						nameView.setText(nameContact);
+
+						Intent service = new Intent(
+								this,
+								com.lollotek.umessage.services.UMessageService.class);
+						service.putExtra("action",
+								MessageTypes.DOWNLOAD_USER_IMAGE);
+						service.putExtra("prefix", prefixNum);
+						service.putExtra("num", phoneNum);
+						startService(service);
+					}
+
+					break;
+				}
+			}
+
+			nameContact = "";
+			if (!contactFound) {
+				Intent intent = new Intent(Intent.ACTION_INSERT,
+						ContactsContract.Contacts.CONTENT_URI);
+				intent.putExtra(ContactsContract.Intents.Insert.NAME,
+						nameContact);
+				intent.putExtra(ContactsContract.Intents.Insert.PHONE, prefix
+						+ num);
+				startActivity(intent);
+			}
+
+			break;
+		}
+
 		return super.onOptionsItemSelected(item);
+
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.singlechatcontact, menu);
+		if ((userInfo != null) && (userInfo.moveToFirst())) {
+			menu.removeItem(R.id.addUser);
+		}
 		return true;
 	}
 
