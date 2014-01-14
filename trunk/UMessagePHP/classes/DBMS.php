@@ -1033,8 +1033,6 @@ class DBMS{
 
 	}
 
-	//-----------------------------      OK    ---------------------------------------------
-
 	// Inserisce l'errore ricevuto
 	function insertError($prefix, $num, $tag, $info){
 		$query = "INSERT INTO errors(prefix, num, tag, info) VALUES (?, ?, ?, ?)";
@@ -1042,20 +1040,20 @@ class DBMS{
 			$stmt->close();
 			return false;
 		}
-		
+
 		$response = array(
 				'errorCode' => ''
 		);
-		
+
 		$stmt->bind_param('ssss', $prefix, $num, $tag, $info);
-		
+
 		if(!$stmt->execute()){
 			$stmt->close();
 			return false;
 		}
-		
+
 		$stmt->store_result();
-		
+
 		if($stmt->affected_rows == 1){
 			$stmt->close();
 			$response['errorCode'] = 'OK';
@@ -1066,6 +1064,9 @@ class DBMS{
 			return false;
 		}
 	}
+
+
+	//-----------------------------      OK    ---------------------------------------------
 
 
 	// Ritorna tutte le chat del numero richiesto
@@ -1175,14 +1176,45 @@ class DBMS{
 
 
 	//Aggiorna il valore della sessione di GCM associato alla id di sessione richiesto.
-	function updateGcmSessId($sessid, $newGcmid){
+	function updateGcmSessId($newGcmId, $sessId){
+		$response = array(
+				'errorCode' => 'KO',
+				'isSessionValid' => false,
+				'isGcmIdUpdated' => false
+		);
+		
+		$query = "SELECT * FROM user WHERE sessid=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+		
+		$stmt->bind_param('s', $sessId);
+		
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+		
+		$stmt->store_result();
+		
+		if($stmt->num_rows == 1){
+			$stmt->close();
+			$response['isSessionValid'] = true;
+		}
+		else{
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			return $response;
+		}
+		
 		$query = "UPDATE user SET gcmid=? WHERE sessid=?;";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
 		}
 
-		$stmt->bind_param('ss', $newGcmid, $sessid);
+		$stmt->bind_param('ss', $newGcmId, $sessId);
 
 		if(!$stmt->execute()){
 			$stmt->close();
@@ -1191,13 +1223,17 @@ class DBMS{
 
 		$stmt->store_result();
 
-		if($stmt->num_rows == 1){
+		if($stmt->affected_rows == 1){
 			$stmt->close();
-			return true;
+			$response['errorCode'] = 'OK';
+			$response['isGcmIdUpdated'] = true;
+			return $response;
 		}
 		else{
 			$stmt->close();
-			return false;
+			$response['errorCode'] = 'OK';
+			$response['isGcmIdUpdated'] = true;
+			return $response;
 		}
 	}
 
