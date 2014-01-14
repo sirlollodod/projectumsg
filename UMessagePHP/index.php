@@ -730,7 +730,7 @@ switch ($_POST['action']){
 		 * + tag: classe che ha generato l'errore
 		 * + info: messaggio di errore
 		 * return:
-		 * 
+		 *
 		 */
 	case 'REPORT_ERROR':
 		$result = $db->checkSessionId($_POST['sessionId']);
@@ -739,7 +739,7 @@ switch ($_POST['action']){
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
+
 		if($result['errorCode'] == 'OK'){
 			$myPrefix = $result['prefix'];
 			$myNum = $result['num'];
@@ -749,14 +749,14 @@ switch ($_POST['action']){
 			$myNum = "N/A";
 			break;
 		}
-		
+
 		$result = $db->insertError($myPrefix, $myNum, $_POST['tag'], $_POST['info']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
+
 		if($result['errorCode'] == 'OK'){
 			$response['errorCode'] = 'OK';
 			break;
@@ -766,10 +766,42 @@ switch ($_POST['action']){
 			$response['errorInfo'] = 'PHP error';
 			break;
 		}
-		
-		
+
+
 		break;
 
+		/**
+		 * + action: UPDATE_GCM_ID
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * + gcmId: nuovo valore di GCM relativo all'utente che invoca la richiesta
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 * + isGcmIdUpdated: true o false, a seonca che il nuovo gcmId sia stato aggiornato
+		 */
+	case 'UPDATE_GCM_ID':
+		$result = $db->updateGcmSessId($_POST['gcmId'], $_POST['sessionId']);
+		if($result['errorCode'] == 'OK'){
+			if($result['isSessionValid']){
+				$response['errorCode'] = 'OK';
+				$response['isSessionValid'] = true;
+				$response['isGcmIdUpdated'] = $result['isGcmIdUpdated'];
+				
+				break;
+			}
+			else{
+				$response['errorCode'] = 'OK';
+				$response['errorInfo'] = 'Session invalid';
+				$response['isSessionValid'] = false;
+				break;
+			}
+		}
+		else{
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'Error updating gcmId';
+			break;
+		}
+
+		break;
 
 		/**
 		 * Caso di default.
