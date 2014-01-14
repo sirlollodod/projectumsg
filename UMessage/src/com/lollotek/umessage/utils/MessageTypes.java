@@ -32,6 +32,7 @@ public class MessageTypes {
 	public static final int GET_CHATS_VERSION = 81;
 	public static final int USER_LOGGED = 82;
 	public static final int DOWNLOAD_USER_IMAGE = 83;
+	public static final int CHECK_GOOGLE_PLAY_SERVICES = 84;
 
 	// Tipi messaggio ricevuti da SynchronizationManager e
 	// SynchronizationListeners

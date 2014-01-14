@@ -23,11 +23,22 @@
         android:textStyle="bold"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
-    <TextView
+    
+    <ImageView 
+        android:id="@id/imageView2"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_toRightOf="@+id/imageView1"
+        android:layout_marginLeft="5dp"
+        android:layout_below="@+id/textView1"
+        android:layout_marginTop="-3dp"
+        android:src="@drawable/sent" />
+
+      <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="20dp"
-        android:layout_toRightOf="@+id/imageView1"
+        android:layout_toRightOf="@+id/imageView2"
         android:layout_marginLeft="10dp"
         android:layout_below="@+id/textView1"
         android:layout_marginTop="-3dp"
