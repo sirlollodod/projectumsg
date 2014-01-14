@@ -21,8 +21,9 @@ import com.lollotek.umessage.utils.Utility;
 
 public class PreviewChatAdapter extends SimpleCursorAdapter {
 
-	private static final String TAG = PreviewChatAdapter.class.getName() + ":\n";
-	
+	private static final String TAG = PreviewChatAdapter.class.getName()
+			+ ":\n";
+
 	private Cursor cursor;
 	private Context context;
 
@@ -54,13 +55,14 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 
 		newRow = inflater.inflate(R.layout.chatpreview, parent, false);
 		TextView name, message, time, news;
-		ImageView icon;
+		ImageView icon, messageStatusIcon;
 
 		cursor.moveToPosition(position);
 
 		name = (TextView) newRow.findViewById(R.id.textView1);
 		message = (TextView) newRow.findViewById(R.id.textView2);
 		time = (TextView) newRow.findViewById(R.id.textView3);
+		messageStatusIcon = (ImageView) newRow.findViewById(R.id.imageView2);
 
 		String nameValue = cursor.getString(cursor
 				.getColumnIndex(DatabaseHelper.KEY_NAME));
@@ -131,6 +133,23 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 
 		time.setText(dataFormattedValue);
 
+		switch (Integer.parseInt(cursor.getString(cursor
+				.getColumnIndex(DatabaseHelper.KEY_STATUS)))) {
+		case 0:
+			messageStatusIcon.setImageResource(R.drawable.local);
+			break;
+		case 1:
+			messageStatusIcon.setImageResource(R.drawable.sent);
+			break;
+		case 2:
+			messageStatusIcon.setImageResource(R.drawable.received);
+		case 3:
+			messageStatusIcon.setImageResource(R.drawable.received);
+			break;
+		case 4:
+			messageStatusIcon.setImageResource(R.drawable.delivered);
+			break;
+		}
 		/*
 		 * if (position % 2 == 0) { newRow.setBackgroundColor(Color.rgb(247,
 		 * 247, 247)); } else { newRow.setBackgroundColor(Color.rgb(229, 229,

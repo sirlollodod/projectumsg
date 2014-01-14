@@ -115,12 +115,19 @@ public class Utility {
 		int resultCode = GooglePlayServicesUtil
 				.isGooglePlayServicesAvailable(context);
 		if (resultCode != ConnectionResult.SUCCESS) {
-			/*
-			 * if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-			 * GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-			 * PLAY_SERVICES_RESOLUTION_REQUEST).show(); } else { Log.i(TAG,
-			 * "This device is not supported."); finish(); }
-			 */
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				// GooglePlayServicesUtil.getErrorDialog(resultCode, context,
+				// PLAY_SERVICES_RESOLUTION_REQUEST).show();
+
+				//Toast.makeText(UMessageApplication.getContext(),
+				//		"Device compatibile... aggiornare GPSs",
+				//		Toast.LENGTH_SHORT).show();
+			} else {
+				//Toast.makeText(UMessageApplication.getContext(),
+				//		"This device is not supported.", Toast.LENGTH_SHORT)
+				//		.show();
+
+			}
 			return false;
 		}
 		return true;
@@ -219,8 +226,8 @@ public class Utility {
 			result = new JSONObject(response);
 
 		} catch (Exception e) {
-			//Utility.reportError(UMessageApplication.getContext(), e, TAG
-			//		+ ": doPostRequest()");
+			// Utility.reportError(UMessageApplication.getContext(), e, TAG
+			// + ": doPostRequest()");
 			/*
 			 * Toast.makeText(UMessageApplication.getContext(), TAG +
 			 * e.toString(), Toast.LENGTH_LONG).show();

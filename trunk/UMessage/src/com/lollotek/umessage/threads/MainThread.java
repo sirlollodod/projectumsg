@@ -70,39 +70,11 @@ public class MainThread extends Thread {
 		mainThreadHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
 				.sendToTarget();
 
+		mainThreadHandler
+				.obtainMessage(MessageTypes.CHECK_GOOGLE_PLAY_SERVICES)
+				.sendToTarget();
+
 		Looper.loop();
-	}
-
-	private void registerGCM() {
-		if (Utility.checkPlayServices(UMessageApplication.getContext())) {
-			Configuration configuration = Utility
-					.getConfiguration(UMessageApplication.getContext());
-
-			String gcmid = configuration.getGcmid();
-			if ((gcmid == "") || (gcmid == null)) {
-
-				String regid;
-				if (gcm == null) {
-					gcm = GoogleCloudMessaging.getInstance(UMessageApplication
-							.getContext());
-				}
-
-				try {
-					regid = gcm.register("1050595639343");
-					configuration.setGcmid(regid);
-					Utility.setConfiguration(UMessageApplication.getContext(),
-							configuration);
-
-				} catch (IOException e) {
-
-				}
-
-			} else {
-
-			}
-		} else {
-
-		}
 	}
 
 	private class MainThreadHandler extends Handler {
@@ -231,6 +203,20 @@ public class MainThread extends Thread {
 				break;
 
 			// ----------------- FINE METODI BASSA PRIORITA' -------------------
+
+			case MessageTypes.CHECK_GOOGLE_PLAY_SERVICES:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "CHECK_GOOGLE_PLAY_SERVICES",
+							Toast.LENGTH_LONG).show();
+				}
+
+				if (!registerGCM()) {
+					addToQueue(msg, TIME_HOUR, 4, false, false);
+				}
+
+				break;
+
 			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
@@ -372,7 +358,7 @@ public class MainThread extends Thread {
 									.getString("dataNewMessage")))) {
 
 						syncMsg = new Message();
-						syncMsg.what = MessageTypes.MESSAGE_UPLOADED;
+						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
 						SynchronizationManager.getInstance()
 								.onSynchronizationFinish(syncMsg);
 
@@ -870,7 +856,7 @@ public class MainThread extends Thread {
 							TAG + ": handleMessage():GET_CHATS_VERSION");
 				}
 
-				addToQueue(msg, TIME_HOUR, 4, true, false);
+				addToQueue(msg, TIME_MINUTE, 4, true, false);
 
 				break;
 
@@ -955,6 +941,61 @@ public class MainThread extends Thread {
 			m.obj = msg.obj;
 			m.setData(msg.getData());
 			lowPriorityThreadHandler.sendMessage(m);
+		}
+
+		private boolean registerGCM() {
+			if (Utility.checkPlayServices(UMessageApplication.getContext())) {
+				Configuration configuration = Utility
+						.getConfiguration(UMessageApplication.getContext());
+
+				String regid;
+				if (gcm == null) {
+					gcm = GoogleCloudMessaging.getInstance(UMessageApplication
+							.getContext());
+				}
+
+				try {
+					regid = gcm.register("1050595639343");
+					configuration.setGcmid(regid);
+					Utility.setConfiguration(UMessageApplication.getContext(),
+							configuration);
+
+					JSONObject parameters = new JSONObject();
+					parameters.accumulate("action", "UPDATE_GCM_ID");
+					parameters.accumulate("sessionId",
+							configuration.getSessid());
+					parameters.accumulate("gcmId", configuration.getGcmid());
+					HttpResponseUmsg httpResult = new HttpResponseUmsg();
+
+					httpResult = doRequest(parameters);
+
+					if (httpResult.error) {
+						return false;
+					}
+
+					if (!httpResult.result.getBoolean("isSessionValid")) {
+						configuration.setSessid("");
+						Utility.setConfiguration(
+								UMessageApplication.getContext(), configuration);
+						return false;
+					}
+
+					if (httpResult.result.getBoolean("isGcmIdUpdated")) {
+						return true;
+					} else {
+						return false;
+					}
+
+				} catch (Exception e) {
+					Utility.reportError(UMessageApplication.getContext(), e,
+							TAG + ": registerGCM()");
+				}
+
+			} else {
+
+			}
+
+			return false;
 		}
 
 	}
