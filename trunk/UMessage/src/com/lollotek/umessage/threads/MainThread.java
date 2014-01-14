@@ -1,13 +1,17 @@
 package com.lollotek.umessage.threads;
 
-import java.io.IOException;
 import java.util.Calendar;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
+import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
+import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
@@ -72,6 +77,9 @@ public class MainThread extends Thread {
 
 		mainThreadHandler
 				.obtainMessage(MessageTypes.CHECK_GOOGLE_PLAY_SERVICES)
+				.sendToTarget();
+
+		mainThreadHandler.obtainMessage(MessageTypes.UPDATE_NOTIFICATION)
 				.sendToTarget();
 
 		Looper.loop();
@@ -203,6 +211,12 @@ public class MainThread extends Thread {
 				break;
 
 			// ----------------- FINE METODI BASSA PRIORITA' -------------------
+
+			case MessageTypes.UPDATE_NOTIFICATION:
+
+				updateNotification();
+
+				break;
 
 			case MessageTypes.CHECK_GOOGLE_PLAY_SERVICES:
 				if (Settings.debugMode) {
@@ -468,6 +482,8 @@ public class MainThread extends Thread {
 					Cursor localMessage;
 					ContentValues newIncomingMessage;
 
+					boolean isThereNewMessages = false;
+
 					for (int i = 0; i < messages.length(); i++) {
 						JSONObject message = messages.getJSONObject(i);
 
@@ -513,6 +529,7 @@ public class MainThread extends Thread {
 								long newMessageId = p
 										.insertNewMessage(newIncomingMessage);
 								updatedSomething = true;
+								isThereNewMessages = true;
 
 								parameters = new JSONObject();
 								parameters.accumulate("action",
@@ -669,6 +686,12 @@ public class MainThread extends Thread {
 						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
 						SynchronizationManager.getInstance()
 								.onSynchronizationFinish(syncMsg);
+					}
+
+					if (isThereNewMessages) {
+						m = new Message();
+						m.what = MessageTypes.UPDATE_NOTIFICATION;
+						addToQueue(m, 0, 4, true, true);
 					}
 
 					if (bnd.getBoolean("messagesToUpload", false)) {
@@ -998,6 +1021,112 @@ public class MainThread extends Thread {
 			return false;
 		}
 
+		// Controlla se ci sono notifiche da dover inviare
+		private boolean updateNotification() {
+			Provider p = new Provider(UMessageApplication.getContext());
+
+			Cursor messagesNotification = p.getAllNewMessages();
+
+			if (messagesNotification == null) {
+				return false;
+			}
+
+			int totalNewMessages = messagesNotification.getCount();
+			int totalNewConversationMessages = 0;
+			boolean firstMessage = true, newDest = false;
+
+			String prefix = "", num = "", name = "", message = "", data = "", type = "";
+
+			if (totalNewMessages == 0) {
+				return true;
+			}
+
+			messagesNotification.moveToFirst();
+
+			Notification notification;
+			String contextText = "";
+
+			do {
+				if (firstMessage) {
+					firstMessage = false;
+					totalNewConversationMessages++;
+				} else {
+					if ((!prefix
+							.equals(messagesNotification.getString(messagesNotification
+									.getColumnIndex(DatabaseHelper.KEY_PREFIX))) || (!num
+							.equals(messagesNotification.getString(messagesNotification
+									.getColumnIndex(DatabaseHelper.KEY_NUM)))))) {
+						totalNewConversationMessages++;
+						newDest = true;
+					} else {
+						newDest = false;
+					}
+				}
+
+				prefix = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_PREFIX));
+				num = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_NUM));
+				name = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_NAME));
+				message = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_MESSAGE));
+				data = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_DATA));
+				type = messagesNotification.getString(messagesNotification
+						.getColumnIndex(DatabaseHelper.KEY_TYPE));
+
+			} while (messagesNotification.moveToNext());
+
+			Intent action;
+			PendingIntent pIntent;
+
+			if (totalNewConversationMessages == 1) {
+				action = new Intent(
+						UMessageApplication.getContext(),
+						com.lollotek.umessage.activities.SingleChatContact.class);
+				action.putExtra("prefix", prefix);
+				action.putExtra("num", num);
+			} else {
+				action = new Intent(
+						UMessageApplication.getContext(),
+						com.lollotek.umessage.activities.ConversationsList.class);
+			}
+
+			pIntent = PendingIntent.getActivity(
+					UMessageApplication.getContext(), 0, action, 0);
+
+			NotificationManager notificationManager = (NotificationManager) UMessageApplication
+					.getContext()
+					.getSystemService(
+							UMessageApplication.getContext().NOTIFICATION_SERVICE);
+
+			notificationManager.cancel(0);
+			notification = new Notification.Builder(
+					UMessageApplication.getContext())
+					.setSmallIcon(R.drawable.ic_launcher)
+					.setContentTitle(
+							totalNewConversationMessages == 1 ? (name
+									.equals("0") ? (prefix + " " + num)
+									: (name + " "))
+									: ("" + messagesNotification.getCount() + " nuovi messaggi"))
+					.setContentText(
+							totalNewConversationMessages == 1 ? (totalNewMessages + (totalNewMessages == 1 ? " nuovo messaggio"
+									: " nuovi messaggi"))
+									: ("In " + totalNewConversationMessages + " conversazioni"))
+					.setContentIntent(pIntent)
+					.setVibrate(new long[] { 500, 1000 })
+					.setSound(
+							RingtoneManager
+									.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+					.build();
+
+			notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+			notificationManager.notify(0, notification);
+
+			return true;
+		}
 	}
 
 }
