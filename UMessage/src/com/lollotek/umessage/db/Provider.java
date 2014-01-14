@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.utils.Utility;
 
 public class Provider {
 
@@ -582,6 +583,60 @@ public class Provider {
 		}
 
 		return messagesToUpload;
+	}
+
+	public synchronized Cursor getAllNewMessages() {
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+		Cursor allNewMessages = null;
+
+		try {
+			String query = "SELECT IFNULL(" + DatabaseHelper.TABLE_USER + "."
+					+ DatabaseHelper.KEY_NAME + ", 0)" + " AS "
+					+ DatabaseHelper.KEY_NAME + ", "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_PREFIXDEST + " AS "
+					+ DatabaseHelper.KEY_PREFIX + ", "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_NUMDEST + " AS "
+					+ DatabaseHelper.KEY_NUM + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DATA + " AS "
+					+ DatabaseHelper.KEY_DATA + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_MESSAGE + " AS "
+					+ DatabaseHelper.KEY_MESSAGE + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TYPE + " AS "
+					+ DatabaseHelper.KEY_TYPE + " FROM "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + " LEFT JOIN "
+					+ DatabaseHelper.TABLE_SINGLECHAT + " ON "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_IDCHAT + "="
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + " LEFT JOIN "
+					+ DatabaseHelper.TABLE_USER + " ON "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_PREFIXDEST + "="
+					+ DatabaseHelper.TABLE_USER + "."
+					+ DatabaseHelper.KEY_PREFIX + " AND "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_NUMDEST + "="
+					+ DatabaseHelper.TABLE_USER + "." + DatabaseHelper.KEY_NUM
+					+ " WHERE " + DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TOREAD + "=? ORDER BY "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID;
+
+			allNewMessages = db.rawQuery(query, new String[] { "1" });
+
+		} catch (Exception e) {
+			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": getAllNewMessages()");
+			Toast.makeText(UMessageApplication.getContext(),
+					TAG + e.toString(), Toast.LENGTH_LONG).show();
+		}
+
+		return allNewMessages;
 	}
 
 	// -------------- DATABASE -------------------------------------
