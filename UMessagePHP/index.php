@@ -258,10 +258,10 @@ switch ($_POST['action']){
 			}
 
 			$result = $db->getGcmId($_POST['destPrefix'], $_POST['destNum']);
-			if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid']){
-				notifyNewMessage($result['gcmId']);
+			if($result['errorCode'] == 'OK' && $result['isDestinationValid']){
+				notifyNewMessage(array($result['gcmId']), $myPrefix, $myNum);
 			}
-
+				
 		}
 		else{
 			$response['errorCode'] = 'KO';
@@ -269,7 +269,7 @@ switch ($_POST['action']){
 			break;
 		}
 
-
+	
 		break;
 
 		/**
@@ -556,12 +556,16 @@ switch ($_POST['action']){
 		if($result['errorCode'] == 'OK'){
 			$response['errorCode'] = 'OK';
 			$response['messageStatusUpdated'] = $result['messageStatusUpdated'];
-			
+
+
+				
 			$result = $db->getGcmId($_POST['destPrefix'], $_POST['destNum']);
 			if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid']){
-				notifyMessageDelivered($result['gcmId']);
+				notifyMessageDelivered(array($result['gcmId']), $myPrefix , $myNum);
 			}
-			
+				
+
+
 			break;
 		}
 		else{

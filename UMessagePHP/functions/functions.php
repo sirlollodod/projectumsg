@@ -5,17 +5,21 @@ function sendEmail($emailAddress, $smsCode, $emailCode){
 	mail($emailAddress, "Verification codes", "SMSCODE: '" . $smsCode . "'\nEMAILCODE: '" . $emailCode . "'", "From: UMessage Service");
 }
 
-function notifyNewMessage($gcmId){
+function notifyNewMessage($gcmId, $prefix, $num){
 	$message = array(
-			'action' => 81
+			'action' => '78',
+			'prefix' => $prefix,
+			'num' => $num
 	);
 
 	send_notification($gcmId, $message);
 }
 
-function notifyMessageDelivered($gcmId){
+function notifyMessageDelivered($gcmId, $prefix, $num){
 	$message = array(
-			'action' => 81
+			'action' => '78',
+			'prefix' => $prefix,
+			'num' => $num
 	);
 
 	send_notification($gcmId, $message);
@@ -55,12 +59,12 @@ function send_notification($registatoin_ids, $message) {
 	// Execute post
 	$result = curl_exec($ch);
 	if ($result === FALSE) {
-		die('Curl failed: ' . curl_error($ch));
+		//die('Curl failed: ' . curl_error($ch));
 	}
 
 	// Close connection
 	curl_close($ch);
-	echo $result;
+	//echo $result;
 }
 
 
