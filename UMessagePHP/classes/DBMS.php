@@ -1066,9 +1066,115 @@ class DBMS{
 	}
 
 
+	//Ritorna il gcmId associato all'utente richiesto.
+	function getGcmId($prefix, $num){
+		$response = array(
+				'errorCode' => 'KO',
+				'isDestinationValid' => false,
+				'gcmId' => ''
+		);
+	
+		$query = "SELECT gcmid FROM user WHERE prefix=? AND num=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->bind_param('ss', $prefix, $num);
+	
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->store_result();
+	
+		if($stmt->num_rows == 1){
+			$stmt->bind_result($sGcmId);
+			$stmt->fetch();
+			$stmt->close();
+	
+			$response['errorCode'] = 'OK';
+			$response['isDestinationValid'] = true;
+			$response['gcmId'] = $sGcmId;
+			return $response;
+		}
+		else{
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			return $response;
+		}
+	
+	}
+	
+	// DA RITESTARE, FORSE RITORNA SEMPRE FALSE ANCHE SE GCMID UPDATED = TRUE
+	//Aggiorna il valore della sessione di GCM associato alla id di sessione richiesto.
+	function updateGcmSessId($newGcmId, $sessId){
+		$response = array(
+				'errorCode' => 'KO',
+				'isSessionValid' => false,
+				'isGcmIdUpdated' => false
+		);
+	
+		$query = "SELECT * FROM user WHERE sessid=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->bind_param('s', $sessId);
+	
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->store_result();
+	
+		if($stmt->num_rows == 1){
+			$stmt->close();
+			$response['isSessionValid'] = true;
+		}
+		else{
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			return $response;
+		}
+	
+		$query = "UPDATE user SET gcmid=? WHERE sessid=?;";
+		if(!$stmt = $this->connection->prepare($query)){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->bind_param('ss', $newGcmId, $sessId);
+	
+		if(!$stmt->execute()){
+			$stmt->close();
+			return false;
+		}
+	
+		$stmt->store_result();
+	
+		if($stmt->affected_rows == 1){
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['isGcmIdUpdated'] = true;
+			return $response;
+		}
+		else{
+			$stmt->close();
+			$response['errorCode'] = 'OK';
+			$response['isGcmIdUpdated'] = false;
+			return $response;
+		}
+	}
+	
+	
 	//-----------------------------      OK    ---------------------------------------------
 
-
+	
+	
 	// Ritorna tutte le chat del numero richiesto
 	function getAllChats($prefix, $num){
 		$response = array(
@@ -1173,69 +1279,6 @@ class DBMS{
 	}
 
 
-
-
-	//Aggiorna il valore della sessione di GCM associato alla id di sessione richiesto.
-	function updateGcmSessId($newGcmId, $sessId){
-		$response = array(
-				'errorCode' => 'KO',
-				'isSessionValid' => false,
-				'isGcmIdUpdated' => false
-		);
-		
-		$query = "SELECT * FROM user WHERE sessid=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
-		
-		$stmt->bind_param('s', $sessId);
-		
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-		
-		$stmt->store_result();
-		
-		if($stmt->num_rows == 1){
-			$stmt->close();
-			$response['isSessionValid'] = true;
-		}
-		else{
-			$stmt->close();
-			$response['errorCode'] = 'OK';
-			return $response;
-		}
-		
-		$query = "UPDATE user SET gcmid=? WHERE sessid=?;";
-		if(!$stmt = $this->connection->prepare($query)){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->bind_param('ss', $newGcmId, $sessId);
-
-		if(!$stmt->execute()){
-			$stmt->close();
-			return false;
-		}
-
-		$stmt->store_result();
-
-		if($stmt->affected_rows == 1){
-			$stmt->close();
-			$response['errorCode'] = 'OK';
-			$response['isGcmIdUpdated'] = true;
-			return $response;
-		}
-		else{
-			$stmt->close();
-			$response['errorCode'] = 'OK';
-			$response['isGcmIdUpdated'] = true;
-			return $response;
-		}
-	}
 
 	//Ritorna il valore di session id associato al numero di telefono richiesto
 	function getSessionId($prefix, $num){
