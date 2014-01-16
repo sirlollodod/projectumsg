@@ -8,8 +8,6 @@ include './functions/functions.php';
 $imageContactFolder = "./UMessage/contactImages/";
 $db = new DBMS();
 
-
-
 /**
  * FOR EVERY ACTION, oltre ai valori specifici per tipo di richiesta:
  * return:
@@ -258,6 +256,12 @@ switch ($_POST['action']){
 			if($result['chatVersionChanged']){
 				$response['newChatVersion'] = $result['newChatVersion'];
 			}
+
+			$result = $db->getGcmId($_POST['destPrefix'], $_POST['destNum']);
+			if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid']){
+				notifyNewMessage($result['gcmId']);
+			}
+
 		}
 		else{
 			$response['errorCode'] = 'KO';
@@ -552,6 +556,12 @@ switch ($_POST['action']){
 		if($result['errorCode'] == 'OK'){
 			$response['errorCode'] = 'OK';
 			$response['messageStatusUpdated'] = $result['messageStatusUpdated'];
+			
+			$result = $db->getGcmId($_POST['destPrefix'], $_POST['destNum']);
+			if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid']){
+				notifyMessageDelivered($result['gcmId']);
+			}
+			
 			break;
 		}
 		else{
@@ -785,7 +795,7 @@ switch ($_POST['action']){
 				$response['errorCode'] = 'OK';
 				$response['isSessionValid'] = true;
 				$response['isGcmIdUpdated'] = $result['isGcmIdUpdated'];
-				
+
 				break;
 			}
 			else{
