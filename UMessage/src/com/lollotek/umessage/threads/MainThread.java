@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Notification;
+import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -1044,6 +1046,8 @@ public class MainThread extends Thread {
 			messagesNotification.moveToFirst();
 
 			Notification notification;
+			Builder b = new Notification.Builder(
+					UMessageApplication.getContext());
 			String contextText = "";
 
 			do {
@@ -1087,10 +1091,25 @@ public class MainThread extends Thread {
 						com.lollotek.umessage.activities.SingleChatContact.class);
 				action.putExtra("prefix", prefix);
 				action.putExtra("num", num);
+				notification = b
+						.setContentTitle(
+								name.equals("0") ? (prefix + " " + num)
+										: (name + " "))
+						.setContentText(
+								totalNewMessages
+										+ (totalNewMessages == 1 ? " nuovo messaggio"
+												: " nuovi messaggi")).build();
 			} else {
 				action = new Intent(
 						UMessageApplication.getContext(),
 						com.lollotek.umessage.activities.ConversationsList.class);
+				notification = b
+						.setContentTitle(
+								"" + messagesNotification.getCount()
+										+ " nuovi messaggi")
+						.setContentText(
+								"In " + totalNewConversationMessages
+										+ " conversazioni").build();
 			}
 
 			pIntent = PendingIntent.getActivity(
@@ -1102,30 +1121,21 @@ public class MainThread extends Thread {
 							UMessageApplication.getContext().NOTIFICATION_SERVICE);
 
 			notificationManager.cancel(0);
-			notification = new Notification.Builder(
-					UMessageApplication.getContext())
-					.setSmallIcon(R.drawable.ic_launcher)
-					.setContentTitle(
-							totalNewConversationMessages == 1 ? (name
-									.equals("0") ? (prefix + " " + num)
-									: (name + " "))
-									: ("" + messagesNotification.getCount() + " nuovi messaggi"))
-					.setContentText(
-							totalNewConversationMessages == 1 ? (totalNewMessages + (totalNewMessages == 1 ? " nuovo messaggio"
-									: " nuovi messaggi"))
-									: ("In " + totalNewConversationMessages + " conversazioni"))
+
+			notification = b
 					.setContentIntent(pIntent)
 					.setVibrate(new long[] { 500, 1000 })
 					.setSound(
 							RingtoneManager
 									.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-					.build();
+					.setSmallIcon(R.drawable.ic_launcher).build();
 
 			notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
-			notificationManager.notify(0, notification);
+			notificationManager.notify(0, null);
 
 			return true;
+
 		}
 	}
 

@@ -659,6 +659,9 @@ public class Provider {
 		return true;
 	}
 
+	public synchronized boolean makeDumpDB(){
+		return true;
+	}
 	// -------------- DEBUG ---------------------------------------
 	public synchronized long insertError(String tag, String error) {
 		ContentValues errore = new ContentValues();
