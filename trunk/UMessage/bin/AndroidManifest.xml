@@ -8,6 +8,10 @@
         android:minSdkVersion="14"
         android:targetSdkVersion="17" />
 
+    <permission android:name="com.lollotek.umessage.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.lollotek.umessage.permission.C2D_MESSAGE" />
+    
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -47,6 +51,15 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="com.lollotek.umessage.receivers.GCMBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="com.lollotek.umessage" />
+            </intent-filter>
+        </receiver>
+        
         <activity
             android:name="com.lollotek.umessage.activities.Main"
             android:label="@string/app_name"
@@ -80,7 +93,8 @@
         <activity
             android:name="com.lollotek.umessage.activities.SingleChatContact"
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance" />
         <activity
             android:name="com.lollotek.umessage.activities.Profile"
             android:label="Profilo"
