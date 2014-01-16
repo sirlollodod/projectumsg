@@ -216,7 +216,7 @@ public class MainThread extends Thread {
 
 			case MessageTypes.UPDATE_NOTIFICATION:
 
-				updateNotification();
+				//updateNotification();
 
 				break;
 
@@ -802,7 +802,7 @@ public class MainThread extends Thread {
 									+ ": handleMessage():CHECK_CHATS_TO_SYNCHRONIZE");
 				}
 
-				addToQueue(msg, TIME_MINUTE, 4, true, false);
+				addToQueue(msg, TIME_HOUR, 4, true, false);
 				break;
 
 			case MessageTypes.GET_CHATS_VERSION:
@@ -881,7 +881,7 @@ public class MainThread extends Thread {
 							TAG + ": handleMessage():GET_CHATS_VERSION");
 				}
 
-				addToQueue(msg, TIME_MINUTE, 4, true, false);
+				addToQueue(msg, TIME_HOUR, 4, true, false);
 
 				break;
 

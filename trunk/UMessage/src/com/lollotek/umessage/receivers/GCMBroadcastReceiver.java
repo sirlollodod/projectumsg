@@ -14,14 +14,10 @@ public class GCMBroadcastReceiver extends WakefulBroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Toast.makeText(UMessageApplication.getContext(),
-				"messaggio ricevuto da gcm: " + intent.getStringExtra("value"), Toast.LENGTH_SHORT).show();
-
 		Intent service = new Intent(context,
 				com.lollotek.umessage.services.UMessageService.class);
 
-		int actionToPerform = intent.getIntExtra("action",
-				MessageTypes.GET_CHATS_VERSION);
+		int actionToPerform = Integer.parseInt(intent.getStringExtra("action"));
 
 		switch (actionToPerform) {
 		case MessageTypes.GET_CHATS_VERSION:
@@ -36,13 +32,10 @@ public class GCMBroadcastReceiver extends WakefulBroadcastReceiver {
 
 		default:
 
-			Toast.makeText(UMessageApplication.getContext(),
-					"Richiesta errata...", Toast.LENGTH_LONG).show();
 		}
 
-		 startWakefulService(context, service);
-		 setResultCode(Activity.RESULT_OK);
-		//context.startService(service);
+		startWakefulService(context, service);
+		setResultCode(Activity.RESULT_OK);
 	}
 
 }
