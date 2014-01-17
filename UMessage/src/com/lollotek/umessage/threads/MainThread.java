@@ -24,6 +24,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.classes.DumpDB;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
@@ -82,6 +83,9 @@ public class MainThread extends Thread {
 				.sendToTarget();
 
 		mainThreadHandler.obtainMessage(MessageTypes.UPDATE_NOTIFICATION)
+				.sendToTarget();
+
+		mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
 				.sendToTarget();
 
 		Looper.loop();
@@ -216,7 +220,50 @@ public class MainThread extends Thread {
 
 			case MessageTypes.UPDATE_NOTIFICATION:
 
-				//updateNotification();
+				updateNotification();
+
+				break;
+
+			case MessageTypes.NETWORK_CONNECTED:
+
+				m = new Message();
+				m.what = MessageTypes.NETWORK_CONNECTED;
+
+				addToQueue(m, 0, 4, true, true);
+
+				break;
+
+			case MessageTypes.MAKE_DB_DUMP:
+				p = new Provider(UMessageApplication.getContext());
+				Cursor cd = p.makeDumpDB();
+				DumpDB dump = new DumpDB(cd, "0", "test", "test");
+				if (dump.buildChatsList()) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"dump riuscito", Toast.LENGTH_LONG).show();
+				} else {
+					Toast.makeText(UMessageApplication.getContext(),
+							"dump non riuscito", Toast.LENGTH_LONG).show();
+				}
+
+				dump.reset();
+				while (dump.moveToNextChat()) {
+					Bundle infoChat = dump.getInfoChat();
+					String destPrefix = infoChat.getString("prefix");
+					String destNum = infoChat.getString("num");
+
+					Toast.makeText(UMessageApplication.getContext(),
+							"Chat " + destPrefix + " - " + destNum,
+							Toast.LENGTH_LONG).show();
+					int count = 0;
+					while (dump.moveToNextMessageInChat()) {
+						count++;
+					}
+					Toast.makeText(UMessageApplication.getContext(),
+							"" + count + " messaggi nella chat.",
+							Toast.LENGTH_LONG).show();
+
+				}
+				
 
 				break;
 
@@ -1132,11 +1179,12 @@ public class MainThread extends Thread {
 
 			notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
-			notificationManager.notify(0, null);
+			notificationManager.notify(0, notification);
 
 			return true;
 
 		}
+
 	}
 
 }

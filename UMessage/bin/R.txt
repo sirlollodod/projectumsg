@@ -65,6 +65,7 @@ int drawable local 0x7f02001e
 int drawable not_available 0x7f02001f
 int drawable received 0x7f020020
 int drawable sent 0x7f020021
+int drawable tick 0x7f020022
 int id addUser 0x7f06001c
 int id bottomBar 0x7f060013
 int id button1 0x7f06000e

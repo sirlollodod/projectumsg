@@ -1,13 +1,14 @@
 package com.lollotek.umessage.receivers;
 
-import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.utils.Settings;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.widget.Toast;
+
+import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.utils.MessageTypes;
+import com.lollotek.umessage.utils.Settings;
 
 public class NetworkChangeReceiver extends BroadcastReceiver {
 
@@ -27,6 +28,11 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
 				Toast.makeText(UMessageApplication.getContext(),
 						"Connessione presente....", Toast.LENGTH_SHORT).show();
 			}
+
+			Intent service = new Intent(UMessageApplication.getContext(),
+					com.lollotek.umessage.services.UMessageService.class);
+			service.putExtra("action", MessageTypes.NETWORK_CONNECTED);
+			context.startService(service);
 		}
 	}
 }

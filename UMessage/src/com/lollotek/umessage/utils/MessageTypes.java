@@ -34,6 +34,8 @@ public class MessageTypes {
 	public static final int DOWNLOAD_USER_IMAGE = 83;
 	public static final int CHECK_GOOGLE_PLAY_SERVICES = 84;
 	public static final int UPDATE_NOTIFICATION = 85;
+	public static final int NETWORK_CONNECTED = 86;
+	public static final int MAKE_DB_DUMP = 87;
 
 	// Tipi messaggio ricevuti da SynchronizationManager e
 	// SynchronizationListeners

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -45,7 +46,8 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 
 		View rowView;
 		TextView data, message, newMessages, time;
-
+		ImageView deliveredTick;
+		
 		cursor.moveToPosition(position);
 
 		String directionValue = cursor.getString(cursor
@@ -60,6 +62,10 @@ public class SingleChatMessagesAdapter extends SimpleCursorAdapter {
 		if (directionValue.equals("0")) {
 			rowView = inflater
 					.inflate(R.layout.chatmessage_sent, parent, false);
+			if(statusValue.equals("3") || statusValue.equals("4")){
+				deliveredTick = (ImageView) rowView.findViewById(R.id.imageView1);
+				deliveredTick.setVisibility(View.VISIBLE);
+			}
 		} else {
 			rowView = inflater.inflate(R.layout.chatmessage_received, parent,
 					false);
