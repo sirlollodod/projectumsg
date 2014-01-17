@@ -133,22 +133,23 @@ public class PreviewChatAdapter extends SimpleCursorAdapter {
 
 		time.setText(dataFormattedValue);
 
-		switch (Integer.parseInt(cursor.getString(cursor
-				.getColumnIndex(DatabaseHelper.KEY_STATUS)))) {
-		case 0:
-			messageStatusIcon.setImageResource(R.drawable.local);
-			break;
-		case 1:
-			messageStatusIcon.setImageResource(R.drawable.sent);
-			break;
-		case 2:
+		if (cursor.getString(
+				cursor.getColumnIndex(DatabaseHelper.KEY_DIRECTION))
+				.equals("1")) {
 			messageStatusIcon.setImageResource(R.drawable.received);
-		case 3:
-			messageStatusIcon.setImageResource(R.drawable.received);
-			break;
-		case 4:
-			messageStatusIcon.setImageResource(R.drawable.delivered);
-			break;
+		} else {
+			switch (Integer.parseInt(cursor.getString(cursor
+					.getColumnIndex(DatabaseHelper.KEY_STATUS)))) {
+			case 0:
+				messageStatusIcon.setImageResource(R.drawable.local);
+				break;
+			case 1:
+				messageStatusIcon.setImageResource(R.drawable.sent);
+				break;
+			case 4:
+				messageStatusIcon.setImageResource(R.drawable.delivered);
+				break;
+			}
 		}
 		/*
 		 * if (position % 2 == 0) { newRow.setBackgroundColor(Color.rgb(247,

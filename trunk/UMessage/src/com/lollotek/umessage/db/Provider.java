@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
 import android.widget.Toast;
 
 import com.lollotek.umessage.UMessageApplication;
@@ -488,7 +489,10 @@ public class Provider {
 					+ DatabaseHelper.KEY_TOREAD + ", "
 					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
 					+ DatabaseHelper.KEY_STATUS + " AS "
-					+ DatabaseHelper.KEY_STATUS + " FROM "
+					+ DatabaseHelper.KEY_STATUS + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DIRECTION + " AS "
+					+ DatabaseHelper.KEY_DIRECTION + " FROM "
 					+ DatabaseHelper.TABLE_SINGLECHAT + " LEFT JOIN  "
 					+ DatabaseHelper.TABLE_USER + " ON "
 					+ DatabaseHelper.TABLE_SINGLECHAT + "."
@@ -631,7 +635,8 @@ public class Provider {
 			allNewMessages = db.rawQuery(query, new String[] { "1" });
 
 		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG + ": getAllNewMessages()");
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": getAllNewMessages()");
 			Toast.makeText(UMessageApplication.getContext(),
 					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
@@ -659,9 +664,57 @@ public class Provider {
 		return true;
 	}
 
-	public synchronized boolean makeDumpDB(){
-		return true;
+	public synchronized Cursor makeDumpDB() {
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+		Cursor messagesDump = null;
+		try {
+
+			String query = "SELECT " + DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_PREFIXDEST + " AS "
+					+ DatabaseHelper.KEY_PREFIX + ", "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_NUMDEST + " AS "
+					+ DatabaseHelper.KEY_NUM + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DIRECTION + " AS "
+					+ DatabaseHelper.KEY_DIRECTION + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_STATUS + " AS "
+					+ DatabaseHelper.KEY_STATUS + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_DATA + " AS "
+					+ DatabaseHelper.KEY_DATA + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TOREAD + " AS "
+					+ DatabaseHelper.KEY_TOREAD + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TYPE + " AS "
+					+ DatabaseHelper.KEY_TYPE + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_MESSAGE + " AS "
+					+ DatabaseHelper.KEY_MESSAGE + ", "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_TAG + " AS " + DatabaseHelper.KEY_TAG
+					+ " FROM " + DatabaseHelper.TABLE_SINGLECHAT + " JOIN "
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + " ON "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID + "="
+					+ DatabaseHelper.TABLE_SINGLECHATMESSAGES + "."
+					+ DatabaseHelper.KEY_IDCHAT + " ORDER BY "
+					+ DatabaseHelper.TABLE_SINGLECHAT + "."
+					+ DatabaseHelper.KEY_ID;
+
+			messagesDump = db.rawQuery(query, null);
+		} catch (Exception e) {
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": makeDumpDB()");
+		}
+
+		return messagesDump;
+
 	}
+
 	// -------------- DEBUG ---------------------------------------
 	public synchronized long insertError(String tag, String error) {
 		ContentValues errore = new ContentValues();

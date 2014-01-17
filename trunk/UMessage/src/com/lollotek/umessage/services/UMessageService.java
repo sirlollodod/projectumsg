@@ -129,6 +129,20 @@ public class UMessageService extends Service {
 
 			break;
 
+		case MessageTypes.NETWORK_CONNECTED:
+			m = new Message();
+			m.what = MessageTypes.NETWORK_CONNECTED;
+			serviceHandler.sendMessageAtFrontOfQueue(m);
+
+			break;
+
+		case MessageTypes.MAKE_DB_DUMP:
+			m = new Message();
+			m.what = MessageTypes.MAKE_DB_DUMP;
+			serviceHandler.sendMessage(m);
+
+			break;
+
 		case MessageTypes.USER_LOGGED:
 			String myProfileImageUrl = intent.getStringExtra("myImageUrl");
 
@@ -338,6 +352,30 @@ public class UMessageService extends Service {
 
 				try {
 					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.NETWORK_CONNECTED:
+				m = new Message();
+				m.what = MessageTypes.NETWORK_CONNECTED;
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 10 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.MAKE_DB_DUMP:
+				m = new Message();
+				m.what = MessageTypes.MAKE_DB_DUMP;
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 10 * 1000);
 				}

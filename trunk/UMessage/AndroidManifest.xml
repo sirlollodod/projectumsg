@@ -94,7 +94,7 @@
             android:name="com.lollotek.umessage.activities.SingleChatContact"
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList"
             android:windowSoftInputMode="stateHidden"
-            android:launchMode="singleInstance" />
+            android:launchMode="singleTask" />
         <activity
             android:name="com.lollotek.umessage.activities.Profile"
             android:label="Profilo"
