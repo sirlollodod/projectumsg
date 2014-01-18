@@ -85,8 +85,8 @@ public class MainThread extends Thread {
 		mainThreadHandler.obtainMessage(MessageTypes.UPDATE_NOTIFICATION)
 				.sendToTarget();
 
-		mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
-				.sendToTarget();
+		// mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
+		// .sendToTarget();
 
 		Looper.loop();
 	}
@@ -154,7 +154,7 @@ public class MainThread extends Thread {
 				try {
 					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					addToQueue(msg, TIME_DAY, 4, false, false);
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
@@ -168,7 +168,7 @@ public class MainThread extends Thread {
 				try {
 					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					addToQueue(msg, TIME_DAY, 4, false, false);
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
@@ -182,7 +182,7 @@ public class MainThread extends Thread {
 				try {
 					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					addToQueue(msg, TIME_DAY, 4, false, false);
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 
 				break;
@@ -197,7 +197,7 @@ public class MainThread extends Thread {
 				try {
 					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					addToQueue(msg, TIME_DAY, 4, false, false);
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 
 				break;
@@ -212,7 +212,7 @@ public class MainThread extends Thread {
 				try {
 					sendToLowPriorityThreadHandler(msg);
 				} catch (Exception e) {
-					addToQueue(msg, TIME_DAY, 4, false, false);
+					addToQueue(msg, TIME_MINUTE, 4, false, false);
 				}
 				break;
 
@@ -227,7 +227,7 @@ public class MainThread extends Thread {
 			case MessageTypes.NETWORK_CONNECTED:
 
 				m = new Message();
-				m.what = MessageTypes.NETWORK_CONNECTED;
+				m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
 
 				addToQueue(m, 0, 4, true, true);
 
@@ -238,11 +238,14 @@ public class MainThread extends Thread {
 				Cursor cd = p.makeDumpDB();
 				DumpDB dump = new DumpDB(cd, "0", "test", "test");
 				if (dump.buildChatsList()) {
-					Toast.makeText(UMessageApplication.getContext(),
-							"dump riuscito", Toast.LENGTH_LONG).show();
+					// Toast.makeText(
+					// UMessageApplication.getContext(),
+					// "dump riuscito " + dump.myPrefix + " - "
+					// + dump.myNum + " [" + dump.dataDumpDB + "]",
+					// Toast.LENGTH_LONG).show();
 				} else {
-					Toast.makeText(UMessageApplication.getContext(),
-							"dump non riuscito", Toast.LENGTH_LONG).show();
+					// Toast.makeText(UMessageApplication.getContext(),
+					// "dump non riuscito", Toast.LENGTH_LONG).show();
 				}
 
 				dump.reset();
@@ -251,19 +254,29 @@ public class MainThread extends Thread {
 					String destPrefix = infoChat.getString("prefix");
 					String destNum = infoChat.getString("num");
 
-					Toast.makeText(UMessageApplication.getContext(),
-							"Chat " + destPrefix + " - " + destNum,
-							Toast.LENGTH_LONG).show();
+					// Toast.makeText(UMessageApplication.getContext(),
+					// "Chat " + destPrefix + " - " + destNum,
+					// Toast.LENGTH_LONG).show();
 					int count = 0;
+
 					while (dump.moveToNextMessageInChat()) {
+						Bundle infoMessage = dump.getInfoMessageInChat();
+						String direction = infoMessage.getString("direction");
+						String data = infoMessage.getString("data");
+						String status = infoMessage.getString("status");
+						String read = infoMessage.getString("read");
+						String type = infoMessage.getString("type");
+						String tag = infoMessage.getString("tag");
+						String message = infoMessage.getString("message");
+						// Toast.makeText(UMessageApplication.getContext(),
+						// message + "\n" + tag, Toast.LENGTH_LONG).show();
 						count++;
 					}
-					Toast.makeText(UMessageApplication.getContext(),
-							"" + count + " messaggi nella chat.",
-							Toast.LENGTH_LONG).show();
+					// Toast.makeText(UMessageApplication.getContext(),
+					// "" + count + " messaggi nella chat.",
+					// Toast.LENGTH_LONG).show();
 
 				}
-				
 
 				break;
 
@@ -323,6 +336,9 @@ public class MainThread extends Thread {
 						addToQueue(m, 0, 4, false, true);
 
 					} else {
+						Utility.reportError(UMessageApplication.getContext(),
+								new Exception("messaggio non inserito nel db"),
+								TAG + ": handleMessage():SEND_NEW_TEXT_MESSAGE");
 						addToQueue(msg, TIME_MINUTE, 4, false, false);
 					}
 				} catch (Exception e) {
@@ -514,7 +530,7 @@ public class MainThread extends Thread {
 						if (bnd.getBoolean("messagesToUpload", false)) {
 							m = new Message();
 							m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-							addToQueue(m, 0, 4, true, false);
+							addToQueue(m, 0, 4, true, true);
 						}
 
 						break;
@@ -746,7 +762,7 @@ public class MainThread extends Thread {
 					if (bnd.getBoolean("messagesToUpload", false)) {
 						m = new Message();
 						m.what = MessageTypes.CHECK_MESSAGES_TO_UPLOAD;
-						addToQueue(m, 0, 4, true, false);
+						addToQueue(m, 0, 4, true, true);
 					}
 
 				} catch (Exception e) {
@@ -795,7 +811,7 @@ public class MainThread extends Thread {
 										.getColumnIndex(DatabaseHelper.KEY_ID)));
 						m.setData(b);
 
-						addToQueue(m, 0, 4, false, false);
+						addToQueue(m, 0, 4, false, true);
 
 					} catch (Exception e) {
 						Utility.reportError(
@@ -1145,7 +1161,8 @@ public class MainThread extends Thread {
 						.setContentText(
 								totalNewMessages
 										+ (totalNewMessages == 1 ? " nuovo messaggio"
-												: " nuovi messaggi")).build();
+												: " nuovi messaggi"))
+						.getNotification();
 			} else {
 				action = new Intent(
 						UMessageApplication.getContext(),
@@ -1156,7 +1173,7 @@ public class MainThread extends Thread {
 										+ " nuovi messaggi")
 						.setContentText(
 								"In " + totalNewConversationMessages
-										+ " conversazioni").build();
+										+ " conversazioni").getNotification();
 			}
 
 			pIntent = PendingIntent.getActivity(
@@ -1175,7 +1192,7 @@ public class MainThread extends Thread {
 					.setSound(
 							RingtoneManager
 									.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-					.setSmallIcon(R.drawable.ic_launcher).build();
+					.setSmallIcon(R.drawable.ic_launcher).getNotification();
 
 			notification.flags |= Notification.FLAG_AUTO_CANCEL;
 

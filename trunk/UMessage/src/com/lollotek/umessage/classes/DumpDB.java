@@ -10,7 +10,7 @@ import android.widget.Toast;
 public class DumpDB {
 
 	private Cursor messagesDump;
-	private String myPrefix, myNum, dataDumpDB;
+	public String myPrefix, myNum, dataDumpDB;
 	private ChatDump actualChat, firstChat, lastChat;
 
 	public DumpDB(Cursor messagesDump, String dataDumpDB, String myPrefix,
@@ -156,6 +156,8 @@ public class DumpDB {
 				return false;
 			}
 		}
+		// caso in cui doveve essere return true, invece azzero anche l'actual
+		// message relativo alla chat attuale
 		actualChat.reset();
 
 		return true;
@@ -212,13 +214,13 @@ public class DumpDB {
 				} else {
 					return false;
 				}
-			}
-
-			if (actualMessage.nextMessage != null) {
-				actualMessage = actualMessage.nextMessage;
-				return true;
 			} else {
-				return false;
+				if (actualMessage.nextMessage != null) {
+					actualMessage = actualMessage.nextMessage;
+					return true;
+				} else {
+					return false;
+				}
 			}
 		}
 
