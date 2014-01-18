@@ -352,7 +352,7 @@ public class LowPriorityThread extends Thread {
 
 				}
 
-				addToQueue(msg, TIME_DAY, 4, true, false);
+				//addToQueue(msg, TIME_DAY, 4, true, false);
 
 				break;
 			}

@@ -242,6 +242,11 @@ public class UMessageService extends Service {
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_MAIN_THREAD_HANDLER:
 				mainThreadHandler = (Handler) msg.obj;
+
+				// Adesso mainThreadHandler è funzionante, dovrei svuotare dalla
+				// coda messaggi del service i messaggi delayed e inoltrarli
+				// nuovamente alla MainThread????
+
 				break;
 
 			case MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC:
@@ -255,7 +260,7 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 				break;
 
@@ -267,7 +272,7 @@ public class UMessageService extends Service {
 							.removeMessages(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 				break;
 
@@ -279,7 +284,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
@@ -293,7 +298,7 @@ public class UMessageService extends Service {
 							.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
 				} catch (Exception e) {
 					this.sendEmptyMessageDelayed(
-							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, 10 * 1000);
+							MessageTypes.DOWNLOAD_ALL_USERS_IMAGES, 1 * 1000);
 				}
 				break;
 
@@ -305,7 +310,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 				break;
 
@@ -316,7 +321,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
@@ -328,7 +333,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
@@ -341,7 +346,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 				break;
 
@@ -353,7 +358,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
@@ -365,7 +370,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
@@ -377,7 +382,7 @@ public class UMessageService extends Service {
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
-					this.sendMessageDelayed(m, 10 * 1000);
+					this.sendMessageDelayed(m, 1 * 1000);
 				}
 
 				break;
