@@ -39,10 +39,9 @@ public class MainThread extends Thread {
 	private static final String TAG = MainThread.class.getName() + ":\n";
 
 	private Handler serviceThreadHandler = null,
-			lowPriorityThreadHandler = null, newMessageThreadHandler = null;
+			lowPriorityThreadHandler = null;
 	private MainThreadHandler mainThreadHandler = null;
 	private LowPriorityThread lowPriorityThread = null;
-	private NewMessageThread newMessageThread = null;
 
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
 	private ExponentialQueueTime timeQueue;
@@ -70,8 +69,6 @@ public class MainThread extends Thread {
 				.sendToTarget();
 		lowPriorityThread = new LowPriorityThread(mainThreadHandler);
 		lowPriorityThread.start();
-		newMessageThread = new NewMessageThread(mainThreadHandler);
-		newMessageThread.start();
 
 		mainThreadHandler.obtainMessage(MessageTypes.GET_CHATS_VERSION)
 				.sendToTarget();
@@ -117,15 +114,6 @@ public class MainThread extends Thread {
 				lowPriorityThreadHandler = (Handler) msg.obj;
 				break;
 
-			case MessageTypes.RECEIVE_NEW_MESSAGE_THREAD_HANDLER:
-				if (Settings.debugMode) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "RECEIVE_NEW_MESSAGE_THREAD_HANDLER",
-							Toast.LENGTH_LONG).show();
-				}
-				newMessageThreadHandler = (Handler) msg.obj;
-				break;
-
 			case MessageTypes.DESTROY:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
@@ -133,13 +121,9 @@ public class MainThread extends Thread {
 				}
 				lowPriorityThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
-				newMessageThreadHandler.obtainMessage(MessageTypes.DESTROY)
-						.sendToTarget();
 				lowPriorityThreadHandler = null;
-				newMessageThreadHandler = null;
 				serviceThreadHandler = null;
 				lowPriorityThread = null;
-				newMessageThread = null;
 				Looper.myLooper().quit();
 				break;
 
@@ -293,60 +277,47 @@ public class MainThread extends Thread {
 
 				break;
 
-			case MessageTypes.SEND_NEW_TEXT_MESSAGE:
-				if (Settings.debugMode) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG)
-							.show();
-				}
-
-				m = new Message();
-				bnd = msg.getData();
-				m.setData(bnd);
-				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
-
-				try {
-					Calendar c = Calendar.getInstance();
-					ContentValues value = new ContentValues();
-					value.put(DatabaseHelper.KEY_PREFIX,
-							bnd.getString("prefix"));
-					value.put(DatabaseHelper.KEY_NUM, bnd.getString("num"));
-					value.put(DatabaseHelper.KEY_DIRECTION, 0);
-					value.put(DatabaseHelper.KEY_STATUS, "0");
-					value.put(DatabaseHelper.KEY_DATA,
-							Double.parseDouble("" + c.getTimeInMillis()));
-					value.put(DatabaseHelper.KEY_TYPE, "text");
-					value.put(DatabaseHelper.KEY_MESSAGE,
-							bnd.getString("messageText"));
-					value.put(DatabaseHelper.KEY_TOREAD, "0");
-					value.put(DatabaseHelper.KEY_TAG,
-							bnd.getString("messageTag"));
-
-					long newMessageId = p.insertNewMessage(value);
-
-					if (newMessageId != -1) {
-						syncMsg = new Message();
-						syncMsg.what = MessageTypes.MESSAGE_UPDATE;
-						SynchronizationManager.getInstance()
-								.onSynchronizationFinish(syncMsg);
-
-						bnd.putLong("messageId", newMessageId);
-						m.what = MessageTypes.UPLOAD_NEW_MESSAGE;
-
-						addToQueue(m, 0, 4, false, true);
-
-					} else {
-						Utility.reportError(UMessageApplication.getContext(),
-								new Exception("messaggio non inserito nel db"),
-								TAG + ": handleMessage():SEND_NEW_TEXT_MESSAGE");
-						addToQueue(msg, TIME_MINUTE, 4, false, false);
-					}
-				} catch (Exception e) {
-					Utility.reportError(UMessageApplication.getContext(), e,
-							TAG + ": handleMessage():SEND_NEW_TEXT_MESSAGE");
-					addToQueue(msg, TIME_MINUTE, 4, false, false);
-				}
-				break;
+			/*
+			 * Spostato in highPriorityThread
+			 * 
+			 * case MessageTypes.SEND_NEW_TEXT_MESSAGE: if (Settings.debugMode)
+			 * { Toast.makeText(UMessageApplication.getContext(), TAG +
+			 * "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG) .show(); }
+			 * 
+			 * m = new Message(); bnd = msg.getData(); m.setData(bnd); m.what =
+			 * MessageTypes.SEND_NEW_TEXT_MESSAGE;
+			 * 
+			 * try { Calendar c = Calendar.getInstance(); ContentValues value =
+			 * new ContentValues(); value.put(DatabaseHelper.KEY_PREFIX,
+			 * bnd.getString("prefix")); value.put(DatabaseHelper.KEY_NUM,
+			 * bnd.getString("num")); value.put(DatabaseHelper.KEY_DIRECTION,
+			 * 0); value.put(DatabaseHelper.KEY_STATUS, "0");
+			 * value.put(DatabaseHelper.KEY_DATA, Double.parseDouble("" +
+			 * c.getTimeInMillis())); value.put(DatabaseHelper.KEY_TYPE,
+			 * "text"); value.put(DatabaseHelper.KEY_MESSAGE,
+			 * bnd.getString("messageText"));
+			 * value.put(DatabaseHelper.KEY_TOREAD, "0");
+			 * value.put(DatabaseHelper.KEY_TAG, bnd.getString("messageTag"));
+			 * 
+			 * long newMessageId = p.insertNewMessage(value);
+			 * 
+			 * if (newMessageId != -1) { syncMsg = new Message(); syncMsg.what =
+			 * MessageTypes.MESSAGE_UPDATE; SynchronizationManager.getInstance()
+			 * .onSynchronizationFinish(syncMsg);
+			 * 
+			 * bnd.putLong("messageId", newMessageId); m.what =
+			 * MessageTypes.UPLOAD_NEW_MESSAGE;
+			 * 
+			 * addToQueue(m, 0, 4, false, true);
+			 * 
+			 * } else { Utility.reportError(UMessageApplication.getContext(),
+			 * new Exception("messaggio non inserito nel db"), TAG +
+			 * ": handleMessage():SEND_NEW_TEXT_MESSAGE"); addToQueue(msg,
+			 * TIME_MINUTE, 4, false, false); } } catch (Exception e) {
+			 * Utility.reportError(UMessageApplication.getContext(), e, TAG +
+			 * ": handleMessage():SEND_NEW_TEXT_MESSAGE"); addToQueue(msg,
+			 * TIME_MINUTE, 4, false, false); } break;
+			 */
 
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
 				if (Settings.debugMode) {

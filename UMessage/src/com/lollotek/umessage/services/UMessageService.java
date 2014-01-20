@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.threads.HighPriorityThread;
 import com.lollotek.umessage.threads.MainThread;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
@@ -25,7 +26,8 @@ public class UMessageService extends Service {
 	private Context instance = null;
 	private ServiceHandler serviceHandler = null;
 	private MainThread mainThread = null;
-	private Handler mainThreadHandler = null;
+	private Handler mainThreadHandler = null, highPriorityThreadHandler = null;
+	private HighPriorityThread highPriorityThread = null;
 
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
 
@@ -40,14 +42,8 @@ public class UMessageService extends Service {
 				instance = this;
 			}
 
-			if (serviceHandler == null) {
-				serviceHandler = new ServiceHandler();
-			}
+			checkHandlerThreadStarted();
 
-			if (mainThread == null) {
-				mainThread = new MainThread(serviceHandler);
-				mainThread.start();
-			}
 		} catch (Exception e) {
 			Utility.reportError(UMessageApplication.getContext(), e, TAG
 					+ ": onCreate()");
@@ -55,7 +51,7 @@ public class UMessageService extends Service {
 
 	}
 
-	private void checkMainThreadStarted() {
+	private void checkHandlerThreadStarted() {
 		if (serviceHandler == null) {
 			serviceHandler = new ServiceHandler();
 		}
@@ -70,6 +66,19 @@ public class UMessageService extends Service {
 			mainThread = new MainThread(serviceHandler);
 			mainThread.start();
 		}
+
+		if (highPriorityThread == null) {
+			if (Settings.debugMode) {
+				Toast.makeText(UMessageApplication.getContext(),
+						"HighPriorityThread null, reinizializzo... ",
+						Toast.LENGTH_LONG).show();
+			}
+
+			highPriorityThread = new HighPriorityThread(serviceHandler);
+			highPriorityThread.start();
+
+		}
+
 	}
 
 	// Inizializzazione base del service
@@ -90,6 +99,10 @@ public class UMessageService extends Service {
 		super.onDestroy();
 		mainThreadHandler.obtainMessage(MessageTypes.DESTROY).sendToTarget();
 		mainThread = null;
+		highPriorityThreadHandler.obtainMessage(MessageTypes.DESTROY)
+				.sendToTarget();
+		highPriorityThread = null;
+
 	}
 
 	@Override
@@ -104,7 +117,7 @@ public class UMessageService extends Service {
 		int actionRequest;
 		Bundle b;
 
-		checkMainThreadStarted();
+		checkHandlerThreadStarted();
 
 		try {
 			actionRequest = intent.getIntExtra("action", MessageTypes.ERROR);
@@ -241,11 +254,30 @@ public class UMessageService extends Service {
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_MAIN_THREAD_HANDLER:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "RECEIVE_MAIN_THREAD_HANDLER",
+							Toast.LENGTH_LONG).show();
+				}
+
 				mainThreadHandler = (Handler) msg.obj;
 
 				// Adesso mainThreadHandler è funzionante, dovrei svuotare dalla
 				// coda messaggi del service i messaggi delayed e inoltrarli
 				// nuovamente alla MainThread????
+
+				break;
+
+			case MessageTypes.RECEIVE_HIGH_PRIORITY_THREAD_HANDLER:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "RECEIVE_HIGH_PRIORITY_THREAD_HANDLER",
+							Toast.LENGTH_LONG).show();
+				}
+
+				highPriorityThreadHandler = (Handler) msg.obj;
+
+				// Adesso highPriorityThreadHandler è funzionante.
 
 				break;
 
@@ -308,10 +340,26 @@ public class UMessageService extends Service {
 				m.what = MessageTypes.SEND_NEW_TEXT_MESSAGE;
 
 				try {
-					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+					highPriorityThreadHandler.sendMessageAtFrontOfQueue(m);
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 1 * 1000);
 				}
+				break;
+
+			case MessageTypes.UPLOAD_NEW_MESSAGE:
+				m = new Message();
+				m.what = msg.what;
+				m.arg1 = msg.arg1;
+				m.arg2 = msg.arg2;
+				m.obj = msg.obj;
+				m.setData(msg.getData());
+
+				try {
+					mainThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
 				break;
 
 			case MessageTypes.CHECK_CHATS_TO_SYNCHRONIZE:
