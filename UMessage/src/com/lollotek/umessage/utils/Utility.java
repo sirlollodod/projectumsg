@@ -111,6 +111,30 @@ public class Utility {
 
 	}
 
+	
+	public static boolean saveDumpDB(Context context, JSONObject dumpDB,
+			File file) {
+
+		try {
+			// ObjectOutputStream outputStream = new ObjectOutputStream(
+			// new FileOutputStream(dumpDBFile));
+			// outputStream.writeObject(dumpDB);
+			// outputStream.close();
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(dumpDB.toString().getBytes());
+			fos.close();
+		} catch (Exception e) {
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ ": saveDumpDB()");
+
+			return false;
+		}
+
+		return true;
+	}
+	
+	
+
 	public static boolean checkPlayServices(Context context) {
 		int resultCode = GooglePlayServicesUtil
 				.isGooglePlayServicesAvailable(context);
@@ -119,13 +143,13 @@ public class Utility {
 				// GooglePlayServicesUtil.getErrorDialog(resultCode, context,
 				// PLAY_SERVICES_RESOLUTION_REQUEST).show();
 
-				//Toast.makeText(UMessageApplication.getContext(),
-				//		"Device compatibile... aggiornare GPSs",
-				//		Toast.LENGTH_SHORT).show();
+				// Toast.makeText(UMessageApplication.getContext(),
+				// "Device compatibile... aggiornare GPSs",
+				// Toast.LENGTH_SHORT).show();
 			} else {
-				//Toast.makeText(UMessageApplication.getContext(),
-				//		"This device is not supported.", Toast.LENGTH_SHORT)
-				//		.show();
+				// Toast.makeText(UMessageApplication.getContext(),
+				// "This device is not supported.", Toast.LENGTH_SHORT)
+				// .show();
 
 			}
 			return false;
