@@ -1,6 +1,7 @@
 package com.lollotek.umessage.threads;
 
 import java.io.File;
+import java.util.Calendar;
 
 import org.apache.http.HttpException;
 import org.json.JSONObject;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.classes.DumpDB;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
@@ -64,6 +66,8 @@ public class LowPriorityThread extends Thread {
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
+
+			Configuration configuration;
 
 			Message m, syncMsg;
 			Bundle b, bnd;
@@ -120,7 +124,7 @@ public class LowPriorityThread extends Thread {
 
 				try {
 
-					Configuration configuration = Utility
+					configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 
 					result = Utility.uploadImageProfile(
@@ -352,7 +356,106 @@ public class LowPriorityThread extends Thread {
 
 				}
 
-				//addToQueue(msg, TIME_DAY, 4, true, false);
+				// addToQueue(msg, TIME_DAY, 4, true, false);
+
+				break;
+
+			case MessageTypes.MAKE_DB_DUMP:
+				p = new Provider(UMessageApplication.getContext());
+				Calendar c = Calendar.getInstance();
+				long dataDump = c.getTimeInMillis();
+				Cursor cd = p.makeDumpDB();
+				configuration = Utility.getConfiguration(UMessageApplication
+						.getContext());
+				DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
+						configuration.getPrefix(), configuration.getNum());
+				if (dump.buildChatsList()) {
+
+				} else {
+					// Errore??
+				}
+
+				dump.reset();
+
+				JSONObject dumpRoot = new JSONObject();
+
+				try {
+					dumpRoot.accumulate("myPrefix", dump.myPrefix);
+					dumpRoot.accumulate("myNum", dump.myNum);
+					dumpRoot.accumulate("data", dump.dataDumpDB);
+				} catch (Exception e) {
+					// Errore??
+				}
+
+				while (dump.moveToNextChat()) {
+					JSONObject dumpChat = new JSONObject();
+					Bundle infoChat = dump.getInfoChat();
+
+					try {
+						dumpChat.accumulate("destPrefix",
+								infoChat.get("prefix"));
+						dumpChat.accumulate("destNum", infoChat.get("num"));
+					} catch (Exception e) {
+						// Errore??
+					}
+
+					while (dump.moveToNextMessageInChat()) {
+						JSONObject dumpMessage = new JSONObject();
+						Bundle infoMessage = dump.getInfoMessageInChat();
+
+						String dataMessage = infoMessage.getString("data");
+
+						if (dataDump < Long.parseLong(dataMessage)) {
+							continue;
+						}
+
+						try {
+							dumpMessage.accumulate("direction",
+									infoMessage.getString("direction"));
+							dumpMessage.accumulate("data",
+									infoMessage.getString("data"));
+							dumpMessage.accumulate("status",
+									infoMessage.getString("status"));
+							dumpMessage.accumulate("read",
+									infoMessage.getString("read"));
+							dumpMessage.accumulate("type",
+									infoMessage.getString("type"));
+							dumpMessage.accumulate("tag",
+									infoMessage.getString("tag"));
+							dumpMessage.accumulate("message",
+									infoMessage.getString("message"));
+						} catch (Exception e) {
+							// Errore??
+						}
+
+						try {
+							dumpChat.accumulate("Message", dumpMessage);
+						} catch (Exception e) {
+							// Errore??
+						}
+					}
+
+					try {
+						dumpRoot.accumulate("Chat", dumpChat);
+					} catch (Exception e) {
+						// Errore??
+					}
+				}
+
+				File mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+				File dumpFile = new File(mainFolder.toString()
+						+ Settings.DUMP_DB_FILE_NAME + "_" + dataDump);
+
+				if (Utility.saveDumpDB(UMessageApplication.getContext(),
+						dumpRoot, dumpFile)) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Dump salvato su file", Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Errore salvataggio dump su file",
+							Toast.LENGTH_SHORT).show();
+				}
 
 				break;
 			}

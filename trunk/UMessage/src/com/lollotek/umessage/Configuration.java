@@ -10,6 +10,7 @@ public class Configuration implements java.io.Serializable {
 	private String prefix, num, sessId, gcmId, simSerial, email, oldPrefix,
 			oldNum;
 	private boolean firstExecutionApp, simIsLogging, profileImageToUpload;
+	private long lastDataDumpDB;
 
 	public Configuration() {
 		super();
@@ -23,6 +24,7 @@ public class Configuration implements java.io.Serializable {
 		this.profileImageToUpload = false;
 		this.oldPrefix = "";
 		this.oldNum = "";
+		this.setLastDataDumpDB(0);
 
 	}
 
@@ -112,6 +114,14 @@ public class Configuration implements java.io.Serializable {
 
 	public void setOldNum(String oldNum) {
 		this.oldNum = oldNum;
+	}
+
+	public long getLastDataDumpDB() {
+		return lastDataDumpDB;
+	}
+
+	public void setLastDataDumpDB(long lastDataDumpDB) {
+		this.lastDataDumpDB = lastDataDumpDB;
 	}
 
 }

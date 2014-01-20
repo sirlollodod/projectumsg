@@ -1,5 +1,6 @@
 package com.lollotek.umessage.threads;
 
+import java.io.File;
 import java.util.Calendar;
 
 import org.json.JSONArray;
@@ -82,10 +83,23 @@ public class MainThread extends Thread {
 		mainThreadHandler.obtainMessage(MessageTypes.UPDATE_NOTIFICATION)
 				.sendToTarget();
 
-		// mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
-		// .sendToTarget();
+		mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
+				.sendToTarget();
 
 		Looper.loop();
+	}
+
+	private void checkHandlerThreadStarted() {
+		if (lowPriorityThread == null) {
+			if (Settings.debugMode) {
+				Toast.makeText(UMessageApplication.getContext(),
+						"LowPriorityThread null, reinizializzo... ",
+						Toast.LENGTH_LONG).show();
+			}
+
+			lowPriorityThread = new LowPriorityThread(mainThreadHandler);
+			lowPriorityThread.start();
+		}
 	}
 
 	private class MainThreadHandler extends Handler {
@@ -99,10 +113,13 @@ public class MainThread extends Thread {
 			Message m, syncMsg;
 			Bundle b, bnd;
 			HttpResponseUmsg httpResult = new HttpResponseUmsg();
+			Configuration configuration;
 
 			JSONObject parameters;
 
 			p = new Provider(UMessageApplication.getContext());
+
+			checkHandlerThreadStarted();
 
 			switch (msg.what) {
 			case MessageTypes.RECEIVE_LOW_PRIORITY_THREAD_HANDLER:
@@ -218,51 +235,82 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.MAKE_DB_DUMP:
-				p = new Provider(UMessageApplication.getContext());
-				Cursor cd = p.makeDumpDB();
-				DumpDB dump = new DumpDB(cd, "0", "test", "test");
-				if (dump.buildChatsList()) {
-					// Toast.makeText(
-					// UMessageApplication.getContext(),
-					// "dump riuscito " + dump.myPrefix + " - "
-					// + dump.myNum + " [" + dump.dataDumpDB + "]",
-					// Toast.LENGTH_LONG).show();
-				} else {
-					// Toast.makeText(UMessageApplication.getContext(),
-					// "dump non riuscito", Toast.LENGTH_LONG).show();
+				try {
+					lowPriorityThreadHandler.obtainMessage(
+							MessageTypes.MAKE_DB_DUMP).sendToTarget();
+				} catch (Exception e) {
+					addToQueue(msg, TIME_MINUTE, 4, true, false);
 				}
-
-				dump.reset();
-				while (dump.moveToNextChat()) {
-					Bundle infoChat = dump.getInfoChat();
-					String destPrefix = infoChat.getString("prefix");
-					String destNum = infoChat.getString("num");
-
-					// Toast.makeText(UMessageApplication.getContext(),
-					// "Chat " + destPrefix + " - " + destNum,
-					// Toast.LENGTH_LONG).show();
-					int count = 0;
-
-					while (dump.moveToNextMessageInChat()) {
-						Bundle infoMessage = dump.getInfoMessageInChat();
-						String direction = infoMessage.getString("direction");
-						String data = infoMessage.getString("data");
-						String status = infoMessage.getString("status");
-						String read = infoMessage.getString("read");
-						String type = infoMessage.getString("type");
-						String tag = infoMessage.getString("tag");
-						String message = infoMessage.getString("message");
-						// Toast.makeText(UMessageApplication.getContext(),
-						// message + "\n" + tag, Toast.LENGTH_LONG).show();
-						count++;
-					}
-					// Toast.makeText(UMessageApplication.getContext(),
-					// "" + count + " messaggi nella chat.",
-					// Toast.LENGTH_LONG).show();
-
-				}
-
 				break;
+
+			/*
+			 * Spostato in LowPriorityThread
+			 * 
+			 * case MessageTypes.MAKE_DB_DUMP: p = new
+			 * Provider(UMessageApplication.getContext()); Calendar c =
+			 * Calendar.getInstance(); long dataDump = c.getTimeInMillis();
+			 * Cursor cd = p.makeDumpDB(); configuration =
+			 * Utility.getConfiguration(UMessageApplication .getContext());
+			 * DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
+			 * configuration.getPrefix(), configuration.getNum()); if
+			 * (dump.buildChatsList()) {
+			 * 
+			 * } else { // Errore?? }
+			 * 
+			 * dump.reset();
+			 * 
+			 * JSONObject dumpRoot = new JSONObject();
+			 * 
+			 * try { dumpRoot.accumulate("myPrefix", dump.myPrefix);
+			 * dumpRoot.accumulate("myNum", dump.myNum);
+			 * dumpRoot.accumulate("data", dump.dataDumpDB); } catch (Exception
+			 * e) { // Errore?? }
+			 * 
+			 * while (dump.moveToNextChat()) { JSONObject dumpChat = new
+			 * JSONObject(); Bundle infoChat = dump.getInfoChat();
+			 * 
+			 * try { dumpChat.accumulate("destPrefix", infoChat.get("prefix"));
+			 * dumpChat.accumulate("destNum", infoChat.get("num")); } catch
+			 * (Exception e) { // Errore?? }
+			 * 
+			 * while (dump.moveToNextMessageInChat()) { JSONObject dumpMessage =
+			 * new JSONObject(); Bundle infoMessage =
+			 * dump.getInfoMessageInChat();
+			 * 
+			 * String dataMessage = infoMessage.getString("data");
+			 * 
+			 * if (dataDump < Long.parseLong(dataMessage)) { continue; }
+			 * 
+			 * try { dumpMessage.accumulate("direction",
+			 * infoMessage.getString("direction"));
+			 * dumpMessage.accumulate("data", infoMessage.getString("data"));
+			 * dumpMessage.accumulate("status",
+			 * infoMessage.getString("status")); dumpMessage.accumulate("read",
+			 * infoMessage.getString("read")); dumpMessage.accumulate("type",
+			 * infoMessage.getString("type")); dumpMessage.accumulate("tag",
+			 * infoMessage.getString("tag")); dumpMessage.accumulate("message",
+			 * infoMessage.getString("message")); } catch (Exception e) { //
+			 * Errore?? }
+			 * 
+			 * try { dumpChat.accumulate("Message", dumpMessage); } catch
+			 * (Exception e) { // Errore?? } }
+			 * 
+			 * try { dumpRoot.accumulate("Chat", dumpChat); } catch (Exception
+			 * e) { // Errore?? } }
+			 * 
+			 * File mainFolder = Utility.getMainFolder(UMessageApplication
+			 * .getContext()); File dumpFile = new File(mainFolder.toString() +
+			 * Settings.DUMP_DB_FILE_NAME + "_" + dataDump);
+			 * 
+			 * if (Utility.saveDumpDB(UMessageApplication.getContext(),
+			 * dumpRoot, dumpFile)) {
+			 * Toast.makeText(UMessageApplication.getContext(),
+			 * "Dump salvato su file", Toast.LENGTH_SHORT).show(); } else {
+			 * Toast.makeText(UMessageApplication.getContext(),
+			 * "Errore salvataggio dump su file", Toast.LENGTH_SHORT).show(); }
+			 * 
+			 * break;
+			 */
 
 			case MessageTypes.CHECK_GOOGLE_PLAY_SERVICES:
 				if (Settings.debugMode) {
@@ -329,7 +377,7 @@ public class MainThread extends Thread {
 
 					bnd = msg.getData();
 					parameters = new JSONObject();
-					Configuration configuration = Utility
+					configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 
 					Cursor infoChat = p.getChat(bnd.getString("prefix"),
@@ -433,7 +481,7 @@ public class MainThread extends Thread {
 				}
 				try {
 					bnd = msg.getData();
-					Configuration configuration = Utility
+					configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 					String prefixDest = bnd.getString("prefix");
 					String numDest = bnd.getString("num");
@@ -846,7 +894,7 @@ public class MainThread extends Thread {
 							.show();
 				}
 				try {
-					Configuration configuration = Utility
+					configuration = Utility
 							.getConfiguration(UMessageApplication.getContext());
 					String sessionId = configuration.getSessid();
 					parameters = new JSONObject();
