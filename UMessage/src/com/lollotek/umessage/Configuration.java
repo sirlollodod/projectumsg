@@ -24,7 +24,7 @@ public class Configuration implements java.io.Serializable {
 		this.profileImageToUpload = false;
 		this.oldPrefix = "";
 		this.oldNum = "";
-		this.setLastDataDumpDB(0);
+		this.lastDataDumpDB = 0;
 
 	}
 

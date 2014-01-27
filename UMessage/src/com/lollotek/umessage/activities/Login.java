@@ -7,6 +7,8 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -32,6 +34,8 @@ public class Login extends Activity {
 	EditText smsCode, emailCode;
 	Button b1;
 
+	private static final String SHARED_PREFS_RESTORE_VALUES = "LOGIN_VALUES";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,8 +58,28 @@ public class Login extends Activity {
 
 	@Override
 	protected void onResume() {
-		// TODO Auto-generated method stub
 		super.onResume();
+
+		SharedPreferences prefs = getSharedPreferences(
+				SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+
+		smsCode.setText(prefs.getString("smsCode", ""));
+		emailCode.setText(prefs.getString("emailCode", ""));
+
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		SharedPreferences prefs = getSharedPreferences(
+				SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+		Editor edit = prefs.edit();
+
+		edit.putString("smsCode", smsCode.getText().toString());
+		edit.putString("emailCode", emailCode.getText().toString());
+		edit.commit();
+
 	}
 
 	@Override
@@ -246,4 +270,5 @@ public class Login extends Activity {
 		}
 
 	}
+
 }
