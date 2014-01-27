@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <menu xmlns:android="http://schemas.android.com/apk/res/android">
+        <item android:id="@+id/connect" android:orderInCategory="100" android:title="Connect" android:showAsAction="never"></item>
+        <item android:id="@+id/disconnect" android:orderInCategory="99" android:title="Disconnect" android:showAsAction="never"></item>
+        <item android:id="@+id/createBackup" android:orderInCategory="99" android:showAsAction="never" android:title="Create Backup"></item>
+        <item android:id="@+id/synchronize" android:orderInCategory="98" android:showAsAction="never" android:title="Synchronize"></item>
+    </menu>

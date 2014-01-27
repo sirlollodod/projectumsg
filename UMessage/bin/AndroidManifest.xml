@@ -108,7 +108,8 @@
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
         <activity
             android:name="com.lollotek.umessage.activities.Dropbox"
-            android:label="Dropbox" />
+            android:label="Dropbox"
+            android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
         <activity
             android:name="com.dropbox.client2.android.AuthActivity"
             android:configChanges="orientation|keyboard"

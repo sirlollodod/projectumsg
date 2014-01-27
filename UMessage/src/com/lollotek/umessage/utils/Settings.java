@@ -13,13 +13,15 @@ public class Settings {
 
 	public static final boolean debugMode = false;
 
-	//Google vars account: davide.lorenzi.vr@gmail.com
+	// Google vars account: davide.lorenzi.vr@gmail.com
 	public static final String GOOGLE_PROJECT_NUMBER = "990058189573";
-	
-	//Dropbox vars
-	public final static String APP_KEY = "hkkh7cx5dxb7f92";
-	public final static String APP_SECRET = "qbvaquyudpj6uwz";
-	public final static AccessType ACCESS_TYPE = AccessType.APP_FOLDER;
 
+	// Dropbox vars
+	public static final String APP_KEY = "hkkh7cx5dxb7f92";
+	public static final String APP_SECRET = "qbvaquyudpj6uwz";
+	public static final AccessType ACCESS_TYPE = AccessType.APP_FOLDER;
+	public static final String SHARED_PREFS_DROPBOX = "DROPBOX_VALUES";
+	public static final String ACCESS_KEY_NAME = "ACCESS_KEY";
+	public static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 
 }

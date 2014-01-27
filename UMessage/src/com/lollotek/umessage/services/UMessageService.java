@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.activities.UMessageSettings;
 import com.lollotek.umessage.threads.HighPriorityThread;
 import com.lollotek.umessage.threads.MainThread;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -152,6 +153,24 @@ public class UMessageService extends Service {
 		case MessageTypes.MAKE_DB_DUMP:
 			m = new Message();
 			m.what = MessageTypes.MAKE_DB_DUMP;
+			b = new Bundle();
+			b.putBoolean("forceDBDump",
+					intent.getBooleanExtra("forceDBDump", false));
+			m.setData(b);
+			serviceHandler.sendMessage(m);
+
+			break;
+
+		case MessageTypes.GET_LAST_LOCAL_DB_BK_DATA:
+			m = new Message();
+			m.what = MessageTypes.GET_LAST_LOCAL_DB_BK_DATA;
+			serviceHandler.sendMessage(m);
+
+			break;
+
+		case MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA:
+			m = new Message();
+			m.what = MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA;
 			serviceHandler.sendMessage(m);
 
 			break;
@@ -426,6 +445,7 @@ public class UMessageService extends Service {
 			case MessageTypes.MAKE_DB_DUMP:
 				m = new Message();
 				m.what = MessageTypes.MAKE_DB_DUMP;
+				m.setData(msg.getData());
 
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
@@ -434,6 +454,31 @@ public class UMessageService extends Service {
 				}
 
 				break;
+
+			case MessageTypes.GET_LAST_LOCAL_DB_BK_DATA:
+				m = new Message();
+				m.what = MessageTypes.GET_LAST_LOCAL_DB_BK_DATA;
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
+				
+			case MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA:
+				m = new Message();
+				m.what = MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA;
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
+
 			}
 		}
 

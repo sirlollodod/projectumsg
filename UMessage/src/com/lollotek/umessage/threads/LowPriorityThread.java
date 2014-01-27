@@ -367,8 +367,11 @@ public class LowPriorityThread extends Thread {
 				Cursor cd = p.makeDumpDB();
 				configuration = Utility.getConfiguration(UMessageApplication
 						.getContext());
-				
-				if ((dataDump - configuration.getLastDataDumpDB()) < TIME_DAY * 1000) {
+				boolean forceDBDump = msg.getData().getBoolean("forceDBDump",
+						false);
+
+				if (((dataDump - configuration.getLastDataDumpDB()) < TIME_DAY * 1000)
+						&& !forceDBDump) {
 					addToQueue(msg,
 							(dataDump - configuration.getLastDataDumpDB()), 4,
 							true, false);
@@ -467,6 +470,12 @@ public class LowPriorityThread extends Thread {
 							"Errore salvataggio dump su file",
 							Toast.LENGTH_SHORT).show();
 				}
+
+				b = msg.getData();
+				b.remove("forceDBDump");
+				msg.setData(b);
+				addToQueue(msg, (dataDump - configuration.getLastDataDumpDB()),
+						4, true, false);
 
 				break;
 			}
