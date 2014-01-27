@@ -8,10 +8,11 @@
         android:minSdkVersion="14"
         android:targetSdkVersion="17" />
 
-    <permission android:name="com.lollotek.umessage.permission.C2D_MESSAGE"
+    <permission
+        android:name="com.lollotek.umessage.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
+
     <uses-permission android:name="com.lollotek.umessage.permission.C2D_MESSAGE" />
-    
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -50,16 +51,16 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name="com.lollotek.umessage.receivers.GCMBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+
                 <category android:name="com.lollotek.umessage" />
             </intent-filter>
         </receiver>
-        
+
         <activity
             android:name="com.lollotek.umessage.activities.Main"
             android:label="@string/app_name"
@@ -84,7 +85,8 @@
         <activity
             android:name="com.lollotek.umessage.activities.ConversationsList"
             android:label="Conversazioni"
-            android:windowSoftInputMode="stateHidden" />
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.Contacts"
             android:label="Contatti"
@@ -92,9 +94,9 @@
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.SingleChatContact"
+            android:launchMode="singleTask"
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList"
-            android:windowSoftInputMode="stateHidden"
-            android:launchMode="singleTask" />
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.lollotek.umessage.activities.Profile"
             android:label="Profilo"
@@ -104,6 +106,24 @@
             android:label="Mappa"
             android:noHistory="true"
             android:parentActivityName="com.lollotek.umessage.activities.ConversationsList" />
+        <activity
+            android:name="com.lollotek.umessage.activities.Dropbox"
+            android:label="Dropbox" />
+        <activity
+            android:name="com.dropbox.client2.android.AuthActivity"
+            android:configChanges="orientation|keyboard"
+            android:launchMode="singleTask" >
+            <intent-filter>
+
+                <!-- Change this to be db- followed by your app key -->
+                <data android:scheme="db-hkkh7cx5dxb7f92" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"

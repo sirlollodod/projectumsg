@@ -7,6 +7,10 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.android.AndroidAuthSession;
+import com.dropbox.client2.session.AppKeyPair;
+import com.dropbox.client2.session.Session.AccessType;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
@@ -17,7 +21,7 @@ import com.lollotek.umessage.utils.Utility;
 public class Main extends Activity {
 
 	private static final String TAG = Main.class.getName() + ":\n";
-	
+
 	private Configuration m_configuration;
 
 	GoogleCloudMessaging gcm;
@@ -32,13 +36,15 @@ public class Main extends Activity {
 
 		context = this;
 
-		m_configuration = Utility.getConfiguration(UMessageApplication.getContext());
+		m_configuration = Utility.getConfiguration(UMessageApplication
+				.getContext());
 		Intent service = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
 		if (m_configuration.getSessid().equals("")) {
 			stopService(service);
 		} else {
-			service.putExtra("action", MessageTypes.STARTED_FOR_INITIALIZE_SERVICE);
+			service.putExtra("action",
+					MessageTypes.STARTED_FOR_INITIALIZE_SERVICE);
 			startService(service);
 		}
 
@@ -59,15 +65,13 @@ public class Main extends Activity {
 		String num = m_configuration.getNum();
 
 		if ((storedSerialSim.equals("")) || (storedSerialSim == null)
-				|| !(actualSerialSim.equals(storedSerialSim))) {
-			// Registrazione
+				|| !(actualSerialSim.equals(storedSerialSim))) { // Registrazione
 
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);
 			startActivity(i);
 
-		} else if (simIsLogging) {
-			// Login
+		} else if (simIsLogging) { // Login
 
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.Login.class);
@@ -81,8 +85,7 @@ public class Main extends Activity {
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.ConversationsList.class);
 			startActivity(i);
-		} else {
-			// Default: Registrazione
+		} else { // Default: Registrazione
 
 			Intent i = new Intent(this,
 					com.lollotek.umessage.activities.Registration.class);

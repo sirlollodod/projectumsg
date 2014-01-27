@@ -5,6 +5,8 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -30,6 +32,8 @@ public class Registration extends Activity {
 	Button b1, b2;
 	String serialSim;
 
+	private static final String SHARED_PREFS_RESTORE_VALUES = "REGISTRATION_VALUES";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -51,6 +55,29 @@ public class Registration extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		SharedPreferences prefs = getSharedPreferences(
+				SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+
+		prefix.setText(prefs.getString("prefix", ""));
+		num.setText(prefs.getString("num", ""));
+		email.setText(prefs.getString("email", ""));
+
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		SharedPreferences prefs = getSharedPreferences(
+				SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+		Editor edit = prefs.edit();
+
+		edit.putString("prefix", prefix.getText().toString());
+		edit.putString("num", num.getText().toString());
+		edit.putString("email", email.getText().toString());
+		edit.commit();
+
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -291,4 +318,5 @@ public class Registration extends Activity {
 		}
 		return true;
 	}
+
 }

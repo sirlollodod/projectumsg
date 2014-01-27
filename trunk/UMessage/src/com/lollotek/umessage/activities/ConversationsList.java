@@ -28,7 +28,7 @@ import com.lollotek.umessage.utils.Utility;
 public class ConversationsList extends Activity {
 
 	private static final String TAG = ConversationsList.class.getName() + ":\n";
-	
+
 	private Context context = null;
 
 	ListView listView;
@@ -218,12 +218,17 @@ public class ConversationsList extends Activity {
 			finish();
 
 			break;
-			
+
 		case R.id.map:
 			i = new Intent(this, com.lollotek.umessage.activities.Map.class);
 			startActivity(i);
 			break;
 
+		case R.id.dropbox:
+			i = new Intent(this, com.lollotek.umessage.activities.Dropbox.class);
+			startActivity(i);
+
+			break;
 		}
 
 		return true;

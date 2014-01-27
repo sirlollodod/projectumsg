@@ -1,8 +1,5 @@
 package com.lollotek.umessage.threads;
 
-import java.io.File;
-import java.util.Calendar;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -18,14 +15,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.android.AndroidAuthSession;
+import com.dropbox.client2.session.AppKeyPair;
+import com.dropbox.client2.session.Session.AccessType;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.classes.DumpDB;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
@@ -87,6 +86,7 @@ public class MainThread extends Thread {
 				.sendToTarget();
 
 		Looper.loop();
+
 	}
 
 	private void checkHandlerThreadStarted() {
@@ -1131,7 +1131,7 @@ public class MainThread extends Thread {
 			Builder b = new Notification.Builder(
 					UMessageApplication.getContext());
 			String contextText = "";
-
+			int count = 0;
 			do {
 				if (firstMessage) {
 					firstMessage = false;
@@ -1171,6 +1171,7 @@ public class MainThread extends Thread {
 				action = new Intent(
 						UMessageApplication.getContext(),
 						com.lollotek.umessage.activities.SingleChatContact.class);
+
 				action.putExtra("prefix", prefix);
 				action.putExtra("num", num);
 				notification = b
@@ -1203,7 +1204,7 @@ public class MainThread extends Thread {
 					.getSystemService(
 							UMessageApplication.getContext().NOTIFICATION_SERVICE);
 
-			notificationManager.cancel(0);
+			notificationManager.cancelAll();
 
 			notification = b
 					.setContentIntent(pIntent)

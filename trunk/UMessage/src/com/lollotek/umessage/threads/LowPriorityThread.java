@@ -367,6 +367,14 @@ public class LowPriorityThread extends Thread {
 				Cursor cd = p.makeDumpDB();
 				configuration = Utility.getConfiguration(UMessageApplication
 						.getContext());
+				
+				if ((dataDump - configuration.getLastDataDumpDB()) < TIME_DAY * 1000) {
+					addToQueue(msg,
+							(dataDump - configuration.getLastDataDumpDB()), 4,
+							true, false);
+					break;
+				}
+
 				DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
 						configuration.getPrefix(), configuration.getNum());
 				if (dump.buildChatsList()) {
@@ -451,6 +459,9 @@ public class LowPriorityThread extends Thread {
 						dumpRoot, dumpFile)) {
 					Toast.makeText(UMessageApplication.getContext(),
 							"Dump salvato su file", Toast.LENGTH_SHORT).show();
+					configuration.setLastDataDumpDB(dataDump);
+					Utility.setConfiguration(UMessageApplication.getContext(),
+							configuration);
 				} else {
 					Toast.makeText(UMessageApplication.getContext(),
 							"Errore salvataggio dump su file",
