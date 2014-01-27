@@ -1,5 +1,7 @@
 package com.lollotek.umessage.threads;
 
+import java.io.File;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -236,11 +238,55 @@ public class MainThread extends Thread {
 
 			case MessageTypes.MAKE_DB_DUMP:
 				try {
-					lowPriorityThreadHandler.obtainMessage(
-							MessageTypes.MAKE_DB_DUMP).sendToTarget();
+					m = new Message();
+					m.what = MessageTypes.MAKE_DB_DUMP;
+					m.setData(msg.getData());
+					lowPriorityThreadHandler.sendMessage(m);
 				} catch (Exception e) {
 					addToQueue(msg, TIME_MINUTE, 4, true, false);
 				}
+				break;
+
+			case MessageTypes.GET_LAST_LOCAL_DB_BK_DATA:
+				File mainFolder = Utility.getMainFolder(UMessageApplication
+						.getContext());
+
+				File[] listDBDumpFiles = mainFolder.listFiles();
+
+				String dataLastLocalDBDump = "0";
+
+				if (listDBDumpFiles.length > 0) {
+					for (int i = 0; i < listDBDumpFiles.length; i++) {
+						if (listDBDumpFiles[i].isFile()) {
+							String fileName = listDBDumpFiles[i].getName();
+							if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
+									.substring(1))) {
+								String data = fileName.substring(fileName
+										.lastIndexOf("_") + 1);
+								if (Long.parseLong(dataLastLocalDBDump) < Long
+										.parseLong(data)) {
+									dataLastLocalDBDump = data;
+								}
+							} else {
+								continue;
+							}
+
+						}
+					}
+				}
+
+				syncMsg = new Message();
+				syncMsg.what = MessageTypes.DROPBOX_REFRESH;
+				b = new Bundle();
+				b.putString("lastLocalBkData", dataLastLocalDBDump);
+				syncMsg.setData(b);
+				SynchronizationManager.getInstance().onSynchronizationFinish(
+						syncMsg);
+
+				break;
+
+			case MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA:
+
 				break;
 
 			/*
