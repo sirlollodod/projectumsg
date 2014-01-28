@@ -27,7 +27,10 @@ function notifyMessageDelivered($gcmId, $prefix, $num){
 
 function send_notification($registatoin_ids, $message) {
 
-	define("GOOGLE_API_KEY", "AIzaSyDGjIoxS6WXXm_wvXqgPc-2bQqTDxI0gsA"); // Place your Google API Key
+	//new server key: davide.lorenzi.vr@gmail.com
+	//value= 'AIzaSyDjmCQmxWNYDPuUajMCx0Zd2FSd0KLkNjw'
+	// old value @ sirlollodod@gmail.com = 'AIzaSyDGjIoxS6WXXm_wvXqgPc-2bQqTDxI0gsA'
+	define("GOOGLE_API_KEY", "AIzaSyDjmCQmxWNYDPuUajMCx0Zd2FSd0KLkNjw"); // Place your Google API Key
 
 	// Set POST variables
 	$url = 'https://android.googleapis.com/gcm/send';
