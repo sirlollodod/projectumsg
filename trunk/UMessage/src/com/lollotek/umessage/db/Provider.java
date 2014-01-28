@@ -2,6 +2,7 @@ package com.lollotek.umessage.db;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -90,6 +91,100 @@ public class Provider {
 					TAG + e.toString(), Toast.LENGTH_LONG).show();
 		}
 		return chat;
+	}
+
+	private boolean insertMessageFromBackup(String prefix, String num,
+			JSONObject message) {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+		Cursor chat;
+		String idChat;
+		long dataLastMessageChat;
+
+		try {
+			chat = db.query(DatabaseHelper.TABLE_SINGLECHAT, null,
+					DatabaseHelper.KEY_PREFIXDEST + "=? AND "
+							+ DatabaseHelper.KEY_NUMDEST + "=?", new String[] {
+							prefix, num }, null, null, null);
+			if (!chat.moveToFirst()) {
+				ContentValues newChat = new ContentValues();
+				newChat.put(DatabaseHelper.KEY_PREFIXDEST, prefix);
+				newChat.put(DatabaseHelper.KEY_NUMDEST, num);
+				newChat.put(DatabaseHelper.KEY_VERSION, "0");
+				newChat.put(DatabaseHelper.KEY_IDLASTMESSAGE, "");
+				newChat.put(DatabaseHelper.KEY_DATALASTMESSAGE, 0);
+
+				idChat = String.valueOf(insert(DatabaseHelper.TABLE_SINGLECHAT,
+						null, newChat));
+				dataLastMessageChat = 0;
+			} else {
+				idChat = chat.getString(chat
+						.getColumnIndex(DatabaseHelper.KEY_ID));
+				dataLastMessageChat = Long.parseLong(chat.getString(chat
+						.getColumnIndex(DatabaseHelper.KEY_DATALASTMESSAGE)));
+			}
+
+			if (idChat.equals("-1")) {
+				return false;
+			}
+
+			Cursor checkMessage = db.query(
+					DatabaseHelper.TABLE_SINGLECHATMESSAGES,
+					null,
+					DatabaseHelper.KEY_DATA + "=? AND "
+							+ DatabaseHelper.KEY_TAG + "=?",
+					new String[] { message.getString("data"),
+							message.getString("tag") }, null, null, null);
+
+			if (checkMessage.moveToFirst()) {
+				return false;
+			}
+
+			ContentValues messageToInsert = new ContentValues();
+			messageToInsert.put(DatabaseHelper.KEY_IDCHAT, idChat);
+			messageToInsert.put(DatabaseHelper.KEY_DIRECTION,
+					message.getString("direction"));
+			messageToInsert.put(DatabaseHelper.KEY_STATUS,
+					message.getString("status"));
+			messageToInsert.put(DatabaseHelper.KEY_DATA,
+					message.getString("data"));
+			messageToInsert.put(DatabaseHelper.KEY_TYPE,
+					message.getString("type"));
+			messageToInsert.put(DatabaseHelper.KEY_MESSAGE,
+					message.getString("message"));
+			messageToInsert.put(DatabaseHelper.KEY_TOREAD,
+					message.getString("read"));
+			messageToInsert.put(DatabaseHelper.KEY_TAG,
+					message.getString("tag"));
+
+			long idNewMessage = insert(DatabaseHelper.TABLE_SINGLECHATMESSAGES,
+					null, messageToInsert);
+
+			if (idNewMessage != -1) {
+				if (dataLastMessageChat < Long.parseLong(message
+						.getString("data"))) {
+					ContentValues chatToUpdate = new ContentValues();
+
+					chatToUpdate.put(DatabaseHelper.KEY_IDLASTMESSAGE,
+							idNewMessage);
+					chatToUpdate.put(DatabaseHelper.KEY_DATALASTMESSAGE,
+							message.getString("data"));
+					update(DatabaseHelper.TABLE_SINGLECHAT, chatToUpdate,
+							DatabaseHelper.KEY_ID + "=?",
+							new String[] { String.valueOf(idChat) });
+
+				}
+				return true;
+			} else {
+				return false;
+			}
+
+		} catch (Exception e) {
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ " : insertMessageFromBackup()");
+			return false;
+		}
+
 	}
 
 	// -------------- public synchronized methods ------------------
@@ -196,7 +291,7 @@ public class Provider {
 
 	}
 
-	public boolean createNewChat(String prefix, String num) {
+	public synchronized boolean createNewChat(String prefix, String num) {
 		ContentValues newChat = new ContentValues();
 		newChat.put(DatabaseHelper.KEY_PREFIXDEST, prefix);
 		newChat.put(DatabaseHelper.KEY_NUMDEST, num);
@@ -724,20 +819,47 @@ public class Provider {
 			String dataDBDump = dumpDB.getString("data");
 			String myPrefix = dumpDB.getString("myPrefix");
 			String myNum = dumpDB.getString("myNum");
-			JSONArray chats = dumpDB.getJSONArray("Chat");
-			int count = 0;
-			for (int i = 0; i < chats.length(); i++) {
-				JSONObject chat = chats.getJSONObject(i);
-				JSONArray messages = chat.getJSONArray("Message");
-				for (int j = 0; j < messages.length(); j++) {
-					JSONObject message = messages.getJSONObject(j);
-					count++;
+
+			try {
+				JSONArray chats = dumpDB.getJSONArray("Chat");
+
+				for (int i = 0; i < chats.length(); i++) {
+					JSONObject chat = chats.getJSONObject(i);
+
+					try {
+						JSONArray messages = chat.getJSONArray("Message");
+						for (int j = 0; j < messages.length(); j++) {
+							JSONObject message = messages.getJSONObject(j);
+							insertMessageFromBackup(
+									chat.getString("destPrefix"),
+									chat.getString("destNum"), message);
+						}
+					} catch (Exception e) {
+						JSONObject message = chat.getJSONObject("Message");
+						insertMessageFromBackup(chat.getString("destPrefix"),
+								chat.getString("destNum"), message);
+					}
+				}
+			} catch (Exception e) {
+				JSONObject chat = dumpDB.getJSONObject("Chat");
+
+				try {
+					JSONArray messages = chat.getJSONArray("Message");
+					for (int j = 0; j < messages.length(); j++) {
+						JSONObject message = messages.getJSONObject(j);
+						insertMessageFromBackup(chat.getString("destPrefix"),
+								chat.getString("destNum"), message);
+					}
+				} catch (Exception e2) {
+					JSONObject message = chat.getJSONObject("Message");
+					insertMessageFromBackup(chat.getString("destPrefix"),
+							chat.getString("destNum"), message);
 				}
 			}
-			
-			Toast.makeText(UMessageApplication.getContext(), "Totale messaggi nel bk: " + count, Toast.LENGTH_LONG).show();
+
 		} catch (Exception e) {
-			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
+			Utility.reportError(UMessageApplication.getContext(), e, TAG
+					+ " : synchronizeDB()");
 		}
 		return true;
 	}

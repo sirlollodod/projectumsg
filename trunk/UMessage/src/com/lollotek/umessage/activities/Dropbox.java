@@ -321,6 +321,8 @@ public class Dropbox extends Activity {
 			menu.removeItem(R.id.connect);
 		} else {
 			menu.removeItem(R.id.disconnect);
+			menu.removeItem(R.id.synchronize);
+			menu.removeItem(R.id.refresh);
 		}
 
 		return super.onPrepareOptionsMenu(menu);
