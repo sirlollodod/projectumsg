@@ -1,10 +1,12 @@
 package com.lollotek.umessage.utils;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -111,7 +113,6 @@ public class Utility {
 
 	}
 
-	
 	public static boolean saveDumpDB(Context context, JSONObject dumpDB,
 			File file) {
 
@@ -132,8 +133,6 @@ public class Utility {
 
 		return true;
 	}
-	
-	
 
 	public static boolean checkPlayServices(Context context) {
 		int resultCode = GooglePlayServicesUtil
@@ -443,6 +442,7 @@ public class Utility {
 	}
 
 	public static void reportError(Context context, Exception e, String classTag) {
+
 		if (Settings.debugMode) {
 			Toast.makeText(context, classTag + e.toString(), Toast.LENGTH_LONG)
 					.show();
@@ -477,5 +477,25 @@ public class Utility {
 			}
 		}
 
+	}
+
+	public static String convertStreamToString(InputStream is) throws Exception {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		StringBuilder sb = new StringBuilder();
+		String line = null;
+		while ((line = reader.readLine()) != null) {
+			sb.append(line).append("\n");
+		}
+		reader.close();
+		return sb.toString();
+	}
+
+	public static String getStringFromFile(String filePath) throws Exception {
+		File fl = new File(filePath);
+		FileInputStream fin = new FileInputStream(fl);
+		String ret = convertStreamToString(fin);
+		// Make sure you close all streams.
+		fin.close();
+		return ret;
 	}
 }

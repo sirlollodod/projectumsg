@@ -4,22 +4,16 @@ import java.util.Calendar;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
@@ -41,7 +35,8 @@ public class Dropbox extends Activity {
 
 	private boolean mLoggedIn;
 	private TextView connectionStatus, lastOnlineBk, lastLocalBk;
-	private String lastOnlineBkData = "0", lastLocalBkData = "0";
+	private String lastOnlineBkData = "0", lastLocalBkData = "0",
+			userLoggedIn = "sconosciuto";
 
 	private SynchronizationListener syncListener;
 
@@ -93,6 +88,9 @@ public class Dropbox extends Activity {
 							lastOnlineBkData = bnd.getString(
 									"lastOnlineBkData", lastOnlineBkData);
 
+							userLoggedIn = bnd.getString("userLoggedIn",
+									userLoggedIn);
+
 							refreshView();
 
 							break;
@@ -137,14 +135,12 @@ public class Dropbox extends Activity {
 			}
 		}
 
-		Intent service = new Intent(this, com.lollotek.umessage.services.UMessageService.class);
-		service.putExtra("action", MessageTypes.GET_LAST_LOCAL_DB_BK_DATA);
-		startService(service);
-		
 		refreshView();
 
 		SynchronizationManager.getInstance().registerSynchronizationListener(
 				syncListener);
+
+		reloadData();
 	}
 
 	@Override
@@ -159,7 +155,7 @@ public class Dropbox extends Activity {
 		Calendar c = Calendar.getInstance();
 
 		if (mLoggedIn) {
-			connectionStatus.setText("connesso");
+			connectionStatus.setText("connesso" + "  ( " + userLoggedIn + " )");
 		} else {
 			connectionStatus.setText("disconnesso");
 		}
@@ -193,7 +189,7 @@ public class Dropbox extends Activity {
 		if (lastOnlineBkData.equals("0")) {
 			lastOnlineBk.setText("N/A");
 		} else {
-			c.setTimeInMillis(Long.parseLong(lastLocalBkData));
+			c.setTimeInMillis(Long.parseLong(lastOnlineBkData));
 			String dataFormattedValue = ""
 					+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
 							+ c.get(Calendar.DAY_OF_MONTH) : c
@@ -291,8 +287,27 @@ public class Dropbox extends Activity {
 		return true;
 	}
 
+	private void reloadData() {
+		Intent service = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
+		service.putExtra("action", MessageTypes.GET_DROPBOX_ACCOUNT_INFO);
+		startService(service);
+
+		service = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
+		service.putExtra("action", MessageTypes.GET_LAST_LOCAL_DB_BK_DATA);
+		startService(service);
+
+		service = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
+		service.putExtra("action", MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA);
+		startService(service);
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		Intent service;
+
 		switch (item.getItemId()) {
 		case R.id.connect:
 			mApi.getSession().startAuthentication(
@@ -304,7 +319,7 @@ public class Dropbox extends Activity {
 			break;
 
 		case R.id.createBackup:
-			Intent service = new Intent(this,
+			service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
 			service.putExtra("action", MessageTypes.MAKE_DB_DUMP);
 			service.putExtra("forceDBDump", true);
@@ -315,8 +330,15 @@ public class Dropbox extends Activity {
 		case R.id.synchronize:
 			service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
-			service.putExtra("action", MessageTypes.GET_LAST_LOCAL_DB_BK_DATA);
+			service.putExtra("action",
+					MessageTypes.START_DROPBOX_SYNCHRONIZATION);
 			startService(service);
+
+			break;
+
+		case R.id.refresh:
+			reloadData();
+
 			break;
 
 		case android.R.id.home:
@@ -347,4 +369,62 @@ public class Dropbox extends Activity {
 		return super.onPrepareOptionsMenu(menu);
 	}
 
+	private class LoadDropboxAccountInfoAsyncTask extends
+			AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
+					Settings.APP_SECRET);
+			AndroidAuthSession sessionDbox;
+
+			String[] stored;
+
+			SharedPreferences prefs = UMessageApplication.getContext()
+					.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
+			String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
+			String secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
+			if (key != null && secret != null) {
+				String[] ret = new String[2];
+				ret[0] = key;
+				ret[1] = secret;
+				stored = ret;
+			} else {
+				stored = null;
+			}
+
+			if (stored != null) {
+				AccessTokenPair accessToken = new AccessTokenPair(stored[0],
+						stored[1]);
+				sessionDbox = new AndroidAuthSession(appKeyPair,
+						Settings.ACCESS_TYPE, accessToken);
+			} else {
+				sessionDbox = new AndroidAuthSession(appKeyPair,
+						Settings.ACCESS_TYPE);
+			}
+
+			DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
+					sessionDbox);
+
+			try {
+				Message syncMsg = new Message();
+				syncMsg.what = MessageTypes.DROPBOX_REFRESH;
+				Bundle b = new Bundle();
+				b.putString("userLoggedIn", mApi.accountInfo().displayName);
+				syncMsg.setData(b);
+				SynchronizationManager.getInstance().onSynchronizationFinish(
+						syncMsg);
+			} catch (Exception e) {
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+
+		}
+
+	}
 }

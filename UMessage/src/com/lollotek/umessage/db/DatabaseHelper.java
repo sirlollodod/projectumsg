@@ -82,7 +82,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	// + KEY_IDMESSAGE + ", " + KEY_IDCHAT + "))";
 
 	// Create table tempsinglechatmessages
-	public static final String CREATE_TABLE_TEMPSINGLECHATMESSAGES = TABLE_SINGLECHATMESSAGES
+	public static final String CREATE_TABLE_TEMPSINGLECHATMESSAGES = TABLE_TEMPSINGLECHATMESSAGES
 			+ "("
 			+ KEY_ID
 			+ " INTEGER PRIMARY KEY AUTOINCREMENT,"

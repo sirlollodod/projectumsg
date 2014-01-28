@@ -1,13 +1,13 @@
 package com.lollotek.umessage.threads;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Calendar;
 
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
-import android.content.ContentValues;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +15,11 @@ import android.os.Looper;
 import android.os.Message;
 import android.widget.Toast;
 
+import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
+import com.dropbox.client2.android.AndroidAuthSession;
+import com.dropbox.client2.session.AccessTokenPair;
+import com.dropbox.client2.session.AppKeyPair;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.DumpDB;
@@ -22,6 +27,7 @@ import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -33,7 +39,8 @@ public class LowPriorityThread extends Thread {
 	private LowPriorityThreadHandler lowPriorityThreadHandler = null;
 	private Handler mainThreadHandler = null;
 	private ExponentialQueueTime timeQueue;
-	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
+	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400,
+			TIME_DUMP_DB = 86400;
 
 	public LowPriorityThread(Handler handler) {
 		mainThreadHandler = handler;
@@ -370,17 +377,20 @@ public class LowPriorityThread extends Thread {
 				boolean forceDBDump = msg.getData().getBoolean("forceDBDump",
 						false);
 
-				if (((dataDump - configuration.getLastDataDumpDB()) < TIME_DAY * 1000)
+				if (((dataDump - configuration.getLastDataDumpDB()) < TIME_DUMP_DB * 1000)
 						&& !forceDBDump) {
-					addToQueue(msg,
-							(dataDump - configuration.getLastDataDumpDB()), 4,
-							true, false);
+					addToQueue(
+							msg,
+							TIME_DUMP_DB
+									- (dataDump - configuration
+											.getLastDataDumpDB()), 4, true,
+							false);
 					break;
 				}
 
 				DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
 						configuration.getPrefix(), configuration.getNum());
-				if (dump.buildChatsList()) {
+				if (dump.buildChatsListFromCursor()) {
 
 				} else {
 					// Errore??
@@ -465,6 +475,14 @@ public class LowPriorityThread extends Thread {
 					configuration.setLastDataDumpDB(dataDump);
 					Utility.setConfiguration(UMessageApplication.getContext(),
 							configuration);
+					syncMsg = new Message();
+					syncMsg.what = MessageTypes.DROPBOX_REFRESH;
+					b = new Bundle();
+					b.putString("lastLocalBkData", String.valueOf(dataDump));
+					syncMsg.setData(b);
+					SynchronizationManager.getInstance()
+							.onSynchronizationFinish(syncMsg);
+
 				} else {
 					Toast.makeText(UMessageApplication.getContext(),
 							"Errore salvataggio dump su file",
@@ -474,8 +492,162 @@ public class LowPriorityThread extends Thread {
 				b = msg.getData();
 				b.remove("forceDBDump");
 				msg.setData(b);
-				addToQueue(msg, (dataDump - configuration.getLastDataDumpDB()),
-						4, true, false);
+				addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+
+				break;
+
+			// Scarico ultimo file bk online su dropbox
+			// costruisco dumpdb object con liste conversazioni e messaggi
+			// lo passo a metodo del provider che integra con db locale i
+			// messaggi non gia presenti localmente
+			// eventualmente creo bk locale aggiornato dopo la synch
+			case MessageTypes.START_DROPBOX_SYNCHRONIZATION:
+				lowPriorityThreadHandler
+						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
+
+				// Dropbox authentication
+				AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
+						Settings.APP_SECRET);
+				AndroidAuthSession sessionDbox;
+
+				String[] stored;
+
+				SharedPreferences prefs = UMessageApplication.getContext()
+						.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
+				String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
+				String secret = prefs.getString(Settings.ACCESS_SECRET_NAME,
+						null);
+				if (key != null && secret != null) {
+					String[] ret = new String[2];
+					ret[0] = key;
+					ret[1] = secret;
+					stored = ret;
+				} else {
+					stored = null;
+				}
+
+				if (stored != null) {
+					AccessTokenPair accessToken = new AccessTokenPair(
+							stored[0], stored[1]);
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE, accessToken);
+				} else {
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE);
+				}
+
+				DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
+						sessionDbox);
+				// Fine Dropbox authentication
+
+				// Check user logged
+				if (!mApi.getSession().isLinked()) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Dropbox user not logged in...", Toast.LENGTH_LONG)
+							.show();
+					break;
+				}
+				// Fine check user logged
+
+				// Download last dropbox db dump, se file non gia esistente
+				// localmente
+				try {
+					DropboxAPI.Entry entries = mApi.metadata("/", 100, null,
+							true, null);
+					String datalastDropboxDBDump = "0", fileToDownload = "";
+					for (DropboxAPI.Entry e : entries.contents) {
+						String fileName = e.fileName();
+						if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
+								.substring(1))) {
+							String data = fileName.substring(fileName
+									.lastIndexOf("_") + 1);
+							if (Long.parseLong(datalastDropboxDBDump) < Long
+									.parseLong(data)) {
+								datalastDropboxDBDump = data;
+								fileToDownload = fileName;
+							}
+						} else {
+							continue;
+						}
+					}
+
+					if (datalastDropboxDBDump.equals("0")
+							|| fileToDownload.equals("")) {
+						Toast.makeText(UMessageApplication.getContext(),
+								"Nessu backup trovato", Toast.LENGTH_LONG)
+								.show();
+						break;
+					}
+
+					mainFolder = Utility.getMainFolder(UMessageApplication
+							.getContext());
+					dumpFile = new File(mainFolder.toString()
+							+ Settings.DUMP_DB_FILE_NAME + "_"
+							+ datalastDropboxDBDump);
+
+					if (dumpFile.isFile()) {
+						Toast.makeText(UMessageApplication.getContext(),
+								"File da scaricare gia esistente",
+								Toast.LENGTH_LONG).show();
+						break;
+					}
+
+					// File file = new File("/magnum-opus.txt");
+					FileOutputStream outputStream = new FileOutputStream(
+							dumpFile);
+					DropboxFileInfo info = mApi.getFile("/" + fileToDownload,
+							null, outputStream, null);
+
+					Toast.makeText(UMessageApplication.getContext(),
+							"File " + fileToDownload + " scaricato",
+							Toast.LENGTH_LONG).show();
+				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
+					break;
+				}
+				// Fine download last dropbox db dump
+
+				// Check se file appena scaricato relativo a utente attualmente
+				// loggato in UMessage
+				JSONObject dropBoxDBDumpJSON;
+				try {
+					dropBoxDBDumpJSON = new JSONObject(
+							Utility.getStringFromFile(dumpFile.toString()));
+					configuration = Utility
+							.getConfiguration(UMessageApplication.getContext());
+					if (!configuration.getPrefix().equals(
+							dropBoxDBDumpJSON.getString("myPrefix"))
+							|| !configuration.getNum().equals(
+									dropBoxDBDumpJSON.getString("myNum"))) {
+						dumpFile.delete();
+						break;
+					}
+
+				} catch (Exception e) {
+					Toast.makeText(UMessageApplication.getContext(),
+							e.toString(), Toast.LENGTH_LONG).show();
+					break;
+				}
+				// Fine check file sca-ricato relativo a utente attualmente
+				// loggato in UMessage
+
+				// Passo JSONObject a metodo Provider che scorre l'oggetto e
+				// inserisce nel db locale i messaggi eventualmente mancanti
+				if (p.synchronizeDB(dropBoxDBDumpJSON)) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Sincronizzazione effettuata", Toast.LENGTH_LONG)
+							.show();
+
+					m = new Message();
+					m.what = MessageTypes.MAKE_DB_DUMP;
+					b = new Bundle();
+					b.putBoolean("forceDBDump", true);
+					m.setData(b);
+
+					addToQueue(m, 0, 4, true, true);
+				}
+				// Fine integrazione db locale
 
 				break;
 			}

@@ -175,6 +175,20 @@ public class UMessageService extends Service {
 
 			break;
 
+		case MessageTypes.GET_DROPBOX_ACCOUNT_INFO:
+			m = new Message();
+			m.what = MessageTypes.GET_DROPBOX_ACCOUNT_INFO;
+			serviceHandler.sendMessage(m);
+
+			break;
+
+		case MessageTypes.START_DROPBOX_SYNCHRONIZATION:
+			m = new Message();
+			m.what = MessageTypes.START_DROPBOX_SYNCHRONIZATION;
+			serviceHandler.sendMessage(m);
+
+			break;
+
 		case MessageTypes.USER_LOGGED:
 			String myProfileImageUrl = intent.getStringExtra("myImageUrl");
 
@@ -466,13 +480,37 @@ public class UMessageService extends Service {
 				}
 
 				break;
-				
+
 			case MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA:
 				m = new Message();
 				m.what = MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA;
 
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.GET_DROPBOX_ACCOUNT_INFO:
+				m = new Message();
+				m.what = MessageTypes.GET_DROPBOX_ACCOUNT_INFO;
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.START_DROPBOX_SYNCHRONIZATION:
+				m = new Message();
+				m.what = MessageTypes.START_DROPBOX_SYNCHRONIZATION;
+
+				try {
+					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 1 * 1000);
 				}
