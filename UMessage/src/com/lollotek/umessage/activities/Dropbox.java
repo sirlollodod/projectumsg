@@ -23,6 +23,7 @@ import com.dropbox.client2.session.TokenPair;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.listeners.SynchronizationListener;
+import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
@@ -46,7 +47,8 @@ public class Dropbox extends Activity {
 
 		setContentView(R.layout.activity_dropbox);
 
-		AndroidAuthSession session = buildSession();
+		AndroidAuthSession session = DropboxManager.getInstance(
+				UMessageApplication.getContext()).buildSession();
 		mApi = new DropboxAPI<AndroidAuthSession>(session);
 
 		connectionStatus = (TextView) findViewById(R.id.textView2);
@@ -91,6 +93,10 @@ public class Dropbox extends Activity {
 							userLoggedIn = bnd.getString("userLoggedIn",
 									userLoggedIn);
 
+							if (bnd.getBoolean("forceReloadAllData", false)) {
+								reloadData();
+							}
+
 							refreshView();
 
 							break;
@@ -127,7 +133,8 @@ public class Dropbox extends Activity {
 
 				// Store it locally in our app for later use
 				TokenPair tokens = session.getAccessTokenPair();
-				storeKeys(tokens.key, tokens.secret);
+				DropboxManager.getInstance(UMessageApplication.getContext())
+						.storeKeys(tokens.key, tokens.secret);
 
 				setLoggedIn();
 			} catch (IllegalStateException e) {
@@ -213,67 +220,17 @@ public class Dropbox extends Activity {
 		}
 	}
 
-	private AndroidAuthSession buildSession() {
-		AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
-				Settings.APP_SECRET);
-		AndroidAuthSession session;
-
-		String[] stored = getKeys();
-		if (stored != null) {
-			AccessTokenPair accessToken = new AccessTokenPair(stored[0],
-					stored[1]);
-			session = new AndroidAuthSession(appKeyPair, Settings.ACCESS_TYPE,
-					accessToken);
-		} else {
-			session = new AndroidAuthSession(appKeyPair, Settings.ACCESS_TYPE);
-		}
-
-		return session;
-	}
-
-	private String[] getKeys() {
-		SharedPreferences prefs = getSharedPreferences(
-				Settings.SHARED_PREFS_DROPBOX, 0);
-		String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-		String secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
-		if (key != null && secret != null) {
-			String[] ret = new String[2];
-			ret[0] = key;
-			ret[1] = secret;
-			return ret;
-		} else {
-			return null;
-		}
-	}
-
-	private void storeKeys(String key, String secret) {
-		// Save the access key for later
-		SharedPreferences prefs = getSharedPreferences(
-				Settings.SHARED_PREFS_DROPBOX, 0);
-		Editor edit = prefs.edit();
-		edit.putString(Settings.ACCESS_KEY_NAME, key);
-		edit.putString(Settings.ACCESS_SECRET_NAME, secret);
-		edit.commit();
-	}
-
 	private void setLoggedOut() {
 		// Remove credentials from the session
 		mApi.getSession().unlink();
 
 		// Clear our stored keys
-		clearKeys();
+		DropboxManager.getInstance(UMessageApplication.getContext())
+				.clearKeys();
 
 		mLoggedIn = false;
 		refreshView();
 
-	}
-
-	private void clearKeys() {
-		SharedPreferences prefs = getSharedPreferences(
-				Settings.SHARED_PREFS_DROPBOX, 0);
-		Editor edit = prefs.edit();
-		edit.clear();
-		edit.commit();
 	}
 
 	private void setLoggedIn() {
@@ -369,62 +326,4 @@ public class Dropbox extends Activity {
 		return super.onPrepareOptionsMenu(menu);
 	}
 
-	private class LoadDropboxAccountInfoAsyncTask extends
-			AsyncTask<Void, Void, Void> {
-
-		@Override
-		protected Void doInBackground(Void... params) {
-			AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
-					Settings.APP_SECRET);
-			AndroidAuthSession sessionDbox;
-
-			String[] stored;
-
-			SharedPreferences prefs = UMessageApplication.getContext()
-					.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
-			String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-			String secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
-			if (key != null && secret != null) {
-				String[] ret = new String[2];
-				ret[0] = key;
-				ret[1] = secret;
-				stored = ret;
-			} else {
-				stored = null;
-			}
-
-			if (stored != null) {
-				AccessTokenPair accessToken = new AccessTokenPair(stored[0],
-						stored[1]);
-				sessionDbox = new AndroidAuthSession(appKeyPair,
-						Settings.ACCESS_TYPE, accessToken);
-			} else {
-				sessionDbox = new AndroidAuthSession(appKeyPair,
-						Settings.ACCESS_TYPE);
-			}
-
-			DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
-					sessionDbox);
-
-			try {
-				Message syncMsg = new Message();
-				syncMsg.what = MessageTypes.DROPBOX_REFRESH;
-				Bundle b = new Bundle();
-				b.putString("userLoggedIn", mApi.accountInfo().displayName);
-				syncMsg.setData(b);
-				SynchronizationManager.getInstance().onSynchronizationFinish(
-						syncMsg);
-			} catch (Exception e) {
-			}
-
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			super.onPostExecute(result);
-
-		}
-
-	}
 }

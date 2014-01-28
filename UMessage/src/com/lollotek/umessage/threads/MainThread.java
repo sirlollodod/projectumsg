@@ -34,6 +34,7 @@ import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
@@ -123,6 +124,9 @@ public class MainThread extends Thread {
 			JSONObject parameters;
 
 			p = new Provider(UMessageApplication.getContext());
+
+			AndroidAuthSession sessionDropbox;
+			DropboxAPI<AndroidAuthSession> mApi;
 
 			checkHandlerThreadStarted();
 
@@ -296,38 +300,9 @@ public class MainThread extends Thread {
 						.removeMessages(MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA);
 
 				// Dropbox authentication
-				AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
-						Settings.APP_SECRET);
-				AndroidAuthSession sessionDbox;
-
-				String[] stored;
-
-				SharedPreferences prefs = UMessageApplication.getContext()
-						.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
-				String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-				String secret = prefs.getString(Settings.ACCESS_SECRET_NAME,
-						null);
-				if (key != null && secret != null) {
-					String[] ret = new String[2];
-					ret[0] = key;
-					ret[1] = secret;
-					stored = ret;
-				} else {
-					stored = null;
-				}
-
-				if (stored != null) {
-					AccessTokenPair accessToken = new AccessTokenPair(
-							stored[0], stored[1]);
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE, accessToken);
-				} else {
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE);
-				}
-
-				DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
-						sessionDbox);
+				sessionDropbox = DropboxManager.getInstance(
+						UMessageApplication.getContext()).buildSession();
+				mApi = new DropboxAPI<AndroidAuthSession>(sessionDropbox);
 				// Fine Dropbox authentication
 
 				// Check user logged
@@ -379,33 +354,11 @@ public class MainThread extends Thread {
 				mainThreadHandler
 						.removeMessages(MessageTypes.GET_DROPBOX_ACCOUNT_INFO);
 
-				appKeyPair = new AppKeyPair(Settings.APP_KEY,
-						Settings.APP_SECRET);
-
-				prefs = UMessageApplication.getContext().getSharedPreferences(
-						Settings.SHARED_PREFS_DROPBOX, 0);
-				key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-				secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
-				if (key != null && secret != null) {
-					String[] ret = new String[2];
-					ret[0] = key;
-					ret[1] = secret;
-					stored = ret;
-				} else {
-					stored = null;
-				}
-
-				if (stored != null) {
-					AccessTokenPair accessToken = new AccessTokenPair(
-							stored[0], stored[1]);
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE, accessToken);
-				} else {
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE);
-				}
-
-				mApi = new DropboxAPI<AndroidAuthSession>(sessionDbox);
+				// Dropbox authentication
+				sessionDropbox = DropboxManager.getInstance(
+						UMessageApplication.getContext()).buildSession();
+				mApi = new DropboxAPI<AndroidAuthSession>(sessionDropbox);
+				// Fine Dropbox authentication
 
 				try {
 					syncMsg = new Message();
@@ -1132,6 +1085,9 @@ public class MainThread extends Thread {
 		}
 
 		private boolean registerGCM() {
+			//android api key sirlollodod@gmail.com value = 'AIzaSyAOh9eb6CXt0iTYPyOpVR7kv08_B6Zyfd4'
+			// davide.lorenzi.vr@gmail.com value='AIzaSyB_qRL4iSjZPB8vkWUZWnU83P6mjAP-tX8'
+			
 			if (Utility.checkPlayServices(UMessageApplication.getContext())) {
 				Configuration configuration = Utility
 						.getConfiguration(UMessageApplication.getContext());
@@ -1143,7 +1099,9 @@ public class MainThread extends Thread {
 				}
 
 				try {
-					regid = gcm.register("1050595639343");
+					//sirlollodod@gmail.com idproject='1050595639343'
+					//davide.lorenzi.vr@gmail.com idproject='990058189573'
+					regid = gcm.register("990058189573");
 					configuration.setGcmid(regid);
 					Utility.setConfiguration(UMessageApplication.getContext(),
 							configuration);

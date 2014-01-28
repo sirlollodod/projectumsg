@@ -1,6 +1,7 @@
 package com.lollotek.umessage.threads;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Calendar;
 
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
+import com.dropbox.client2.DropboxAPI.Entry;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
@@ -27,6 +29,7 @@ import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
@@ -83,6 +86,9 @@ public class LowPriorityThread extends Thread {
 			JSONObject parameters, result;
 
 			p = new Provider(UMessageApplication.getContext());
+
+			AndroidAuthSession sessionDropbox;
+			DropboxAPI<AndroidAuthSession> mApi;
 
 			switch (msg.what) {
 			case MessageTypes.DESTROY:
@@ -470,14 +476,39 @@ public class LowPriorityThread extends Thread {
 
 				if (Utility.saveDumpDB(UMessageApplication.getContext(),
 						dumpRoot, dumpFile)) {
+					// debug
 					Toast.makeText(UMessageApplication.getContext(),
 							"Dump salvato su file", Toast.LENGTH_SHORT).show();
+
 					configuration.setLastDataDumpDB(dataDump);
 					Utility.setConfiguration(UMessageApplication.getContext(),
 							configuration);
+
+					// Dropbox authentication
+					sessionDropbox = DropboxManager.getInstance(
+							UMessageApplication.getContext()).buildSession();
+					mApi = new DropboxAPI<AndroidAuthSession>(sessionDropbox);
+					// Fine Dropbox authentication
+
+					// Upload nuovo bk su dropbox
+					if (mApi.getSession().isLinked()) {
+						try {
+							FileInputStream inputStream = new FileInputStream(
+									dumpFile);
+							Entry response = mApi.putFile("/"
+									+ Settings.DUMP_DB_FILE_NAME + "_"
+									+ dataDump, inputStream, dumpFile.length(),
+									null, null);
+						} catch (Exception e) {
+
+						}
+					}
+					// Fine upload nuovo bk su dropbox
+
 					syncMsg = new Message();
 					syncMsg.what = MessageTypes.DROPBOX_REFRESH;
 					b = new Bundle();
+					b.putBoolean("forceReloadAllData", true);
 					b.putString("lastLocalBkData", String.valueOf(dataDump));
 					syncMsg.setData(b);
 					SynchronizationManager.getInstance()
@@ -505,39 +536,13 @@ public class LowPriorityThread extends Thread {
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
 
+				//debug
+				Toast.makeText(UMessageApplication.getContext(), "low thread start synch", Toast.LENGTH_LONG).show();
+				
 				// Dropbox authentication
-				AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
-						Settings.APP_SECRET);
-				AndroidAuthSession sessionDbox;
-
-				String[] stored;
-
-				SharedPreferences prefs = UMessageApplication.getContext()
-						.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
-				String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-				String secret = prefs.getString(Settings.ACCESS_SECRET_NAME,
-						null);
-				if (key != null && secret != null) {
-					String[] ret = new String[2];
-					ret[0] = key;
-					ret[1] = secret;
-					stored = ret;
-				} else {
-					stored = null;
-				}
-
-				if (stored != null) {
-					AccessTokenPair accessToken = new AccessTokenPair(
-							stored[0], stored[1]);
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE, accessToken);
-				} else {
-					sessionDbox = new AndroidAuthSession(appKeyPair,
-							Settings.ACCESS_TYPE);
-				}
-
-				DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
-						sessionDbox);
+				sessionDropbox = DropboxManager.getInstance(
+						UMessageApplication.getContext()).buildSession();
+				mApi = new DropboxAPI<AndroidAuthSession>(sessionDropbox);
 				// Fine Dropbox authentication
 
 				// Check user logged
@@ -598,9 +603,11 @@ public class LowPriorityThread extends Thread {
 					DropboxFileInfo info = mApi.getFile("/" + fileToDownload,
 							null, outputStream, null);
 
+					// debug
 					Toast.makeText(UMessageApplication.getContext(),
 							"File " + fileToDownload + " scaricato",
 							Toast.LENGTH_LONG).show();
+
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
 							e.toString(), Toast.LENGTH_LONG).show();
@@ -701,5 +708,38 @@ public class LowPriorityThread extends Thread {
 
 		}
 
+		private AndroidAuthSession buildSession() {
+			AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
+					Settings.APP_SECRET);
+			AndroidAuthSession session;
+
+			String[] stored = getKeys();
+			if (stored != null) {
+				AccessTokenPair accessToken = new AccessTokenPair(stored[0],
+						stored[1]);
+				session = new AndroidAuthSession(appKeyPair,
+						Settings.ACCESS_TYPE, accessToken);
+			} else {
+				session = new AndroidAuthSession(appKeyPair,
+						Settings.ACCESS_TYPE);
+			}
+
+			return session;
+		}
+
+		private String[] getKeys() {
+			SharedPreferences prefs = UMessageApplication.getContext()
+					.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
+			String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
+			String secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
+			if (key != null && secret != null) {
+				String[] ret = new String[2];
+				ret[0] = key;
+				ret[1] = secret;
+				return ret;
+			} else {
+				return null;
+			}
+		}
 	}
 }
