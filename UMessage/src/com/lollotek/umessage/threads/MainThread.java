@@ -508,6 +508,12 @@ public class MainThread extends Thread {
 
 			// ---------------- DA QUI IN POI AGGIORNATI CON UTILIZZO METODI
 			// NUOVI
+
+			// da cotrollare, ERRORE indexoutofboundexception, quando localmente
+			// no chat/messaggi e qualche messaggio da scaricare/sync da db
+			// online
+			// inoltre probabilmente qui, message.status scrive il valore di
+			// message.tag
 			case MessageTypes.SYNCHRONIZE_CHAT:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
@@ -732,7 +738,7 @@ public class MainThread extends Thread {
 										DatabaseHelper.KEY_DIRECTION, 0);
 								newIncomingMessage.put(
 										DatabaseHelper.KEY_STATUS,
-										message.getString("tag"));
+										message.getString("status"));
 								newIncomingMessage.put(DatabaseHelper.KEY_DATA,
 										message.getString("data"));
 								newIncomingMessage.put(DatabaseHelper.KEY_TYPE,
@@ -1085,9 +1091,11 @@ public class MainThread extends Thread {
 		}
 
 		private boolean registerGCM() {
-			//android api key sirlollodod@gmail.com value = 'AIzaSyAOh9eb6CXt0iTYPyOpVR7kv08_B6Zyfd4'
-			// davide.lorenzi.vr@gmail.com value='AIzaSyB_qRL4iSjZPB8vkWUZWnU83P6mjAP-tX8'
-			
+			// android api key sirlollodod@gmail.com value =
+			// 'AIzaSyAOh9eb6CXt0iTYPyOpVR7kv08_B6Zyfd4'
+			// davide.lorenzi.vr@gmail.com
+			// value='AIzaSyB_qRL4iSjZPB8vkWUZWnU83P6mjAP-tX8'
+
 			if (Utility.checkPlayServices(UMessageApplication.getContext())) {
 				Configuration configuration = Utility
 						.getConfiguration(UMessageApplication.getContext());
@@ -1099,8 +1107,8 @@ public class MainThread extends Thread {
 				}
 
 				try {
-					//sirlollodod@gmail.com idproject='1050595639343'
-					//davide.lorenzi.vr@gmail.com idproject='990058189573'
+					// sirlollodod@gmail.com idproject='1050595639343'
+					// davide.lorenzi.vr@gmail.com idproject='990058189573'
 					regid = gcm.register("990058189573");
 					configuration.setGcmid(regid);
 					Utility.setConfiguration(UMessageApplication.getContext(),
