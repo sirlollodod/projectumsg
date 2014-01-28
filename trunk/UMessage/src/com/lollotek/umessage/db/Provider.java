@@ -1,5 +1,6 @@
 package com.lollotek.umessage.db;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.ContentValues;
@@ -719,6 +720,25 @@ public class Provider {
 
 	public synchronized boolean synchronizeDB(JSONObject dumpDB) {
 
+		try {
+			String dataDBDump = dumpDB.getString("data");
+			String myPrefix = dumpDB.getString("myPrefix");
+			String myNum = dumpDB.getString("myNum");
+			JSONArray chats = dumpDB.getJSONArray("Chat");
+			int count = 0;
+			for (int i = 0; i < chats.length(); i++) {
+				JSONObject chat = chats.getJSONObject(i);
+				JSONArray messages = chat.getJSONArray("Message");
+				for (int j = 0; j < messages.length(); j++) {
+					JSONObject message = messages.getJSONObject(j);
+					count++;
+				}
+			}
+			
+			Toast.makeText(UMessageApplication.getContext(), "Totale messaggi nel bk: " + count, Toast.LENGTH_LONG).show();
+		} catch (Exception e) {
+			Toast.makeText(UMessageApplication.getContext(), e.toString(), Toast.LENGTH_LONG).show();
+		}
 		return true;
 	}
 
