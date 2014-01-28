@@ -37,7 +37,9 @@ public class MessageTypes {
 	public static final int NETWORK_CONNECTED = 86;
 	public static final int MAKE_DB_DUMP = 87;
 	public static final int GET_LAST_LOCAL_DB_BK_DATA = 88;
-	public static final int GET_LAST_DROPBOX_DB_BK_DATA = 89;
+	public static final int GET_DROPBOX_ACCOUNT_INFO = 89;
+	public static final int GET_LAST_DROPBOX_DB_BK_DATA = 90;
+	public static final int START_DROPBOX_SYNCHRONIZATION = 91;
 
 	// Tipi messaggio ricevuti da SynchronizationManager e
 	// SynchronizationListeners

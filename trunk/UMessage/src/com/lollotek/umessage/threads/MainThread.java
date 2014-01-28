@@ -1,6 +1,7 @@
 package com.lollotek.umessage.threads;
 
 import java.io.File;
+import java.security.acl.LastOwnerException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,6 +12,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
+import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session.AccessType;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -248,6 +251,9 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.GET_LAST_LOCAL_DB_BK_DATA:
+				mainThreadHandler
+						.removeMessages(MessageTypes.GET_LAST_LOCAL_DB_BK_DATA);
+
 				File mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
@@ -286,77 +292,148 @@ public class MainThread extends Thread {
 				break;
 
 			case MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA:
+				mainThreadHandler
+						.removeMessages(MessageTypes.GET_LAST_DROPBOX_DB_BK_DATA);
+
+				// Dropbox authentication
+				AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
+						Settings.APP_SECRET);
+				AndroidAuthSession sessionDbox;
+
+				String[] stored;
+
+				SharedPreferences prefs = UMessageApplication.getContext()
+						.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
+				String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
+				String secret = prefs.getString(Settings.ACCESS_SECRET_NAME,
+						null);
+				if (key != null && secret != null) {
+					String[] ret = new String[2];
+					ret[0] = key;
+					ret[1] = secret;
+					stored = ret;
+				} else {
+					stored = null;
+				}
+
+				if (stored != null) {
+					AccessTokenPair accessToken = new AccessTokenPair(
+							stored[0], stored[1]);
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE, accessToken);
+				} else {
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE);
+				}
+
+				DropboxAPI<AndroidAuthSession> mApi = new DropboxAPI<AndroidAuthSession>(
+						sessionDbox);
+				// Fine Dropbox authentication
+
+				// Check user logged
+				if (!mApi.getSession().isLinked()) {
+					Toast.makeText(UMessageApplication.getContext(),
+							"Dropbox user not logged in...", Toast.LENGTH_LONG)
+							.show();
+					break;
+				}
+				// Fine check user logged
+
+				// Download last dropbox db dump, se file non gia esistente
+				// localmente
+				try {
+					DropboxAPI.Entry entries = mApi.metadata("/", 100, null,
+							true, null);
+					String dataLastDropboxDBDump = "0", fileToDownload = "";
+					for (DropboxAPI.Entry e : entries.contents) {
+						String fileName = e.fileName();
+						if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
+								.substring(1))) {
+							String data = fileName.substring(fileName
+									.lastIndexOf("_") + 1);
+							if (Long.parseLong(dataLastDropboxDBDump) < Long
+									.parseLong(data)) {
+								dataLastDropboxDBDump = data;
+								fileToDownload = fileName;
+							}
+						} else {
+							continue;
+						}
+					}
+
+					syncMsg = new Message();
+					syncMsg.what = MessageTypes.DROPBOX_REFRESH;
+					b = new Bundle();
+					b.putString("lastOnlineBkData", dataLastDropboxDBDump);
+					syncMsg.setData(b);
+					SynchronizationManager.getInstance()
+							.onSynchronizationFinish(syncMsg);
+
+				} catch (Exception e) {
+
+				}
 
 				break;
 
-			/*
-			 * Spostato in LowPriorityThread
-			 * 
-			 * case MessageTypes.MAKE_DB_DUMP: p = new
-			 * Provider(UMessageApplication.getContext()); Calendar c =
-			 * Calendar.getInstance(); long dataDump = c.getTimeInMillis();
-			 * Cursor cd = p.makeDumpDB(); configuration =
-			 * Utility.getConfiguration(UMessageApplication .getContext());
-			 * DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
-			 * configuration.getPrefix(), configuration.getNum()); if
-			 * (dump.buildChatsList()) {
-			 * 
-			 * } else { // Errore?? }
-			 * 
-			 * dump.reset();
-			 * 
-			 * JSONObject dumpRoot = new JSONObject();
-			 * 
-			 * try { dumpRoot.accumulate("myPrefix", dump.myPrefix);
-			 * dumpRoot.accumulate("myNum", dump.myNum);
-			 * dumpRoot.accumulate("data", dump.dataDumpDB); } catch (Exception
-			 * e) { // Errore?? }
-			 * 
-			 * while (dump.moveToNextChat()) { JSONObject dumpChat = new
-			 * JSONObject(); Bundle infoChat = dump.getInfoChat();
-			 * 
-			 * try { dumpChat.accumulate("destPrefix", infoChat.get("prefix"));
-			 * dumpChat.accumulate("destNum", infoChat.get("num")); } catch
-			 * (Exception e) { // Errore?? }
-			 * 
-			 * while (dump.moveToNextMessageInChat()) { JSONObject dumpMessage =
-			 * new JSONObject(); Bundle infoMessage =
-			 * dump.getInfoMessageInChat();
-			 * 
-			 * String dataMessage = infoMessage.getString("data");
-			 * 
-			 * if (dataDump < Long.parseLong(dataMessage)) { continue; }
-			 * 
-			 * try { dumpMessage.accumulate("direction",
-			 * infoMessage.getString("direction"));
-			 * dumpMessage.accumulate("data", infoMessage.getString("data"));
-			 * dumpMessage.accumulate("status",
-			 * infoMessage.getString("status")); dumpMessage.accumulate("read",
-			 * infoMessage.getString("read")); dumpMessage.accumulate("type",
-			 * infoMessage.getString("type")); dumpMessage.accumulate("tag",
-			 * infoMessage.getString("tag")); dumpMessage.accumulate("message",
-			 * infoMessage.getString("message")); } catch (Exception e) { //
-			 * Errore?? }
-			 * 
-			 * try { dumpChat.accumulate("Message", dumpMessage); } catch
-			 * (Exception e) { // Errore?? } }
-			 * 
-			 * try { dumpRoot.accumulate("Chat", dumpChat); } catch (Exception
-			 * e) { // Errore?? } }
-			 * 
-			 * File mainFolder = Utility.getMainFolder(UMessageApplication
-			 * .getContext()); File dumpFile = new File(mainFolder.toString() +
-			 * Settings.DUMP_DB_FILE_NAME + "_" + dataDump);
-			 * 
-			 * if (Utility.saveDumpDB(UMessageApplication.getContext(),
-			 * dumpRoot, dumpFile)) {
-			 * Toast.makeText(UMessageApplication.getContext(),
-			 * "Dump salvato su file", Toast.LENGTH_SHORT).show(); } else {
-			 * Toast.makeText(UMessageApplication.getContext(),
-			 * "Errore salvataggio dump su file", Toast.LENGTH_SHORT).show(); }
-			 * 
-			 * break;
-			 */
+			case MessageTypes.GET_DROPBOX_ACCOUNT_INFO:
+				mainThreadHandler
+						.removeMessages(MessageTypes.GET_DROPBOX_ACCOUNT_INFO);
+
+				appKeyPair = new AppKeyPair(Settings.APP_KEY,
+						Settings.APP_SECRET);
+
+				prefs = UMessageApplication.getContext().getSharedPreferences(
+						Settings.SHARED_PREFS_DROPBOX, 0);
+				key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
+				secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
+				if (key != null && secret != null) {
+					String[] ret = new String[2];
+					ret[0] = key;
+					ret[1] = secret;
+					stored = ret;
+				} else {
+					stored = null;
+				}
+
+				if (stored != null) {
+					AccessTokenPair accessToken = new AccessTokenPair(
+							stored[0], stored[1]);
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE, accessToken);
+				} else {
+					sessionDbox = new AndroidAuthSession(appKeyPair,
+							Settings.ACCESS_TYPE);
+				}
+
+				mApi = new DropboxAPI<AndroidAuthSession>(sessionDbox);
+
+				try {
+					syncMsg = new Message();
+					syncMsg.what = MessageTypes.DROPBOX_REFRESH;
+					b = new Bundle();
+					b.putString("userLoggedIn", mApi.accountInfo().displayName);
+					syncMsg.setData(b);
+					SynchronizationManager.getInstance()
+							.onSynchronizationFinish(syncMsg);
+				} catch (Exception e) {
+				}
+
+				break;
+
+			case MessageTypes.START_DROPBOX_SYNCHRONIZATION:
+				mainThreadHandler
+						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
+
+				try {
+					m = new Message();
+					m.what = MessageTypes.START_DROPBOX_SYNCHRONIZATION;
+					m.setData(msg.getData());
+					lowPriorityThreadHandler.sendMessage(m);
+				} catch (Exception e) {
+					addToQueue(msg, TIME_MINUTE, 4, true, false);
+				}
+
+				break;
 
 			case MessageTypes.CHECK_GOOGLE_PLAY_SERVICES:
 				if (Settings.debugMode) {
@@ -370,48 +447,6 @@ public class MainThread extends Thread {
 				}
 
 				break;
-
-			/*
-			 * Spostato in highPriorityThread
-			 * 
-			 * case MessageTypes.SEND_NEW_TEXT_MESSAGE: if (Settings.debugMode)
-			 * { Toast.makeText(UMessageApplication.getContext(), TAG +
-			 * "SEND_NEW_TEXT_MESSAGE", Toast.LENGTH_LONG) .show(); }
-			 * 
-			 * m = new Message(); bnd = msg.getData(); m.setData(bnd); m.what =
-			 * MessageTypes.SEND_NEW_TEXT_MESSAGE;
-			 * 
-			 * try { Calendar c = Calendar.getInstance(); ContentValues value =
-			 * new ContentValues(); value.put(DatabaseHelper.KEY_PREFIX,
-			 * bnd.getString("prefix")); value.put(DatabaseHelper.KEY_NUM,
-			 * bnd.getString("num")); value.put(DatabaseHelper.KEY_DIRECTION,
-			 * 0); value.put(DatabaseHelper.KEY_STATUS, "0");
-			 * value.put(DatabaseHelper.KEY_DATA, Double.parseDouble("" +
-			 * c.getTimeInMillis())); value.put(DatabaseHelper.KEY_TYPE,
-			 * "text"); value.put(DatabaseHelper.KEY_MESSAGE,
-			 * bnd.getString("messageText"));
-			 * value.put(DatabaseHelper.KEY_TOREAD, "0");
-			 * value.put(DatabaseHelper.KEY_TAG, bnd.getString("messageTag"));
-			 * 
-			 * long newMessageId = p.insertNewMessage(value);
-			 * 
-			 * if (newMessageId != -1) { syncMsg = new Message(); syncMsg.what =
-			 * MessageTypes.MESSAGE_UPDATE; SynchronizationManager.getInstance()
-			 * .onSynchronizationFinish(syncMsg);
-			 * 
-			 * bnd.putLong("messageId", newMessageId); m.what =
-			 * MessageTypes.UPLOAD_NEW_MESSAGE;
-			 * 
-			 * addToQueue(m, 0, 4, false, true);
-			 * 
-			 * } else { Utility.reportError(UMessageApplication.getContext(),
-			 * new Exception("messaggio non inserito nel db"), TAG +
-			 * ": handleMessage():SEND_NEW_TEXT_MESSAGE"); addToQueue(msg,
-			 * TIME_MINUTE, 4, false, false); } } catch (Exception e) {
-			 * Utility.reportError(UMessageApplication.getContext(), e, TAG +
-			 * ": handleMessage():SEND_NEW_TEXT_MESSAGE"); addToQueue(msg,
-			 * TIME_MINUTE, 4, false, false); } break;
-			 */
 
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
 				if (Settings.debugMode) {

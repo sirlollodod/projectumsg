@@ -1,5 +1,7 @@
 package com.lollotek.umessage.classes;
 
+import org.json.JSONObject;
+
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.db.DatabaseHelper;
 
@@ -9,14 +11,15 @@ import android.widget.Toast;
 
 public class DumpDB {
 
-	private Cursor messagesDump;
+	private Cursor messagesDumpCursor;
+	private JSONObject messagesDumpJSON;
 	public String myPrefix, myNum, dataDumpDB;
 	private ChatDump actualChat, firstChat, lastChat;
 
 	public DumpDB(Cursor messagesDump, String dataDumpDB, String myPrefix,
 			String myNum) {
 		this.dataDumpDB = dataDumpDB;
-		this.messagesDump = messagesDump;
+		this.messagesDumpCursor = messagesDump;
 		this.myPrefix = myPrefix;
 		this.myNum = myNum;
 		this.actualChat = null;
@@ -67,8 +70,8 @@ public class DumpDB {
 		return b;
 	}
 
-	public boolean buildChatsList() {
-		messagesDump.moveToFirst();
+	public boolean buildChatsListFromCursor() {
+		messagesDumpCursor.moveToFirst();
 		this.actualChat = null;
 		this.firstChat = null;
 		this.lastChat = null;
@@ -77,23 +80,23 @@ public class DumpDB {
 		String msgDirection = "", msgStatus = "", msgData = "", msgRead = "", msgType = "", msgMessage = "", msgTag = "";
 
 		do {
-			actualDestPrefix = messagesDump.getString(messagesDump
+			actualDestPrefix = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_PREFIX));
-			actualDestNum = messagesDump.getString(messagesDump
+			actualDestNum = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_NUM));
-			msgDirection = messagesDump.getString(messagesDump
+			msgDirection = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_DIRECTION));
-			msgStatus = messagesDump.getString(messagesDump
+			msgStatus = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_STATUS));
-			msgData = messagesDump.getString(messagesDump
+			msgData = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_DATA));
-			msgRead = messagesDump.getString(messagesDump
+			msgRead = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_TOREAD));
-			msgType = messagesDump.getString(messagesDump
+			msgType = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_TYPE));
-			msgMessage = messagesDump.getString(messagesDump
+			msgMessage = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_MESSAGE));
-			msgTag = messagesDump.getString(messagesDump
+			msgTag = messagesDumpCursor.getString(messagesDumpCursor
 					.getColumnIndex(DatabaseHelper.KEY_TAG));
 
 			if (!prevDestPrefix.equals(actualDestPrefix)
@@ -112,7 +115,7 @@ public class DumpDB {
 				return false;
 			}
 
-		} while (messagesDump.moveToNext());
+		} while (messagesDumpCursor.moveToNext());
 
 		return true;
 	}

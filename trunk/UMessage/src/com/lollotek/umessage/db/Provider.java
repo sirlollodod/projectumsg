@@ -1,5 +1,7 @@
 package com.lollotek.umessage.db;
 
+import org.json.JSONObject;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -713,6 +715,11 @@ public class Provider {
 
 		return messagesDump;
 
+	}
+
+	public synchronized boolean synchronizeDB(JSONObject dumpDB) {
+
+		return true;
 	}
 
 	// -------------- DEBUG ---------------------------------------
