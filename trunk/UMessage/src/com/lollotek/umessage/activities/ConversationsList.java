@@ -236,6 +236,10 @@ public class ConversationsList extends Activity {
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.conversationslist, menu);
+		
+		//elementi di prova
+		menu.removeItem(R.id.map);
+		menu.removeItem(R.id.settings);
 		return true;
 	}
 

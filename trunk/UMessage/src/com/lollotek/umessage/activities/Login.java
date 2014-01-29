@@ -175,11 +175,21 @@ public class Login extends Activity {
 			}
 
 			startService(service);
+			
+			SharedPreferences prefs = getSharedPreferences(
+					SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+			Editor edit = prefs.edit();
 
+			edit.remove("smsCode");
+			edit.remove("emailCode");
+			edit.commit();
+			
 			Intent i = new Intent(UMessageApplication.getContext(),
 					com.lollotek.umessage.activities.ConversationsList.class);
 			startActivity(i);
+			
 
+			
 		} catch (Exception e) {
 			Utility.reportError(UMessageApplication.getContext(), e, TAG
 					+ ": userLogged()");

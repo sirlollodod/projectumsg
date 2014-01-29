@@ -103,7 +103,16 @@ public class Registration extends Activity {
 					.getContext()));
 			Utility.setConfiguration(UMessageApplication.getContext(),
 					configuration);
+			
+			SharedPreferences prefs = getSharedPreferences(
+					SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
+			Editor edit = prefs.edit();
 
+			edit.remove("prefix");
+			edit.remove("num");
+			edit.remove("email");
+			edit.commit();
+			
 		} catch (Exception e) {
 			Utility.reportError(UMessageApplication.getContext(), e, TAG
 					+ ": startLoginActivity()");

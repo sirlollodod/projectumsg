@@ -536,9 +536,6 @@ public class LowPriorityThread extends Thread {
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
 
-				//debug
-				Toast.makeText(UMessageApplication.getContext(), "low thread start synch", Toast.LENGTH_LONG).show();
-				
 				// Dropbox authentication
 				sessionDropbox = DropboxManager.getInstance(
 						UMessageApplication.getContext()).buildSession();
@@ -627,6 +624,9 @@ public class LowPriorityThread extends Thread {
 							dropBoxDBDumpJSON.getString("myPrefix"))
 							|| !configuration.getNum().equals(
 									dropBoxDBDumpJSON.getString("myNum"))) {
+						Toast.makeText(UMessageApplication.getContext(),
+								"File di backup non compatibile",
+								Toast.LENGTH_LONG).show();
 						dumpFile.delete();
 						break;
 					}
@@ -708,38 +708,5 @@ public class LowPriorityThread extends Thread {
 
 		}
 
-		private AndroidAuthSession buildSession() {
-			AppKeyPair appKeyPair = new AppKeyPair(Settings.APP_KEY,
-					Settings.APP_SECRET);
-			AndroidAuthSession session;
-
-			String[] stored = getKeys();
-			if (stored != null) {
-				AccessTokenPair accessToken = new AccessTokenPair(stored[0],
-						stored[1]);
-				session = new AndroidAuthSession(appKeyPair,
-						Settings.ACCESS_TYPE, accessToken);
-			} else {
-				session = new AndroidAuthSession(appKeyPair,
-						Settings.ACCESS_TYPE);
-			}
-
-			return session;
-		}
-
-		private String[] getKeys() {
-			SharedPreferences prefs = UMessageApplication.getContext()
-					.getSharedPreferences(Settings.SHARED_PREFS_DROPBOX, 0);
-			String key = prefs.getString(Settings.ACCESS_KEY_NAME, null);
-			String secret = prefs.getString(Settings.ACCESS_SECRET_NAME, null);
-			if (key != null && secret != null) {
-				String[] ret = new String[2];
-				ret[0] = key;
-				ret[1] = secret;
-				return ret;
-			} else {
-				return null;
-			}
-		}
 	}
 }
