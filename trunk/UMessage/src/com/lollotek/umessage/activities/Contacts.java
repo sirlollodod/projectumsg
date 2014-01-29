@@ -225,6 +225,7 @@ public class Contacts extends Activity {
 
 				if (phoneUtil.getNumberType(num) == PhoneNumberType.MOBILE) {
 
+					//errore: null pointer exception in questo try/catch... forse risolto
 					try {
 						// Controllo che user non sia gia inserito nel db locale
 						Cursor localUser = p.getUserInfo(prefixNum, phoneNum);
@@ -243,6 +244,10 @@ public class Contacts extends Activity {
 						result = Utility.doPostRequest(Settings.SERVER_URL,
 								parameters);
 
+						if(result == null){
+							continue;
+						}
+						
 						if ((!result.getString("errorCode").equals("OK"))
 								|| !result.getBoolean("isRegistered")) {
 							continue;

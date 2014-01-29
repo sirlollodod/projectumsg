@@ -512,8 +512,6 @@ public class MainThread extends Thread {
 			// da cotrollare, ERRORE indexoutofboundexception, quando localmente
 			// no chat/messaggi e qualche messaggio da scaricare/sync da db
 			// online
-			// inoltre probabilmente qui, message.status scrive il valore di
-			// message.tag
 			case MessageTypes.SYNCHRONIZE_CHAT:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
@@ -757,6 +755,13 @@ public class MainThread extends Thread {
 								newMyMessage = true;
 
 							}
+
+							// ERRORE QUI??? indexoutofboundexception??? forse
+							// risolto ricaricando il messaggio dal db in caso
+							// non fosse presente e appena inserito nel db
+							// locale
+							localMessage = p.getMessageByTag(prefixDest,
+									numDest, message.getString("tag"));
 
 							idLocalMessage = localMessage.getLong(localMessage
 									.getColumnIndex(DatabaseHelper.KEY_ID));
