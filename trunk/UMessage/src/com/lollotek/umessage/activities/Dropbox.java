@@ -123,6 +123,8 @@ public class Dropbox extends Activity {
 		super.onResume();
 		AndroidAuthSession session = mApi.getSession();
 
+		reloadData();
+
 		// The next part must be inserted in the onResume() method of the
 		// activity from which session.startAuthentication() was called, so
 		// that Dropbox authentication completes properly.
@@ -147,7 +149,6 @@ public class Dropbox extends Activity {
 		SynchronizationManager.getInstance().registerSynchronizationListener(
 				syncListener);
 
-		reloadData();
 	}
 
 	@Override
