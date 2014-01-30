@@ -233,8 +233,11 @@ public class MainThread extends Thread {
 			// ----------------- FINE METODI BASSA PRIORITA' -------------------
 
 			case MessageTypes.UPDATE_NOTIFICATION:
+				bnd = msg.getData();
 
-				updateNotification();
+				boolean calledFromSingleChatContact = bnd.getBoolean(
+						"calledFromSingleChatContact", false);
+				updateNotification(calledFromSingleChatContact);
 
 				break;
 
@@ -1167,7 +1170,7 @@ public class MainThread extends Thread {
 		}
 
 		// Controlla se ci sono notifiche da dover inviare
-		private boolean updateNotification() {
+		private boolean updateNotification(boolean calledFromSingleChatContact) {
 			Provider p = new Provider(UMessageApplication.getContext());
 
 			Cursor messagesNotification = p.getAllNewMessages();
@@ -1181,9 +1184,15 @@ public class MainThread extends Thread {
 			int totalNewConversationMessages = 0;
 			boolean firstMessage = true, newDest = false;
 
+			NotificationManager notificationManager = (NotificationManager) UMessageApplication
+					.getContext()
+					.getSystemService(
+							UMessageApplication.getContext().NOTIFICATION_SERVICE);
+
 			String prefix = "", num = "", name = "", message = "", data = "", type = "";
 
 			if (totalNewMessages == 0) {
+				notificationManager.cancelAll();
 				return true;
 			}
 
@@ -1241,10 +1250,10 @@ public class MainThread extends Thread {
 			} while (messagesNotification.moveToNext());
 
 			if (totalNewMessagesToShow == 0) {
+				notificationManager.cancelAll();
 				return true;
 			}
 
-			
 			Intent action;
 			PendingIntent pIntent;
 
@@ -1279,20 +1288,20 @@ public class MainThread extends Thread {
 			pIntent = PendingIntent.getActivity(
 					UMessageApplication.getContext(), 0, action, 0);
 
-			NotificationManager notificationManager = (NotificationManager) UMessageApplication
-					.getContext()
-					.getSystemService(
-							UMessageApplication.getContext().NOTIFICATION_SERVICE);
-
 			notificationManager.cancelAll();
 
-			notification = b
-					.setContentIntent(pIntent)
-					.setVibrate(new long[] { 500, 1000 })
-					.setSound(
-							RingtoneManager
-									.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+			notification = b.setContentIntent(pIntent)
 					.setSmallIcon(R.drawable.ic_launcher).getNotification();
+
+			if (!calledFromSingleChatContact) {
+				notification = b
+						.setVibrate(new long[] { 500, 1000 })
+						.setSound(
+								RingtoneManager
+										.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+						.getNotification();
+
+			}
 
 			notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
