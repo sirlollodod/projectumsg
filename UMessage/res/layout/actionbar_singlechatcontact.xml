@@ -11,13 +11,23 @@
         android:alpha="0"
         android:background="#3C3745" />
 
+     <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="2dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_ab_back_holo_dark" />
+     
     <ImageView
         android:id="@+id/imageView2"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_alignParentLeft="true"
+        android:layout_toRightOf="@id/imageView3"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="0dp"
         android:scaleType="centerCrop"
         android:src="@drawable/not_available" />
 

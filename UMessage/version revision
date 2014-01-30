@@ -4,3 +4,12 @@ Changelog:
 + Periodic check for user images updated to download
 + Minor bug fixes
  
+ 
+version = 4
+version name = 
+Changelog:
++ Restore da backup anche se file su dropbox è gia presente localmente
++ Activity Dropbox migliorato reload dati se connessione non presente
++ Aggiunto icona stock Android Home Up in Activity SingleChatContact
++ Barra notifiche migliorata: notifica non creata per messaggi ricevuti relativi a conversazione attualmente aperta.
++ Utility reportError() adesso invia anche la versione dell'app

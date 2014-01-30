@@ -38,6 +38,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
@@ -450,12 +451,16 @@ public class Utility {
 
 		if (newErrorId != -1) {
 			try {
+				PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+				
 				JSONObject parameters = new JSONObject();
 				parameters.accumulate("action", "REPORT_ERROR");
 				parameters.accumulate("sessionId",
 						Utility.getConfiguration(context).getSessid());
 				parameters.accumulate("tag", classTag);
 				parameters.accumulate("info", e.toString());
+				parameters.accumulate("appVersion", packageInfo.versionCode);
+				
 
 				result.result = Utility.doPostRequest(Settings.SERVER_URL,
 						parameters);

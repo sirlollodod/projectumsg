@@ -55,6 +55,9 @@ public class MainThread extends Thread {
 
 	GoogleCloudMessaging gcm = null;
 
+	// test
+	public static String prefixDisplayed = "", numDisplayed = "";
+
 	public MainThread(Handler handler) {
 		serviceThreadHandler = handler;
 
@@ -1174,6 +1177,7 @@ public class MainThread extends Thread {
 			}
 
 			int totalNewMessages = messagesNotification.getCount();
+			int totalNewMessagesToShow = 0;
 			int totalNewConversationMessages = 0;
 			boolean firstMessage = true, newDest = false;
 
@@ -1191,10 +1195,24 @@ public class MainThread extends Thread {
 			String contextText = "";
 			int count = 0;
 			do {
+				// se attualmente aperta activity relativa a user con nuovi
+				// messaggi non li conteggio per la nuova notifica
+				if (MainThread.prefixDisplayed.equals(messagesNotification
+						.getString(messagesNotification
+								.getColumnIndex(DatabaseHelper.KEY_PREFIX)))
+						&& MainThread.numDisplayed
+								.equals(messagesNotification.getString(messagesNotification
+										.getColumnIndex(DatabaseHelper.KEY_NUM)))) {
+					continue;
+				}
+
+				totalNewMessagesToShow++;
+
 				if (firstMessage) {
 					firstMessage = false;
 					totalNewConversationMessages++;
 				} else {
+
 					if ((!prefix
 							.equals(messagesNotification.getString(messagesNotification
 									.getColumnIndex(DatabaseHelper.KEY_PREFIX))) || (!num
@@ -1222,6 +1240,11 @@ public class MainThread extends Thread {
 
 			} while (messagesNotification.moveToNext());
 
+			if (totalNewMessagesToShow == 0) {
+				return true;
+			}
+
+			
 			Intent action;
 			PendingIntent pIntent;
 
@@ -1237,8 +1260,8 @@ public class MainThread extends Thread {
 								name.equals("0") ? (prefix + " " + num)
 										: (name + " "))
 						.setContentText(
-								totalNewMessages
-										+ (totalNewMessages == 1 ? " nuovo messaggio"
+								totalNewMessagesToShow
+										+ (totalNewMessagesToShow == 1 ? " nuovo messaggio"
 												: " nuovi messaggi"))
 						.getNotification();
 			} else {
@@ -1247,8 +1270,7 @@ public class MainThread extends Thread {
 						com.lollotek.umessage.activities.ConversationsList.class);
 				notification = b
 						.setContentTitle(
-								"" + messagesNotification.getCount()
-										+ " nuovi messaggi")
+								"" + totalNewMessagesToShow + " nuovi messaggi")
 						.setContentText(
 								"In " + totalNewConversationMessages
 										+ " conversazioni").getNotification();

@@ -36,6 +36,7 @@ import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.listeners.SynchronizationListener;
 import com.lollotek.umessage.managers.SynchronizationManager;
+import com.lollotek.umessage.threads.MainThread;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -116,6 +117,10 @@ public class SingleChatContact extends Activity {
 
 		prefix = parameter.getStringExtra("prefix");
 		num = parameter.getStringExtra("num");
+
+		// test
+		MainThread.prefixDisplayed = prefix;
+		MainThread.numDisplayed = num;
 
 		Intent syncChat = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
@@ -256,6 +261,9 @@ public class SingleChatContact extends Activity {
 
 		firstMessageDisplayed = listView.getFirstVisiblePosition();
 
+		// test
+		MainThread.prefixDisplayed = "";
+		MainThread.numDisplayed = "";
 	}
 
 	@Override

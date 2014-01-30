@@ -285,6 +285,10 @@ public class LowPriorityThread extends Thread {
 					result = Utility.doPostRequest(Settings.SERVER_URL,
 							parameters);
 
+					if (result == null) {
+						break;
+					}
+
 					if ((!result.getString("errorCode").equals("OK"))
 							|| !result.getBoolean("isRegistered")) {
 						break;
@@ -615,23 +619,23 @@ public class LowPriorityThread extends Thread {
 							+ Settings.DUMP_DB_FILE_NAME + "_"
 							+ datalastDropboxDBDump);
 
-					if (dumpFile.isFile()) {
+					if (!dumpFile.isFile()) {
+
+						// File file = new File("/magnum-opus.txt");
+						FileOutputStream outputStream = new FileOutputStream(
+								dumpFile);
+						DropboxFileInfo info = mApi.getFile("/"
+								+ fileToDownload, null, outputStream, null);
+
+						// debug
+						Toast.makeText(UMessageApplication.getContext(),
+								"File " + fileToDownload + " scaricato",
+								Toast.LENGTH_LONG).show();
+					} else {
 						Toast.makeText(UMessageApplication.getContext(),
 								"File da scaricare gia esistente",
 								Toast.LENGTH_LONG).show();
-						break;
 					}
-
-					// File file = new File("/magnum-opus.txt");
-					FileOutputStream outputStream = new FileOutputStream(
-							dumpFile);
-					DropboxFileInfo info = mApi.getFile("/" + fileToDownload,
-							null, outputStream, null);
-
-					// debug
-					Toast.makeText(UMessageApplication.getContext(),
-							"File " + fileToDownload + " scaricato",
-							Toast.LENGTH_LONG).show();
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
