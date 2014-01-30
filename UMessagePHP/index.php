@@ -743,6 +743,7 @@ switch ($_POST['action']){
 		 * + sessionId: id di sessione utente che invoca la richiesta
 		 * + tag: classe che ha generato l'errore
 		 * + info: messaggio di errore
+		 * + appVersion: versione dell'applicazione installata
 		 * return:
 		 *
 		 */
@@ -764,7 +765,11 @@ switch ($_POST['action']){
 			break;
 		}
 
-		$result = $db->insertError($myPrefix, $myNum, $_POST['tag'], $_POST['info']);
+		if(!isset($_POST['appVersion'])){
+			$_POST['appVersion'] = '<3';
+		}
+		
+		$result = $db->insertError($myPrefix, $myNum, $_POST['tag'], $_POST['info'], $_POST['appVersion']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'PHP error';
