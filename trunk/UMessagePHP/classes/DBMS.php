@@ -1034,8 +1034,8 @@ class DBMS{
 	}
 
 	// Inserisce l'errore ricevuto
-	function insertError($prefix, $num, $tag, $info){
-		$query = "INSERT INTO errors(prefix, num, tag, info) VALUES (?, ?, ?, ?)";
+	function insertError($prefix, $num, $tag, $info, $appVersion){
+		$query = "INSERT INTO errors(prefix, num, tag, info, appVersion) VALUES (?, ?, ?, ?, ?)";
 		if(!$stmt = $this->connection->prepare($query)){
 			$stmt->close();
 			return false;
@@ -1045,7 +1045,7 @@ class DBMS{
 				'errorCode' => ''
 		);
 
-		$stmt->bind_param('ssss', $prefix, $num, $tag, $info);
+		$stmt->bind_param('sssss', $prefix, $num, $tag, $info, $appVersion);
 
 		if(!$stmt->execute()){
 			$stmt->close();
