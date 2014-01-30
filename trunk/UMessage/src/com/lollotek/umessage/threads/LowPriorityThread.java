@@ -406,10 +406,18 @@ public class LowPriorityThread extends Thread {
 				break;
 
 			case MessageTypes.MAKE_DB_DUMP:
-				p = new Provider(UMessageApplication.getContext());
+				lowPriorityThreadHandler.removeMessages(MessageTypes.MAKE_DB_DUMP);
+				
 				Calendar c = Calendar.getInstance();
 				long dataDump = c.getTimeInMillis();
 				Cursor cd = p.makeDumpDB();
+
+				if ((cd == null) || (!cd.moveToFirst())) {
+					// probabilmente db vuoto
+					addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+					break;
+				}
+
 				configuration = Utility.getConfiguration(UMessageApplication
 						.getContext());
 				boolean forceDBDump = msg.getData().getBoolean("forceDBDump",
@@ -432,6 +440,8 @@ public class LowPriorityThread extends Thread {
 
 				} else {
 					// Errore??
+					addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+					break;
 				}
 
 				dump.reset();
@@ -444,6 +454,8 @@ public class LowPriorityThread extends Thread {
 					dumpRoot.accumulate("data", dump.dataDumpDB);
 				} catch (Exception e) {
 					// Errore??
+					addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+					break;
 				}
 
 				while (dump.moveToNextChat()) {
@@ -456,6 +468,8 @@ public class LowPriorityThread extends Thread {
 						dumpChat.accumulate("destNum", infoChat.get("num"));
 					} catch (Exception e) {
 						// Errore??
+						addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+						break;
 					}
 
 					while (dump.moveToNextMessageInChat()) {
@@ -485,12 +499,16 @@ public class LowPriorityThread extends Thread {
 									infoMessage.getString("message"));
 						} catch (Exception e) {
 							// Errore??
+							addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+							break;
 						}
 
 						try {
 							dumpChat.accumulate("Message", dumpMessage);
 						} catch (Exception e) {
 							// Errore??
+							addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+							break;
 						}
 					}
 
@@ -498,6 +516,8 @@ public class LowPriorityThread extends Thread {
 						dumpRoot.accumulate("Chat", dumpChat);
 					} catch (Exception e) {
 						// Errore??
+						addToQueue(msg, TIME_DUMP_DB, 4, true, false);
+						break;
 					}
 				}
 
@@ -508,9 +528,6 @@ public class LowPriorityThread extends Thread {
 
 				if (Utility.saveDumpDB(UMessageApplication.getContext(),
 						dumpRoot, dumpFile)) {
-					// debug
-					Toast.makeText(UMessageApplication.getContext(),
-							"Dump salvato su file", Toast.LENGTH_SHORT).show();
 
 					configuration.setLastDataDumpDB(dataDump);
 					Utility.setConfiguration(UMessageApplication.getContext(),

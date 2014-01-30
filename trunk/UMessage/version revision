@@ -6,10 +6,12 @@ Changelog:
  
  
 version = 4
-version name = 
+version name = 1.0.3
 Changelog:
 + Restore da backup anche se file su dropbox è gia presente localmente
 + Activity Dropbox migliorato reload dati se connessione non presente
 + Aggiunto icona stock Android Home Up in Activity SingleChatContact
-+ Barra notifiche migliorata: notifica non creata per messaggi ricevuti relativi a conversazione attualmente aperta.
++ Barra notifiche migliorata: notifica non creata per messaggi ricevuti relativi a conversazione attualmente aperta;
+	 rimosse anche le notifiche per la conversazione appena aperta
 + Utility reportError() adesso invia anche la versione dell'app
++ Rivisto MAKE_DB_DUMP in LowPriorityThread, corretti alcuni casi di errore

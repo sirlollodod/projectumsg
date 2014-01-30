@@ -255,6 +255,19 @@ public class UMessageService extends Service {
 			m.what = MessageTypes.SYNCHRONIZE_CHAT;
 			serviceHandler.sendMessage(m);
 
+			break;
+
+		case MessageTypes.UPDATE_NOTIFICATION:
+			m = new Message();
+			m.what = MessageTypes.UPDATE_NOTIFICATION;
+			b = new Bundle();
+			b.putBoolean("calledFromSingleChatContact", intent.getBooleanExtra(
+					"calledFromSingleChatContact", false));
+			m.setData(b);
+			serviceHandler.sendMessageAtFrontOfQueue(m);
+
+			break;
+
 		case MessageTypes.ERROR:
 
 			break;
@@ -504,6 +517,18 @@ public class UMessageService extends Service {
 
 				break;
 
+			case MessageTypes.UPDATE_NOTIFICATION:
+				m = new Message();
+				m.what = MessageTypes.UPDATE_NOTIFICATION;
+				m.setData(msg.getData());
+
+				try {
+					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
 			}
 		}
 

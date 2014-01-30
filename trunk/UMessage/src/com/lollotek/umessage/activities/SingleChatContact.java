@@ -122,6 +122,12 @@ public class SingleChatContact extends Activity {
 		MainThread.prefixDisplayed = prefix;
 		MainThread.numDisplayed = num;
 
+		Intent updateNotification = new Intent(this,
+				com.lollotek.umessage.services.UMessageService.class);
+		updateNotification.putExtra("action", MessageTypes.UPDATE_NOTIFICATION);
+		updateNotification.putExtra("calledFromSingleChatContact", true);
+		startService(updateNotification);
+
 		Intent syncChat = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
 		syncChat.putExtra("action", MessageTypes.SYNCHRONIZE_CHAT);
