@@ -82,19 +82,6 @@ public class UMessageService extends Service {
 
 	}
 
-	// Inizializzazione base del service
-	private void scheduleDownloadAllProfileImages() {
-		Configuration configuration = Utility.getConfiguration(instance);
-
-		if (configuration.isProfileImageToUpload()) {
-			serviceHandler
-					.sendEmptyMessage(MessageTypes.UPLOAD_MY_PROFILE_IMAGE);
-		}
-
-		serviceHandler.sendEmptyMessage(MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
-
-	}
-
 	@Override
 	public void onDestroy() {
 		super.onDestroy();

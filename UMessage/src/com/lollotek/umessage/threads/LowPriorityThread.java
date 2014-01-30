@@ -43,7 +43,7 @@ public class LowPriorityThread extends Thread {
 	private Handler mainThreadHandler = null;
 	private ExponentialQueueTime timeQueue;
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400,
-			TIME_DUMP_DB = 86400;
+			TIME_DUMP_DB = 86400, TIME_CHECK_USER_IMAGES_UPDATED = 86400;
 
 	public LowPriorityThread(Handler handler) {
 		mainThreadHandler = handler;
@@ -64,6 +64,9 @@ public class LowPriorityThread extends Thread {
 		mainThreadHandler.obtainMessage(
 				MessageTypes.RECEIVE_LOW_PRIORITY_THREAD_HANDLER,
 				lowPriorityThreadHandler).sendToTarget();
+
+		lowPriorityThreadHandler.obtainMessage(
+				MessageTypes.CHECK_FOR_USER_IMAGES_UPDATED).sendToTarget();
 
 		Looper.loop();
 	}
@@ -95,6 +98,31 @@ public class LowPriorityThread extends Thread {
 				mainThreadHandler = null;
 				lowPriorityThreadHandler = null;
 				Looper.myLooper().quit();
+
+				break;
+
+			case MessageTypes.CHECK_FOR_USER_IMAGES_UPDATED:
+				Cursor users = p.getTotalUser();
+
+				if (users == null) {
+					addToQueue(msg, TIME_CHECK_USER_IMAGES_UPDATED, 4, true,
+							false);
+					break;
+				}
+
+				while (users.moveToNext()) {
+					b = new Bundle();
+					b.putString("prefix", users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_PREFIX)));
+					b.putString("num", users.getString(users
+							.getColumnIndex(DatabaseHelper.KEY_NUM)));
+					m = new Message();
+					m.what = MessageTypes.DOWNLOAD_USER_IMAGE;
+					m.setData(b);
+					lowPriorityThreadHandler.sendMessage(m);
+				}
+
+				addToQueue(msg, TIME_CHECK_USER_IMAGES_UPDATED, 4, true, false);
 
 				break;
 
@@ -291,7 +319,7 @@ public class LowPriorityThread extends Thread {
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 
-				Cursor users = p.getTotalUser();
+				users = p.getTotalUser();
 
 				while (users.moveToNext()) {
 
