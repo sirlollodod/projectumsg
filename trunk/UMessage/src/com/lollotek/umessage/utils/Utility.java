@@ -406,10 +406,7 @@ public class Utility {
 		} catch (Exception e) {
 			Utility.reportError(UMessageApplication.getContext(), e, TAG
 					+ ": downloadFileFromUrl()");
-			/*
-			 * Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
-			 * .show();
-			 */
+
 			return false;
 		}
 

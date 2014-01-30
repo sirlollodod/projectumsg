@@ -49,7 +49,8 @@ public class MainThread extends Thread {
 	private MainThreadHandler mainThreadHandler = null;
 	private LowPriorityThread lowPriorityThread = null;
 
-	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400;
+	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400,
+			TIME_SYNC_POLLING = 300;
 	private ExponentialQueueTime timeQueue;
 
 	GoogleCloudMessaging gcm = null;
@@ -397,6 +398,10 @@ public class MainThread extends Thread {
 
 				if (!registerGCM()) {
 					addToQueue(msg, TIME_HOUR, 4, false, false);
+				} else {
+					// gcm registrato correttamente, rimuovo polling
+					mainThreadHandler
+							.removeMessages(MessageTypes.GET_CHATS_VERSION);
 				}
 
 				break;
@@ -762,6 +767,7 @@ public class MainThread extends Thread {
 							// locale
 							localMessage = p.getMessageByTag(prefixDest,
 									numDest, message.getString("tag"));
+							localMessage.moveToFirst();
 
 							idLocalMessage = localMessage.getLong(localMessage
 									.getColumnIndex(DatabaseHelper.KEY_ID));
@@ -949,7 +955,7 @@ public class MainThread extends Thread {
 					httpResult = doRequest(parameters);
 
 					if (httpResult.error) {
-						addToQueue(msg, TIME_HOUR, 4, true, false);
+						addToQueue(msg, TIME_SYNC_POLLING, 4, true, false);
 						break;
 					}
 
@@ -962,7 +968,7 @@ public class MainThread extends Thread {
 					}
 
 					if (httpResult.result.getInt("numChats") == 0) {
-						addToQueue(msg, TIME_HOUR, 4, true, false);
+						addToQueue(msg, TIME_SYNC_POLLING, 4, true, false);
 						break;
 					}
 
@@ -1008,7 +1014,7 @@ public class MainThread extends Thread {
 							TAG + ": handleMessage():GET_CHATS_VERSION");
 				}
 
-				addToQueue(msg, TIME_HOUR, 4, true, false);
+				addToQueue(msg, TIME_SYNC_POLLING, 4, true, false);
 
 				break;
 

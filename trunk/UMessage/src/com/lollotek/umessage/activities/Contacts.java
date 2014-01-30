@@ -225,7 +225,8 @@ public class Contacts extends Activity {
 
 				if (phoneUtil.getNumberType(num) == PhoneNumberType.MOBILE) {
 
-					//errore: null pointer exception in questo try/catch... forse risolto
+					// errore: null pointer exception in questo try/catch...
+					// forse risolto
 					try {
 						// Controllo che user non sia gia inserito nel db locale
 						Cursor localUser = p.getUserInfo(prefixNum, phoneNum);
@@ -244,10 +245,10 @@ public class Contacts extends Activity {
 						result = Utility.doPostRequest(Settings.SERVER_URL,
 								parameters);
 
-						if(result == null){
+						if (result == null) {
 							continue;
 						}
-						
+
 						if ((!result.getString("errorCode").equals("OK"))
 								|| !result.getBoolean("isRegistered")) {
 							continue;
@@ -307,20 +308,8 @@ public class Contacts extends Activity {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 
-			/*
-			 * testing: controllo singoli contatti e non tutti alla fine, per
-			 * evitare doppie chiamate a PHP per ottenere indirizzo immagini
-			 * profilo Intent service = new
-			 * Intent(UMessageApplication.getContext(),
-			 * com.lollotek.umessage.services.UMessageService.class);
-			 * service.putExtra("action",
-			 * MessageTypes.DOWNLOAD_ALL_USERS_IMAGES);
-			 * 
-			 * startService(service);
-			 */
-
-			Toast msg = Toast.makeText(UMessageApplication.getContext(), TAG
-					+ "Importati " + result + " contatti.", Toast.LENGTH_SHORT);
+			Toast msg = Toast.makeText(UMessageApplication.getContext(),
+					"Importati " + result + " contatti.", Toast.LENGTH_SHORT);
 			msg.show();
 
 			loading.setVisibility(View.GONE);
