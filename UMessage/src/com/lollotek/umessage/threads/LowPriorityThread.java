@@ -8,7 +8,6 @@ import java.util.Calendar;
 import org.apache.http.HttpException;
 import org.json.JSONObject;
 
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,8 +19,6 @@ import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
 import com.dropbox.client2.DropboxAPI.Entry;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
 import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.DumpDB;
@@ -132,6 +129,7 @@ public class LowPriorityThread extends Thread {
 							TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
 							Toast.LENGTH_LONG).show();
 				}
+
 				String imageUrl = (String) msg.obj;
 
 				mainFolder = Utility.getMainFolder(UMessageApplication
@@ -406,8 +404,9 @@ public class LowPriorityThread extends Thread {
 				break;
 
 			case MessageTypes.MAKE_DB_DUMP:
-				lowPriorityThreadHandler.removeMessages(MessageTypes.MAKE_DB_DUMP);
-				
+				lowPriorityThreadHandler
+						.removeMessages(MessageTypes.MAKE_DB_DUMP);
+
 				Calendar c = Calendar.getInstance();
 				long dataDump = c.getTimeInMillis();
 				Cursor cd = p.makeDumpDB();
@@ -524,7 +523,7 @@ public class LowPriorityThread extends Thread {
 				File mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
 				File dumpFile = new File(mainFolder.toString()
-						+ Settings.DUMP_DB_FILE_NAME + "_" + dataDump);
+						+ Settings.DUMP_DB_BASE_FILE_NAME + "_" + dataDump);
 
 				if (Utility.saveDumpDB(UMessageApplication.getContext(),
 						dumpRoot, dumpFile)) {
@@ -545,7 +544,7 @@ public class LowPriorityThread extends Thread {
 							FileInputStream inputStream = new FileInputStream(
 									dumpFile);
 							Entry response = mApi.putFile("/"
-									+ Settings.DUMP_DB_FILE_NAME + "_"
+									+ Settings.DUMP_DB_BASE_FILE_NAME + "_"
 									+ dataDump, inputStream, dumpFile.length(),
 									null, null);
 						} catch (Exception e) {
@@ -608,7 +607,7 @@ public class LowPriorityThread extends Thread {
 					String datalastDropboxDBDump = "0", fileToDownload = "";
 					for (DropboxAPI.Entry e : entries.contents) {
 						String fileName = e.fileName();
-						if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
+						if (fileName.startsWith(Settings.DUMP_DB_BASE_FILE_NAME
 								.substring(1))) {
 							String data = fileName.substring(fileName
 									.lastIndexOf("_") + 1);
@@ -633,7 +632,7 @@ public class LowPriorityThread extends Thread {
 					mainFolder = Utility.getMainFolder(UMessageApplication
 							.getContext());
 					dumpFile = new File(mainFolder.toString()
-							+ Settings.DUMP_DB_FILE_NAME + "_"
+							+ Settings.DUMP_DB_BASE_FILE_NAME + "_"
 							+ datalastDropboxDBDump);
 
 					if (!dumpFile.isFile()) {

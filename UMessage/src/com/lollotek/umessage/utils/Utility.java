@@ -446,21 +446,23 @@ public class Utility {
 					.show();
 		}
 		Provider p = new Provider(context);
-		long newErrorId = p.insertError(classTag, e.toString());
+		long newErrorId = p.insertError(classTag, e.toString() + "\n"
+				+ e.getStackTrace().toString());
 		HttpResponseUmsg result = new HttpResponseUmsg();
 
 		if (newErrorId != -1) {
 			try {
-				PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-				
+				PackageInfo packageInfo = context.getPackageManager()
+						.getPackageInfo(context.getPackageName(), 0);
+
 				JSONObject parameters = new JSONObject();
 				parameters.accumulate("action", "REPORT_ERROR");
 				parameters.accumulate("sessionId",
 						Utility.getConfiguration(context).getSessid());
 				parameters.accumulate("tag", classTag);
-				parameters.accumulate("info", e.toString());
+				parameters.accumulate("info", e.toString() + "\n"
+						+ e.getStackTrace().toString());
 				parameters.accumulate("appVersion", packageInfo.versionCode);
-				
 
 				result.result = Utility.doPostRequest(Settings.SERVER_URL,
 						parameters);
