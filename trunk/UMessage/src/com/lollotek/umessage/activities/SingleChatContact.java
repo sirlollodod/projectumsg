@@ -55,6 +55,8 @@ public class SingleChatContact extends Activity {
 	Context context;
 
 	private int firstMessageDisplayed;
+	
+	private boolean addUserIconToDisplay = true;
 
 	private SynchronizationListener syncListener;
 
@@ -445,6 +447,9 @@ public class SingleChatContact extends Activity {
 						service.putExtra("prefix", prefixNum);
 						service.putExtra("num", phoneNum);
 						startService(service);
+						
+						invalidateOptionsMenu();
+						addUserIconToDisplay = false;
 					}
 
 					break;
@@ -472,7 +477,7 @@ public class SingleChatContact extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.singlechatcontact, menu);
-		if ((userInfo != null) && (userInfo.moveToFirst())) {
+		if ((userInfo != null) && (userInfo.moveToFirst()) || !addUserIconToDisplay) {
 			menu.removeItem(R.id.addUser);
 		}
 		return true;

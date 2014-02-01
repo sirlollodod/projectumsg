@@ -9,11 +9,11 @@ public class Settings {
 	public static final String CONTACT_PROFILE_IMAGES_FOLDER = "/contacts";
 	public static final String MY_PROFILE_IMAGE_SRC = "/me.jpg";
 	public static final String MY_PROFILE_IMAGE_SRC_TEMP = "/temp_me.jpg";
-	public static final String DUMP_DB_FILE_NAME = "/dumpDB";
+	public static final String DUMP_DB_BASE_FILE_NAME = "/dumpDB";
 
 	public static final boolean debugMode = false;
 
-	// Google vars account: davide.lorenzi.vr@gmail.com
+	// Google vars
 	public static final String GOOGLE_PROJECT_NUMBER = "990058189573";
 
 	// Dropbox vars

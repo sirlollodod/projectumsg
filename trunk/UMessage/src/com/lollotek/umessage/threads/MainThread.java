@@ -80,6 +80,9 @@ public class MainThread extends Thread {
 		lowPriorityThread = new LowPriorityThread(mainThreadHandler);
 		lowPriorityThread.start();
 
+		Message m;
+		Bundle b;
+
 		mainThreadHandler.obtainMessage(MessageTypes.GET_CHATS_VERSION)
 				.sendToTarget();
 		mainThreadHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
@@ -89,8 +92,12 @@ public class MainThread extends Thread {
 				.obtainMessage(MessageTypes.CHECK_GOOGLE_PLAY_SERVICES)
 				.sendToTarget();
 
-		mainThreadHandler.obtainMessage(MessageTypes.UPDATE_NOTIFICATION)
-				.sendToTarget();
+		m = new Message();
+		m.what = MessageTypes.UPDATE_NOTIFICATION;
+		b = new Bundle();
+		b.putBoolean("calledFromThreadStarted", true);
+		m.setData(b);
+		mainThreadHandler.sendMessage(m);
 
 		mainThreadHandler.obtainMessage(MessageTypes.MAKE_DB_DUMP)
 				.sendToTarget();
@@ -237,7 +244,10 @@ public class MainThread extends Thread {
 
 				boolean calledFromSingleChatContact = bnd.getBoolean(
 						"calledFromSingleChatContact", false);
-				updateNotification(calledFromSingleChatContact);
+
+				boolean calledFromThreadStarted = bnd.getBoolean(
+						"calledFromThreadStarted", false);
+				updateNotification(!calledFromSingleChatContact && !calledFromThreadStarted);
 
 				break;
 
@@ -276,8 +286,9 @@ public class MainThread extends Thread {
 					for (int i = 0; i < listDBDumpFiles.length; i++) {
 						if (listDBDumpFiles[i].isFile()) {
 							String fileName = listDBDumpFiles[i].getName();
-							if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
-									.substring(1))) {
+							if (fileName
+									.startsWith(Settings.DUMP_DB_BASE_FILE_NAME
+											.substring(1))) {
 								String data = fileName.substring(fileName
 										.lastIndexOf("_") + 1);
 								if (Long.parseLong(dataLastLocalDBDump) < Long
@@ -329,7 +340,7 @@ public class MainThread extends Thread {
 					String dataLastDropboxDBDump = "0", fileToDownload = "";
 					for (DropboxAPI.Entry e : entries.contents) {
 						String fileName = e.fileName();
-						if (fileName.startsWith(Settings.DUMP_DB_FILE_NAME
+						if (fileName.startsWith(Settings.DUMP_DB_BASE_FILE_NAME
 								.substring(1))) {
 							String data = fileName.substring(fileName
 									.lastIndexOf("_") + 1);
@@ -1108,11 +1119,6 @@ public class MainThread extends Thread {
 		}
 
 		private boolean registerGCM() {
-			// android api key sirlollodod@gmail.com value =
-			// 'AIzaSyAOh9eb6CXt0iTYPyOpVR7kv08_B6Zyfd4'
-			// davide.lorenzi.vr@gmail.com
-			// value='AIzaSyB_qRL4iSjZPB8vkWUZWnU83P6mjAP-tX8'
-
 			if (Utility.checkPlayServices(UMessageApplication.getContext())) {
 				Configuration configuration = Utility
 						.getConfiguration(UMessageApplication.getContext());
@@ -1124,9 +1130,7 @@ public class MainThread extends Thread {
 				}
 
 				try {
-					// sirlollodod@gmail.com idproject='1050595639343'
-					// davide.lorenzi.vr@gmail.com idproject='990058189573'
-					regid = gcm.register("990058189573");
+					regid = gcm.register(Settings.GOOGLE_PROJECT_NUMBER);
 					configuration.setGcmid(regid);
 					Utility.setConfiguration(UMessageApplication.getContext(),
 							configuration);
@@ -1170,7 +1174,7 @@ public class MainThread extends Thread {
 		}
 
 		// Controlla se ci sono notifiche da dover inviare
-		private boolean updateNotification(boolean calledFromSingleChatContact) {
+		private boolean updateNotification(boolean playSoundAndVibrate) {
 			Provider p = new Provider(UMessageApplication.getContext());
 
 			Cursor messagesNotification = p.getAllNewMessages();
@@ -1293,7 +1297,7 @@ public class MainThread extends Thread {
 			notification = b.setContentIntent(pIntent)
 					.setSmallIcon(R.drawable.ic_launcher).getNotification();
 
-			if (!calledFromSingleChatContact) {
+			if (playSoundAndVibrate) {
 				notification = b
 						.setVibrate(new long[] { 500, 1000 })
 						.setSound(

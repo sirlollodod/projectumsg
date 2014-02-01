@@ -1,12 +1,17 @@
-version = 3
-version name = 1.0.2
+#################################
+version = 3						#
+version name = 1.0.2			#
+#################################
 Changelog:
 + Periodic check for user images updated to download
 + Minor bug fixes
  
  
-version = 4
-version name = 1.0.3
+ 
+#################################
+version = 4						#
+version name = 1.0.3			#
+#################################
 Changelog:
 + Restore da backup anche se file su dropbox è gia presente localmente
 + Activity Dropbox migliorato reload dati se connessione non presente
@@ -15,3 +20,18 @@ Changelog:
 	 rimosse anche le notifiche per la conversazione appena aperta
 + Utility reportError() adesso invia anche la versione dell'app
 + Rivisto MAKE_DB_DUMP in LowPriorityThread, corretti alcuni casi di errore
+ ######################################################################
+ 
+ 
+ 
+#################################
+version = 5						#
+version name = 1.0.4			#
+#################################
+Changelog:
++ Modificate icone stato messaggi
++ Check UMessageService.USER_LOGGED se immagine profilo da scaricare diversa da null
++ Aggiunta icona per nuovo utente in ActionBar se numero sconosciuto
++ Suono e vibrazione per notifiche nuovi messaggi non riprodotti anche quando MainThread avviata e schedula controllo
++ Utility.reportError() aggiunto print StackTrace in messaggio di errore
+
