@@ -13,14 +13,15 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.TextView;
 
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.PreviewChatAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
 import com.lollotek.umessage.listeners.SynchronizationListener;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Utility;
@@ -31,7 +32,11 @@ public class ConversationsList extends Activity {
 
 	private Context context = null;
 
+	private Bundle request, response;
+
 	ListView listView;
+	TextView noConversation;
+	
 	String[] fromColumns = { DatabaseHelper.KEY_IMGSRC,
 			DatabaseHelper.KEY_NAME, DatabaseHelper.KEY_MESSAGE,
 			DatabaseHelper.KEY_DATA };
@@ -87,7 +92,8 @@ public class ConversationsList extends Activity {
 		};
 
 		listView = (ListView) findViewById(R.id.listView1);
-
+		noConversation = (TextView) findViewById(R.id.textView1);
+		
 		listView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
@@ -137,6 +143,13 @@ public class ConversationsList extends Activity {
 
 		Bundle b = new Bundle();
 
+		if(users.getCount() == 0){
+			noConversation.setVisibility(View.VISIBLE);
+		}
+		else{
+			noConversation.setVisibility(View.GONE);
+		}
+		
 		while (newMessagesCount.moveToNext()) {
 			b.putInt(newMessagesCount.getString(newMessagesCount
 					.getColumnIndex(DatabaseHelper.KEY_IDCHAT)), Integer
@@ -205,9 +218,15 @@ public class ConversationsList extends Activity {
 
 		case R.id.logout:
 
-			Configuration configuration = Utility.getConfiguration(context);
-			configuration.setSessid("");
-			Utility.setConfiguration(context, configuration);
+			request = new Bundle();
+			request.putString(ConfigurationManager.SESSION_ID, "");
+			if (ConfigurationManager.saveValues(request)) {
+				Utility.reportError(
+						UMessageApplication.getContext(),
+						new Exception(
+								"Configurazione non scritta: onOptionsItemSelected() ConversationsList.java "),
+						TAG);
+			}
 
 			Intent service = new Intent(this,
 					com.lollotek.umessage.services.UMessageService.class);
@@ -236,8 +255,8 @@ public class ConversationsList extends Activity {
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.conversationslist, menu);
-		
-		//elementi di prova
+
+		// elementi di prova
 		menu.removeItem(R.id.map);
 		menu.removeItem(R.id.settings);
 		return true;

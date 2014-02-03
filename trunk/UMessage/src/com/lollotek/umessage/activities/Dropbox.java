@@ -5,9 +5,6 @@ import java.util.Calendar;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
@@ -17,8 +14,6 @@ import android.widget.TextView;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.TokenPair;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
@@ -26,7 +21,6 @@ import com.lollotek.umessage.listeners.SynchronizationListener;
 import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
-import com.lollotek.umessage.utils.Settings;
 
 public class Dropbox extends Activity {
 

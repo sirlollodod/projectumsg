@@ -19,13 +19,13 @@ import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
 import com.dropbox.client2.DropboxAPI.Entry;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.DumpDB;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -41,6 +41,8 @@ public class LowPriorityThread extends Thread {
 	private ExponentialQueueTime timeQueue;
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400,
 			TIME_DUMP_DB = 86400, TIME_CHECK_USER_IMAGES_UPDATED = 86400;
+
+	private Bundle request, response;
 
 	public LowPriorityThread(Handler handler) {
 		mainThreadHandler = handler;
@@ -76,8 +78,6 @@ public class LowPriorityThread extends Thread {
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
-
-			Configuration configuration;
 
 			Message m, syncMsg;
 			Bundle b, bnd;
@@ -119,6 +119,10 @@ public class LowPriorityThread extends Thread {
 					lowPriorityThreadHandler.sendMessage(m);
 				}
 
+				if (users != null) {
+					users.close();
+				}
+
 				addToQueue(msg, TIME_CHECK_USER_IMAGES_UPDATED, 4, true, false);
 
 				break;
@@ -127,7 +131,7 @@ public class LowPriorityThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				String imageUrl = (String) msg.obj;
@@ -151,7 +155,7 @@ public class LowPriorityThread extends Thread {
 			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
+							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_SHORT)
 							.show();
 				}
 
@@ -163,17 +167,18 @@ public class LowPriorityThread extends Thread {
 
 				try {
 
-					configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
+					request = new Bundle();
+					request.putBoolean(ConfigurationManager.SESSION_ID, true);
+					response = ConfigurationManager.getValues(request);
 
-					result = Utility.uploadImageProfile(
-							UMessageApplication.getContext(),
-							Settings.SERVER_URL, myNewProfileImage,
-							configuration.getSessid());
+					result = Utility.uploadImageProfile(UMessageApplication
+							.getContext(), Settings.SERVER_URL,
+							myNewProfileImage, response.getString(
+									ConfigurationManager.SESSION_ID, ""));
 
 					if (Settings.debugMode) {
 						Toast.makeText(UMessageApplication.getContext(),
-								TAG + result.toString(), Toast.LENGTH_LONG)
+								TAG + result.toString(), Toast.LENGTH_SHORT)
 								.show();
 					}
 					if ((result == null)
@@ -181,18 +186,33 @@ public class LowPriorityThread extends Thread {
 						addToQueue(msg, TIME_MINUTE, 4, false, false);
 					} else if (result.getString("errorCode").equals("OK")
 							&& result.getBoolean("isSessionValid")) {
-						configuration.setProfileImageToUpload(false);
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putBoolean(
+								ConfigurationManager.PROFILE_IMAGE_TO_UPLOAD,
+								false);
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: onHandleMessage() UPLOAD_MY_PROFILE_IMAGE LowPriorityThread.java "),
+									TAG);
+						}
 
 					} else if (!result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putString(ConfigurationManager.SESSION_ID, "");
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: onHandleMessage() UPLOAD_MY_PROFILE_IMAGE LowPriorityThread.java "),
+									TAG);
+						}
+
 						if (Settings.debugMode) {
 							Toast.makeText(UMessageApplication.getContext(),
 									TAG + "sessione non valida... azzerata!",
-									Toast.LENGTH_LONG).show();
+									Toast.LENGTH_SHORT).show();
 						}
 
 					}
@@ -209,7 +229,7 @@ public class LowPriorityThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
@@ -229,8 +249,9 @@ public class LowPriorityThread extends Thread {
 				File userImage = new File(mainFolder.toString()
 						+ Settings.CONTACT_PROFILE_IMAGES_FOLDER + newImageName);
 
+				Cursor userInfo = null;
 				try {
-					Cursor userInfo = p.getUserInfo(bnd.getString("prefix"),
+					userInfo = p.getUserInfo(bnd.getString("prefix"),
 							bnd.getString("num"));
 
 					if (!userInfo.moveToNext()) {
@@ -260,19 +281,30 @@ public class LowPriorityThread extends Thread {
 							TAG
 									+ ": handleMessage():DOWNLOAD_USER_IMAGE_FROM_SRC");
 					addToQueue(msg, TIME_HOUR, 4, false, false);
+				} finally {
+					if (userInfo != null) {
+						userInfo.close();
+					}
 				}
 
 				break;
 
 			case MessageTypes.DOWNLOAD_USER_IMAGE:
-				if (Settings.debugMode) {
-					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "DOWNLOAD_USER_IMAGE", Toast.LENGTH_LONG)
-							.show();
-				}
+
 				bnd = msg.getData();
 
 				try {
+					// debug
+					if (Settings.debugMode) {
+						Toast.makeText(
+								UMessageApplication.getContext(),
+								TAG + "DOWNLOAD_USER_IMAGE "
+										+ bnd.getString("num"),
+								Toast.LENGTH_SHORT).show();
+					}
+
+					lowPriorityThreadHandler
+							.removeMessages(MessageTypes.DOWNLOAD_USER_IMAGE);
 
 					parameters = new JSONObject();
 					parameters.accumulate("action", "CHECK_USER_REGISTERED");
@@ -316,7 +348,7 @@ public class LowPriorityThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_ALL_USERS_IMAGES",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 				mainFolder = Utility.getMainFolder(UMessageApplication
 						.getContext());
@@ -399,11 +431,20 @@ public class LowPriorityThread extends Thread {
 
 				}
 
+				if (users != null) {
+					users.close();
+				}
 				// addToQueue(msg, TIME_DAY, 4, true, false);
 
 				break;
 
 			case MessageTypes.MAKE_DB_DUMP:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "MAKE_DB_DUMP",
+							Toast.LENGTH_SHORT).show();
+				}
+				
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.MAKE_DB_DUMP);
 
@@ -417,30 +458,47 @@ public class LowPriorityThread extends Thread {
 					break;
 				}
 
-				configuration = Utility.getConfiguration(UMessageApplication
-						.getContext());
+				request = new Bundle();
+				request.putBoolean(ConfigurationManager.PREFIX, true);
+				request.putBoolean(ConfigurationManager.NUM, true);
+				request.putBoolean(ConfigurationManager.LAST_DATA_DUMP_DB, true);
+				response = ConfigurationManager.getValues(request);
+
 				boolean forceDBDump = msg.getData().getBoolean("forceDBDump",
 						false);
 
-				if (((dataDump - configuration.getLastDataDumpDB()) < TIME_DUMP_DB * 1000)
+				if (((dataDump - response.getLong(
+						ConfigurationManager.LAST_DATA_DUMP_DB, 0)) < TIME_DUMP_DB * 1000)
 						&& !forceDBDump) {
 					addToQueue(
 							msg,
 							TIME_DUMP_DB
-									- (dataDump - configuration
-											.getLastDataDumpDB()), 4, true,
-							false);
+									- (dataDump - response
+											.getLong(
+													ConfigurationManager.LAST_DATA_DUMP_DB,
+													0)), 4, true, false);
+					if (cd != null) {
+						cd.close();
+					}
 					break;
 				}
 
 				DumpDB dump = new DumpDB(cd, String.valueOf(dataDump),
-						configuration.getPrefix(), configuration.getNum());
+						response.getString(ConfigurationManager.PREFIX, ""),
+						response.getString(ConfigurationManager.NUM, ""));
 				if (dump.buildChatsListFromCursor()) {
 
 				} else {
 					// Errore??
+					if (cd != null) {
+						cd.close();
+					}
 					addToQueue(msg, TIME_DUMP_DB, 4, true, false);
 					break;
+				}
+
+				if (cd != null) {
+					cd.close();
 				}
 
 				dump.reset();
@@ -528,9 +586,16 @@ public class LowPriorityThread extends Thread {
 				if (Utility.saveDumpDB(UMessageApplication.getContext(),
 						dumpRoot, dumpFile)) {
 
-					configuration.setLastDataDumpDB(dataDump);
-					Utility.setConfiguration(UMessageApplication.getContext(),
-							configuration);
+					request = new Bundle();
+					request.putLong(ConfigurationManager.LAST_DATA_DUMP_DB,
+							dataDump);
+					if (ConfigurationManager.saveValues(request)) {
+						Utility.reportError(
+								UMessageApplication.getContext(),
+								new Exception(
+										"Configurazione non scritta: onHandleMessage() MAKE_DB_DUMP LowPriorityThread.java "),
+								TAG);
+					}
 
 					// Dropbox authentication
 					sessionDropbox = DropboxManager.getInstance(
@@ -581,6 +646,12 @@ public class LowPriorityThread extends Thread {
 			// messaggi non gia presenti localmente
 			// eventualmente creo bk locale aggiornato dopo la synch
 			case MessageTypes.START_DROPBOX_SYNCHRONIZATION:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "START_DROPBOX_SYNCHRONIZATION",
+							Toast.LENGTH_SHORT).show();
+				}
+				
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
 
@@ -593,7 +664,7 @@ public class LowPriorityThread extends Thread {
 				// Check user logged
 				if (!mApi.getSession().isLinked()) {
 					Toast.makeText(UMessageApplication.getContext(),
-							"Dropbox user not logged in...", Toast.LENGTH_LONG)
+							"Dropbox user not logged in...", Toast.LENGTH_SHORT)
 							.show();
 					break;
 				}
@@ -624,7 +695,7 @@ public class LowPriorityThread extends Thread {
 					if (datalastDropboxDBDump.equals("0")
 							|| fileToDownload.equals("")) {
 						Toast.makeText(UMessageApplication.getContext(),
-								"Nessu backup trovato", Toast.LENGTH_LONG)
+								"Nessu backup trovato", Toast.LENGTH_SHORT)
 								.show();
 						break;
 					}
@@ -646,16 +717,16 @@ public class LowPriorityThread extends Thread {
 						// debug
 						Toast.makeText(UMessageApplication.getContext(),
 								"File " + fileToDownload + " scaricato",
-								Toast.LENGTH_LONG).show();
+								Toast.LENGTH_SHORT).show();
 					} else {
 						Toast.makeText(UMessageApplication.getContext(),
 								"File da scaricare gia esistente",
-								Toast.LENGTH_LONG).show();
+								Toast.LENGTH_SHORT).show();
 					}
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							e.toString(), Toast.LENGTH_SHORT).show();
 					break;
 				}
 				// Fine download last dropbox db dump
@@ -666,22 +737,27 @@ public class LowPriorityThread extends Thread {
 				try {
 					dropBoxDBDumpJSON = new JSONObject(
 							Utility.getStringFromFile(dumpFile.toString()));
-					configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
-					if (!configuration.getPrefix().equals(
-							dropBoxDBDumpJSON.getString("myPrefix"))
-							|| !configuration.getNum().equals(
-									dropBoxDBDumpJSON.getString("myNum"))) {
+					request = new Bundle();
+					request.putBoolean(ConfigurationManager.PREFIX, true);
+					request.putBoolean(ConfigurationManager.NUM, true);
+					response = ConfigurationManager.getValues(request);
+
+					if (!response.getString(ConfigurationManager.PREFIX, "")
+							.equals(dropBoxDBDumpJSON.getString("myPrefix"))
+							|| !response
+									.getString(ConfigurationManager.NUM, "")
+									.equals(dropBoxDBDumpJSON
+											.getString("myNum"))) {
 						Toast.makeText(UMessageApplication.getContext(),
 								"File di backup non compatibile",
-								Toast.LENGTH_LONG).show();
+								Toast.LENGTH_SHORT).show();
 						dumpFile.delete();
 						break;
 					}
 
 				} catch (Exception e) {
 					Toast.makeText(UMessageApplication.getContext(),
-							e.toString(), Toast.LENGTH_LONG).show();
+							e.toString(), Toast.LENGTH_SHORT).show();
 					break;
 				}
 				// Fine check file sca-ricato relativo a utente attualmente
@@ -691,7 +767,7 @@ public class LowPriorityThread extends Thread {
 				// inserisce nel db locale i messaggi eventualmente mancanti
 				if (p.synchronizeDB(dropBoxDBDumpJSON)) {
 					Toast.makeText(UMessageApplication.getContext(),
-							"Sincronizzazione effettuata", Toast.LENGTH_LONG)
+							"Sincronizzazione effettuata", Toast.LENGTH_SHORT)
 							.show();
 
 					m = new Message();

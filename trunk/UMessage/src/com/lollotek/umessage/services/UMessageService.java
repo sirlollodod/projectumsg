@@ -11,9 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.widget.Toast;
 
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.activities.UMessageSettings;
 import com.lollotek.umessage.threads.HighPriorityThread;
 import com.lollotek.umessage.threads.MainThread;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -60,7 +58,7 @@ public class UMessageService extends Service {
 		if (mainThread == null) {
 			if (Settings.debugMode) {
 				Toast.makeText(UMessageApplication.getContext(),
-						"MainThread null, reinizializzo... ", Toast.LENGTH_LONG)
+						"MainThread null, reinizializzo... ", Toast.LENGTH_SHORT)
 						.show();
 			}
 
@@ -72,7 +70,7 @@ public class UMessageService extends Service {
 			if (Settings.debugMode) {
 				Toast.makeText(UMessageApplication.getContext(),
 						"HighPriorityThread null, reinizializzo... ",
-						Toast.LENGTH_LONG).show();
+						Toast.LENGTH_SHORT).show();
 			}
 
 			highPriorityThread = new HighPriorityThread(serviceHandler);
@@ -115,7 +113,7 @@ public class UMessageService extends Service {
 
 		if (Settings.debugMode) {
 			Toast.makeText(UMessageApplication.getContext(),
-					TAG + actionRequest, Toast.LENGTH_LONG).show();
+					TAG + actionRequest, Toast.LENGTH_SHORT).show();
 		}
 
 		Message m;
@@ -273,6 +271,13 @@ public class UMessageService extends Service {
 
 			break;
 
+		case MessageTypes.PING_FROM_GCM:
+			m = new Message();
+			m.what = MessageTypes.PING_FROM_GCM;
+			serviceHandler.sendMessage(m);
+
+			break;
+
 		case MessageTypes.ERROR:
 
 			break;
@@ -295,7 +300,7 @@ public class UMessageService extends Service {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "RECEIVE_MAIN_THREAD_HANDLER",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				mainThreadHandler = (Handler) msg.obj;
@@ -310,7 +315,7 @@ public class UMessageService extends Service {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "RECEIVE_HIGH_PRIORITY_THREAD_HANDLER",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				highPriorityThreadHandler = (Handler) msg.obj;
@@ -529,6 +534,19 @@ public class UMessageService extends Service {
 
 				try {
 					mainThreadHandler.sendMessageAtFrontOfQueue(m);
+				} catch (Exception e) {
+					this.sendMessageDelayed(m, 1 * 1000);
+				}
+
+				break;
+
+			case MessageTypes.PING_FROM_GCM:
+				m = new Message();
+				m.what = MessageTypes.PING_FROM_GCM;
+				m.setData(msg.getData());
+
+				try {
+					mainThreadHandler.sendMessage(m);
 				} catch (Exception e) {
 					this.sendMessageDelayed(m, 1 * 1000);
 				}

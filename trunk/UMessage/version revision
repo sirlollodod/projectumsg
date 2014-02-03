@@ -34,4 +34,26 @@ Changelog:
 + Aggiunta icona per nuovo utente in ActionBar se numero sconosciuto
 + Suono e vibrazione per notifiche nuovi messaggi non riprodotti anche quando MainThread avviata e schedula controllo
 + Utility.reportError() aggiunto print StackTrace in messaggio di errore
+######################################################################
+
+ 
+ 
+#################################
+version = 6 					#
+version name = 1.0.5			#
+#################################
+Changelog:
++ Risolto crash subito dopo login se user cercava di scaricare immagine profilo però non esistente sul sito
++ Migliorata registrazione a SERVER GCM, facendo prima il controllo se gcmId già esistente ancora valido tramite ping a umsg.netsons.org 
++ Creazione notifiche: cancellazione vecchio PendingIntent se presente, forse risolto problema apertura chat relativa ad utente sbgliato.
++ Visualizzato messaggio errore in fase Registrazione e Login se connessione non presente invece del messaggio di errore generico
++ Implementato ConfigurationManager (synchronized) al posto di accesso a metodi Utility per lettura/scrittura file configurazione
++ Aggiunta data/ora in Utility.reportError()
++ MainThread e LowPriorityThread gestione migliorata Cursor, chiusi dopo averli utilizzati
++ Cancellazione vecchio file configurazione, che altrimenti non veniva letto/scritto da ConfigurationManager
++ Aggiunta scritta 'Nessuna conversazione' in ConversationsList se nessuna chat presente
+
+
+
+
 

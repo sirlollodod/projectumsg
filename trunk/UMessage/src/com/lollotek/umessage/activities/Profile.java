@@ -27,11 +27,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -45,6 +44,8 @@ public class Profile extends Activity {
 	private Context context;
 	private final int TAKE_IMAGE = 0, CROP_IMAGE = 1;
 
+	private Bundle request, response;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -57,9 +58,14 @@ public class Profile extends Activity {
 		b = (Button) findViewById(R.id.button1);
 		ActionBar ab = getActionBar();
 		ab.setDisplayHomeAsUpEnabled(true);
-		Configuration configuration = Utility.getConfiguration(context);
-		ab.setSubtitle(configuration.getPrefix() + "  "
-				+ configuration.getNum());
+
+		request = new Bundle();
+		request.putBoolean(ConfigurationManager.PREFIX, true);
+		request.putBoolean(ConfigurationManager.NUM, true);
+		response = ConfigurationManager.getValues(request);
+
+		ab.setSubtitle(response.getString(ConfigurationManager.PREFIX, "")
+				+ "  " + response.getString(ConfigurationManager.NUM, ""));
 		b.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -129,10 +135,12 @@ public class Profile extends Activity {
 				startActivityForResult(cropIntent, CROP_IMAGE);
 
 			} catch (Exception e) {
-				Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onActivityResult:TAKE_IMAGE");
-				/*Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
-						.show();
-				*/		
+				Utility.reportError(UMessageApplication.getContext(), e, TAG
+						+ ": onActivityResult:TAKE_IMAGE");
+				/*
+				 * Toast.makeText(context, TAG + e.toString(),
+				 * Toast.LENGTH_LONG) .show();
+				 */
 			}
 			break;
 
@@ -161,9 +169,16 @@ public class Profile extends Activity {
 
 				// compressImage(myNewProfileImage.toString());
 
-				Configuration configuration = Utility.getConfiguration(context);
-				configuration.setProfileImageToUpload(true);
-				Utility.setConfiguration(context, configuration);
+				request = new Bundle();
+				request.putBoolean(
+						ConfigurationManager.PROFILE_IMAGE_TO_UPLOAD, true);
+				if (ConfigurationManager.saveValues(request)) {
+					Utility.reportError(
+							UMessageApplication.getContext(),
+							new Exception(
+									"Configurazione non scritta: onActivityResult(CROP_IMAGE) Profile.java "),
+							TAG);
+				}
 
 				Intent service = new Intent(UMessageApplication.getContext(),
 						com.lollotek.umessage.services.UMessageService.class);
@@ -175,10 +190,12 @@ public class Profile extends Activity {
 				if (myNewProfileImageTemp.isFile()) {
 					myNewProfileImageTemp.delete();
 				}
-				Utility.reportError(UMessageApplication.getContext(), e, TAG + ": onActivityResult:CROP_IMAGE");
-				/*Toast.makeText(context, TAG + e.toString(), Toast.LENGTH_LONG)
-						.show();
-				*/
+				Utility.reportError(UMessageApplication.getContext(), e, TAG
+						+ ": onActivityResult:CROP_IMAGE");
+				/*
+				 * Toast.makeText(context, TAG + e.toString(),
+				 * Toast.LENGTH_LONG) .show();
+				 */
 			}
 			break;
 		}

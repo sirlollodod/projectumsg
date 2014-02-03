@@ -2,13 +2,11 @@ package com.lollotek.umessage.db;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Bundle;
 import android.widget.Toast;
 
 import com.lollotek.umessage.UMessageApplication;

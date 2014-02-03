@@ -28,12 +28,12 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberType;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.adapters.ContactAdapter;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.utils.MessageTypes;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
@@ -49,6 +49,8 @@ public class Contacts extends Activity {
 	int[] toViews = { R.id.textView1, R.id.textView2, R.id.textView3 };
 	Context context = null;
 	private static int firstContactDisplayed;
+
+	private Bundle request, response;
 
 	static LoadUserContactsAsyncTask loadUserContactAsyncTask = null;
 
@@ -182,10 +184,14 @@ public class Contacts extends Activity {
 			totalPhoneContacts = phones.getCount();
 			int actualPhoneContact = 0;
 
-			Configuration configuration = Utility
-					.getConfiguration(UMessageApplication.getContext());
-			String myPrefix = configuration.getPrefix();
-			String myNum = configuration.getNum();
+			request = new Bundle();
+			request.putBoolean(ConfigurationManager.PREFIX, true);
+			request.putBoolean(ConfigurationManager.NUM, true);
+			response = ConfigurationManager.getValues(request);
+
+			String myPrefix = response.getString(ConfigurationManager.PREFIX,
+					"");
+			String myNum = response.getString(ConfigurationManager.NUM, "");
 
 			while (phones.moveToNext()) {
 				publishProgress(++actualPhoneContact);

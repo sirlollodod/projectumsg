@@ -41,6 +41,7 @@ public class MessageTypes {
 	public static final int GET_LAST_DROPBOX_DB_BK_DATA = 90;
 	public static final int START_DROPBOX_SYNCHRONIZATION = 91;
 	public static final int CHECK_FOR_USER_IMAGES_UPDATED = 92;
+	public static final int PING_FROM_GCM = 93;
 
 	// Tipi messaggio ricevuti da SynchronizationManager e
 	// SynchronizationListeners

@@ -2,12 +2,10 @@ package com.lollotek.umessage.classes;
 
 import org.json.JSONObject;
 
-import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.db.DatabaseHelper;
-
 import android.database.Cursor;
 import android.os.Bundle;
-import android.widget.Toast;
+
+import com.lollotek.umessage.db.DatabaseHelper;
 
 public class DumpDB {
 
