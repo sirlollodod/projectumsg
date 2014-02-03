@@ -1,14 +1,11 @@
 package com.lollotek.umessage.receivers;
 
-import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.utils.MessageTypes;
-import com.lollotek.umessage.utils.Utility;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.WakefulBroadcastReceiver;
-import android.widget.Toast;
+
+import com.lollotek.umessage.utils.MessageTypes;
 
 public class GCMBroadcastReceiver extends WakefulBroadcastReceiver {
 
@@ -30,6 +27,10 @@ public class GCMBroadcastReceiver extends WakefulBroadcastReceiver {
 			service.putExtra("num", intent.getStringExtra("num"));
 			break;
 
+		case MessageTypes.PING_FROM_GCM:
+			service.putExtra("action", actionToPerform);
+			break;
+			
 		default:
 
 		}

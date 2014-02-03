@@ -23,7 +23,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -55,7 +54,7 @@ public class SingleChatContact extends Activity {
 	Context context;
 
 	private int firstMessageDisplayed;
-	
+
 	private boolean addUserIconToDisplay = true;
 
 	private SynchronizationListener syncListener;
@@ -447,7 +446,7 @@ public class SingleChatContact extends Activity {
 						service.putExtra("prefix", prefixNum);
 						service.putExtra("num", phoneNum);
 						startService(service);
-						
+
 						invalidateOptionsMenu();
 						addUserIconToDisplay = false;
 					}
@@ -477,7 +476,8 @@ public class SingleChatContact extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.singlechatcontact, menu);
-		if ((userInfo != null) && (userInfo.moveToFirst()) || !addUserIconToDisplay) {
+		if ((userInfo != null) && (userInfo.moveToFirst())
+				|| !addUserIconToDisplay) {
 			menu.removeItem(R.id.addUser);
 		}
 		return true;

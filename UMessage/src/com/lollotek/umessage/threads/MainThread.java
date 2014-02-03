@@ -1,7 +1,6 @@
 package com.lollotek.umessage.threads;
 
 import java.io.File;
-import java.security.acl.LastOwnerException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,7 +11,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.os.Bundle;
@@ -23,17 +21,14 @@ import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session.AccessType;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.ExponentialQueueTime;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.DatabaseHelper;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.managers.DropboxManager;
 import com.lollotek.umessage.managers.SynchronizationManager;
 import com.lollotek.umessage.utils.MessageTypes;
@@ -50,8 +45,10 @@ public class MainThread extends Thread {
 	private LowPriorityThread lowPriorityThread = null;
 
 	private final long TIME_MINUTE = 60, TIME_HOUR = 3600, TIME_DAY = 86400,
-			TIME_SYNC_POLLING = 300;
+			TIME_SYNC_POLLING = 300, TIME_WAIT_PING_GCM = 600;
 	private ExponentialQueueTime timeQueue;
+
+	private Bundle request, response;
 
 	GoogleCloudMessaging gcm = null;
 
@@ -88,9 +85,12 @@ public class MainThread extends Thread {
 		mainThreadHandler.obtainMessage(MessageTypes.CHECK_MESSAGES_TO_UPLOAD)
 				.sendToTarget();
 
-		mainThreadHandler
-				.obtainMessage(MessageTypes.CHECK_GOOGLE_PLAY_SERVICES)
-				.sendToTarget();
+		m = new Message();
+		m.what = MessageTypes.CHECK_GOOGLE_PLAY_SERVICES;
+		b = new Bundle();
+		b.putBoolean("calledFromThreadStarted", true);
+		m.setData(b);
+		mainThreadHandler.sendMessage(m);
 
 		m = new Message();
 		m.what = MessageTypes.UPDATE_NOTIFICATION;
@@ -111,7 +111,7 @@ public class MainThread extends Thread {
 			if (Settings.debugMode) {
 				Toast.makeText(UMessageApplication.getContext(),
 						"LowPriorityThread null, reinizializzo... ",
-						Toast.LENGTH_LONG).show();
+						Toast.LENGTH_SHORT).show();
 			}
 
 			lowPriorityThread = new LowPriorityThread(mainThreadHandler);
@@ -130,7 +130,6 @@ public class MainThread extends Thread {
 			Message m, syncMsg;
 			Bundle b, bnd;
 			HttpResponseUmsg httpResult = new HttpResponseUmsg();
-			Configuration configuration;
 
 			JSONObject parameters;
 
@@ -146,7 +145,7 @@ public class MainThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "RECEIVE_LOW_PRIORITY_THREAD_HANDLER",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 				lowPriorityThreadHandler = (Handler) msg.obj;
 				break;
@@ -154,7 +153,7 @@ public class MainThread extends Thread {
 			case MessageTypes.DESTROY:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "DESTROY", Toast.LENGTH_LONG).show();
+							TAG + "DESTROY", Toast.LENGTH_SHORT).show();
 				}
 				lowPriorityThreadHandler.obtainMessage(MessageTypes.DESTROY)
 						.sendToTarget();
@@ -169,7 +168,7 @@ public class MainThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_MY_PROFILE_IMAGE_FROM_SRC",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				try {
@@ -182,7 +181,7 @@ public class MainThread extends Thread {
 			case MessageTypes.UPLOAD_MY_PROFILE_IMAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_LONG)
+							TAG + "UPLOAD_MY_PROFILE_IMAGE", Toast.LENGTH_SHORT)
 							.show();
 				}
 
@@ -197,7 +196,7 @@ public class MainThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_USER_IMAGE_FROM_SRC",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				try {
@@ -212,7 +211,7 @@ public class MainThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "DOWNLOAD_ALL_USERS_IMAGES",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 
 				try {
@@ -226,7 +225,7 @@ public class MainThread extends Thread {
 			case MessageTypes.DOWNLOAD_USER_IMAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "DOWNLOAD_USER_IMAGE", Toast.LENGTH_LONG)
+							TAG + "DOWNLOAD_USER_IMAGE", Toast.LENGTH_SHORT)
 							.show();
 				}
 
@@ -247,7 +246,8 @@ public class MainThread extends Thread {
 
 				boolean calledFromThreadStarted = bnd.getBoolean(
 						"calledFromThreadStarted", false);
-				updateNotification(!calledFromSingleChatContact && !calledFromThreadStarted);
+				updateNotification(!calledFromSingleChatContact
+						&& !calledFromThreadStarted);
 
 				break;
 
@@ -326,7 +326,7 @@ public class MainThread extends Thread {
 				// Check user logged
 				if (!mApi.getSession().isLinked()) {
 					Toast.makeText(UMessageApplication.getContext(),
-							"Dropbox user not logged in...", Toast.LENGTH_LONG)
+							"Dropbox user not logged in...", Toast.LENGTH_SHORT)
 							.show();
 					break;
 				}
@@ -406,11 +406,79 @@ public class MainThread extends Thread {
 
 				break;
 
+			case MessageTypes.PING_FROM_GCM:
+				if (Settings.debugMode) {
+					Toast.makeText(UMessageApplication.getContext(),
+							TAG + "PING_FROM_GCM", Toast.LENGTH_SHORT).show();
+				}
+
+				// ping gcm funzionante, rimuovo check per registrazione gcm...
+				mainThreadHandler
+						.removeMessages(MessageTypes.CHECK_GOOGLE_PLAY_SERVICES);
+				// ... e polling
+				mainThreadHandler
+						.removeMessages(MessageTypes.GET_CHATS_VERSION);
+
+				break;
+
 			case MessageTypes.CHECK_GOOGLE_PLAY_SERVICES:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "CHECK_GOOGLE_PLAY_SERVICES",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
+				}
+
+				bnd = msg.getData();
+
+				request = new Bundle();
+				request.putBoolean(ConfigurationManager.GCM_ID, true);
+				request.putBoolean(ConfigurationManager.SESSION_ID, true);
+				response = ConfigurationManager.getValues(request);
+
+				if (!response.getString(ConfigurationManager.GCM_ID, "")
+						.equals("")
+						&& bnd.getBoolean("calledFromThreadStarted", true)) {
+					try {
+						parameters = new JSONObject();
+						parameters.accumulate("action", "PING_ME_GCM");
+						parameters.accumulate("sessionId", response.getString(
+								ConfigurationManager.SESSION_ID, ""));
+
+						httpResult = doRequest(parameters);
+
+						if (httpResult.error) {
+							addToQueue(msg, TIME_MINUTE, 4, false, false);
+							break;
+						}
+
+						if (!httpResult.result.getBoolean("isSessionValid")) {
+							request = new Bundle();
+							request.putString(ConfigurationManager.SESSION_ID,
+									"");
+							if (ConfigurationManager.saveValues(request)) {
+								Utility.reportError(
+										UMessageApplication.getContext(),
+										new Exception(
+												"Configurazione non scritta: onHandleMessage() CHECK_GOOGLE_PLAY_SERVICE MainThread.java "),
+										TAG);
+							}
+
+							break;
+						}
+
+						m = new Message();
+						m.what = MessageTypes.CHECK_GOOGLE_PLAY_SERVICES;
+						b = new Bundle();
+						b.putBoolean("calledFromThreadStarted", false);
+						m.setData(b);
+						addToQueue(m, TIME_WAIT_PING_GCM, 4, true, false);
+						break;
+
+					} catch (Exception e) {
+						Utility.reportError(UMessageApplication.getContext(),
+								e, TAG + "CHECK_GOOGLE_PLAY_SERVICES");
+					}
+					break;
 				}
 
 				if (!registerGCM()) {
@@ -426,24 +494,28 @@ public class MainThread extends Thread {
 			case MessageTypes.UPLOAD_NEW_MESSAGE:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "UPLOAD_NEW_MESSAGE", Toast.LENGTH_LONG)
+							TAG + "UPLOAD_NEW_MESSAGE", Toast.LENGTH_SHORT)
 							.show();
 				}
+
+				Cursor infoChat = null;
 				try {
 
 					bnd = msg.getData();
 					parameters = new JSONObject();
-					configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
 
-					Cursor infoChat = p.getChat(bnd.getString("prefix"),
+					request = new Bundle();
+					request.putBoolean(ConfigurationManager.SESSION_ID, true);
+					response = ConfigurationManager.getValues(request);
+
+					infoChat = p.getChat(bnd.getString("prefix"),
 							bnd.getString("num"));
 
 					infoChat.moveToNext();
 
 					parameters.accumulate("action", "SEND_NEW_MESSAGE");
-					parameters.accumulate("sessionId",
-							configuration.getSessid());
+					parameters.accumulate("sessionId", response.getString(
+							ConfigurationManager.SESSION_ID, ""));
 					parameters
 							.accumulate("destPrefix", bnd.getString("prefix"));
 					parameters.accumulate("destNum", bnd.getString("num"));
@@ -467,9 +539,15 @@ public class MainThread extends Thread {
 					}
 
 					if (!httpResult.result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putString(ConfigurationManager.SESSION_ID, "");
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: onHandleMessage() UPLOAD_NEW_MESSAGE MainThread.java "),
+									TAG);
+						}
 
 						break;
 					}
@@ -480,7 +558,7 @@ public class MainThread extends Thread {
 						if (Settings.debugMode) {
 							Toast.makeText(UMessageApplication.getContext(),
 									TAG + "destination not valid",
-									Toast.LENGTH_LONG).show();
+									Toast.LENGTH_SHORT).show();
 						}
 						break;
 					}
@@ -524,6 +602,10 @@ public class MainThread extends Thread {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():UPLOAD_NEW_MESSAGE");
 					addToQueue(msg, TIME_MINUTE, 4, false, false);
+				} finally {
+					if (infoChat != null) {
+						infoChat.close();
+					}
 				}
 
 				break;
@@ -537,17 +619,24 @@ public class MainThread extends Thread {
 			case MessageTypes.SYNCHRONIZE_CHAT:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "SYNCHRONIZE_CHAT", Toast.LENGTH_LONG).show();
+							TAG + "SYNCHRONIZE_CHAT", Toast.LENGTH_SHORT)
+							.show();
 				}
+
+				Cursor localMessage = null;
+				infoChat = null;
 				try {
 					bnd = msg.getData();
-					configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
+					request = new Bundle();
+					request.putBoolean(ConfigurationManager.SESSION_ID, true);
+					response = ConfigurationManager.getValues(request);
+
 					String prefixDest = bnd.getString("prefix");
 					String numDest = bnd.getString("num");
-					String sessionId = configuration.getSessid();
+					String sessionId = response.getString(
+							ConfigurationManager.SESSION_ID, "");
 					parameters = new JSONObject();
-					Cursor infoChat = p.getChat(prefixDest, numDest);
+					infoChat = p.getChat(prefixDest, numDest);
 					boolean updatedSomething = false;
 					boolean existsLocalChat = true;
 
@@ -576,9 +665,15 @@ public class MainThread extends Thread {
 					}
 
 					if (!httpResult.result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putString(ConfigurationManager.SESSION_ID, "");
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: onHandleMessage() SYNCHRONIZE_CHAT MainThread.java "),
+									TAG);
+						}
 
 						break;
 					}
@@ -589,7 +684,7 @@ public class MainThread extends Thread {
 						if (Settings.debugMode) {
 							Toast.makeText(UMessageApplication.getContext(),
 									TAG + "destination not valid",
-									Toast.LENGTH_LONG).show();
+									Toast.LENGTH_SHORT).show();
 						}
 						break;
 					}
@@ -623,7 +718,7 @@ public class MainThread extends Thread {
 
 					JSONArray messages = httpResult.result
 							.getJSONArray("messages");
-					Cursor localMessage;
+
 					ContentValues newIncomingMessage;
 
 					boolean isThereNewMessages = false;
@@ -855,6 +950,13 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():SYNCHRONIZE_CHAT");
+				} finally {
+					if (infoChat != null) {
+						infoChat.close();
+					}
+					if (localMessage != null) {
+						localMessage.close();
+					}
 				}
 
 				break;
@@ -862,8 +964,8 @@ public class MainThread extends Thread {
 			case MessageTypes.CHECK_MESSAGES_TO_UPLOAD:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "CHECK_MESSAGES_TO_UPLOAD", Toast.LENGTH_LONG)
-							.show();
+							TAG + "CHECK_MESSAGES_TO_UPLOAD",
+							Toast.LENGTH_SHORT).show();
 				}
 				Cursor messagesToUpload = p.getMessagesToUpload();
 
@@ -910,6 +1012,9 @@ public class MainThread extends Thread {
 					}
 
 				}
+				if (messagesToUpload != null) {
+					messagesToUpload.close();
+				}
 
 				if (errors) {
 					addToQueue(msg, TIME_MINUTE, 4, true, false);
@@ -921,11 +1026,13 @@ public class MainThread extends Thread {
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
 							TAG + "CHECK_CHATS_TO_SYNCHRONIZE",
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
+
+				Cursor chats = null;
 				try {
 
-					Cursor chats = p.getAllChats();
+					chats = p.getAllChats();
 
 					if (chats == null) {
 						addToQueue(msg, TIME_MINUTE, 4, true, false);
@@ -950,6 +1057,10 @@ public class MainThread extends Thread {
 							e,
 							TAG
 									+ ": handleMessage():CHECK_CHATS_TO_SYNCHRONIZE");
+				} finally {
+					if (chats != null) {
+						chats.close();
+					}
 				}
 
 				addToQueue(msg, TIME_HOUR, 4, true, false);
@@ -958,13 +1069,19 @@ public class MainThread extends Thread {
 			case MessageTypes.GET_CHATS_VERSION:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "GET_CHATS_VERSION", Toast.LENGTH_LONG)
+							TAG + "GET_CHATS_VERSION", Toast.LENGTH_SHORT)
 							.show();
 				}
+
+				Cursor localChat = null;
 				try {
-					configuration = Utility
-							.getConfiguration(UMessageApplication.getContext());
-					String sessionId = configuration.getSessid();
+
+					request = new Bundle();
+					request.putBoolean(ConfigurationManager.SESSION_ID, true);
+					response = ConfigurationManager.getValues(request);
+
+					String sessionId = response.getString(
+							ConfigurationManager.SESSION_ID, "");
 					parameters = new JSONObject();
 					parameters.accumulate("action", "GET_CHATS_VERSION");
 					parameters.accumulate("sessionId", sessionId);
@@ -977,9 +1094,15 @@ public class MainThread extends Thread {
 					}
 
 					if (!httpResult.result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putString(ConfigurationManager.SESSION_ID, "");
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: onHandleMessage() GET_CHATS_VERSION MainThread.java "),
+									TAG);
+						}
 
 						break;
 					}
@@ -998,7 +1121,7 @@ public class MainThread extends Thread {
 						prefixDest = onlineChat.getString("prefixDest");
 						numDest = onlineChat.getString("numDest");
 						version = onlineChat.getString("version");
-						Cursor localChat = p.getChat(prefixDest, numDest);
+						localChat = p.getChat(prefixDest, numDest);
 						boolean chatToSync = false;
 
 						if ((localChat == null) || (!localChat.moveToFirst())) {
@@ -1029,6 +1152,10 @@ public class MainThread extends Thread {
 				} catch (Exception e) {
 					Utility.reportError(UMessageApplication.getContext(), e,
 							TAG + ": handleMessage():GET_CHATS_VERSION");
+				} finally {
+					if (localChat != null) {
+						localChat.close();
+					}
 				}
 
 				addToQueue(msg, TIME_SYNC_POLLING, 4, true, false);
@@ -1120,8 +1247,10 @@ public class MainThread extends Thread {
 
 		private boolean registerGCM() {
 			if (Utility.checkPlayServices(UMessageApplication.getContext())) {
-				Configuration configuration = Utility
-						.getConfiguration(UMessageApplication.getContext());
+
+				request = new Bundle();
+				request.putBoolean(ConfigurationManager.SESSION_ID, true);
+				response = ConfigurationManager.getValues(request);
 
 				String regid;
 				if (gcm == null) {
@@ -1131,15 +1260,12 @@ public class MainThread extends Thread {
 
 				try {
 					regid = gcm.register(Settings.GOOGLE_PROJECT_NUMBER);
-					configuration.setGcmid(regid);
-					Utility.setConfiguration(UMessageApplication.getContext(),
-							configuration);
 
 					JSONObject parameters = new JSONObject();
 					parameters.accumulate("action", "UPDATE_GCM_ID");
-					parameters.accumulate("sessionId",
-							configuration.getSessid());
-					parameters.accumulate("gcmId", configuration.getGcmid());
+					parameters.accumulate("sessionId", response.getString(
+							ConfigurationManager.SESSION_ID, ""));
+					parameters.accumulate("gcmId", regid);
 					HttpResponseUmsg httpResult = new HttpResponseUmsg();
 
 					httpResult = doRequest(parameters);
@@ -1149,13 +1275,30 @@ public class MainThread extends Thread {
 					}
 
 					if (!httpResult.result.getBoolean("isSessionValid")) {
-						configuration.setSessid("");
-						Utility.setConfiguration(
-								UMessageApplication.getContext(), configuration);
+						request = new Bundle();
+						request.putString(ConfigurationManager.SESSION_ID, "");
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: registerGcm1() MainThread.java "),
+									TAG);
+						}
+
 						return false;
 					}
 
 					if (httpResult.result.getBoolean("isGcmIdUpdated")) {
+						request = new Bundle();
+						request.putString(ConfigurationManager.GCM_ID, regid);
+						if (ConfigurationManager.saveValues(request)) {
+							Utility.reportError(
+									UMessageApplication.getContext(),
+									new Exception(
+											"Configurazione non scritta: registerGcm2() MainThread.java "),
+									TAG);
+						}
+
 						return true;
 					} else {
 						return false;
@@ -1290,8 +1433,10 @@ public class MainThread extends Thread {
 			}
 
 			pIntent = PendingIntent.getActivity(
-					UMessageApplication.getContext(), 0, action, 0);
+					UMessageApplication.getContext(), 0, action,
+					PendingIntent.FLAG_CANCEL_CURRENT);
 
+			notificationManager.cancel(0);
 			notificationManager.cancelAll();
 
 			notification = b.setContentIntent(pIntent)
@@ -1310,6 +1455,10 @@ public class MainThread extends Thread {
 			notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
 			notificationManager.notify(0, notification);
+
+			if (messagesNotification != null) {
+				messagesNotification.close();
+			}
 
 			return true;
 

@@ -17,9 +17,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
+import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
@@ -31,6 +31,8 @@ public class Registration extends Activity {
 	EditText prefix, num, email;
 	Button b1, b2;
 	String serialSim;
+
+	Bundle request, response;
 
 	private static final String SHARED_PREFS_RESTORE_VALUES = "REGISTRATION_VALUES";
 
@@ -94,16 +96,21 @@ public class Registration extends Activity {
 			String num = userInfo.getString("num");
 			String email = userInfo.getString("email");
 
-			Configuration configuration = Utility
-					.getConfiguration(UMessageApplication.getContext());
-			configuration.setPrefix(prefix);
-			configuration.setNum(num);
-			configuration.setEmail(email);
-			configuration.setSimserial(Utility.getSerialSim(UMessageApplication
-					.getContext()));
-			Utility.setConfiguration(UMessageApplication.getContext(),
-					configuration);
-			
+			request = new Bundle();
+			request.putString(ConfigurationManager.PREFIX, prefix);
+			request.putString(ConfigurationManager.NUM, num);
+			request.putString(ConfigurationManager.EMAIL, email);
+			request.putString(ConfigurationManager.SIM_SERIAL,
+					Utility.getSerialSim(UMessageApplication.getContext()));
+
+			if (ConfigurationManager.saveValues(request)) {
+				Utility.reportError(
+						UMessageApplication.getContext(),
+						new Exception(
+								"Configurazione non scritta: startLoginActivity() "),
+						TAG);
+			}
+
 			SharedPreferences prefs = getSharedPreferences(
 					SHARED_PREFS_RESTORE_VALUES, MODE_PRIVATE);
 			Editor edit = prefs.edit();
@@ -112,7 +119,7 @@ public class Registration extends Activity {
 			edit.remove("num");
 			edit.remove("email");
 			edit.commit();
-			
+
 		} catch (Exception e) {
 			Utility.reportError(UMessageApplication.getContext(), e, TAG
 					+ ": startLoginActivity()");
@@ -209,7 +216,8 @@ public class Registration extends Activity {
 
 				if (result == null) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "Errore:1", Toast.LENGTH_SHORT).show();
+							"Nessuna connessione...", Toast.LENGTH_SHORT)
+							.show();
 					prefix.setEnabled(true);
 					num.setEnabled(true);
 					b1.setText("Conferma");
@@ -232,7 +240,7 @@ public class Registration extends Activity {
 				}
 			} catch (Exception e) {
 				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "Errore:2", Toast.LENGTH_SHORT).show();
+						"Nessuna connessione...", Toast.LENGTH_SHORT).show();
 
 				prefix.setEnabled(true);
 				num.setEnabled(true);
@@ -284,7 +292,8 @@ public class Registration extends Activity {
 			try {
 				if ((result == null)) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "Errore:3", Toast.LENGTH_SHORT).show();
+							"Nessuna connessione...", Toast.LENGTH_SHORT)
+							.show();
 				} else if (result.getString("errorCode").equals("OK")) {
 					// utente registrato, codici inviati per sms e mail dal
 					// sistema
@@ -300,7 +309,7 @@ public class Registration extends Activity {
 				}
 			} catch (Exception e) {
 				Toast.makeText(UMessageApplication.getContext(),
-						TAG + "Errore:4", Toast.LENGTH_SHORT).show();
+						"Nessuna connessione...", Toast.LENGTH_SHORT).show();
 
 			}
 		}

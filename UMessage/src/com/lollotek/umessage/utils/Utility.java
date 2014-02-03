@@ -7,8 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -18,6 +16,7 @@ import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
@@ -41,78 +40,22 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.lollotek.umessage.Configuration;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.classes.HttpResponseUmsg;
 import com.lollotek.umessage.db.Provider;
+import com.lollotek.umessage.managers.ConfigurationManager;
 
 public class Utility {
 
 	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
 	private static final String TAG = Utility.class.getName() + ":\n";
-
-	/**
-	 * Carica la configurazione dal file specificato.
-	 * 
-	 * @param configFile
-	 *            puntatore al file da cui caricare la configurazione.
-	 * @return la configurazione caricata da file se disponibile, null
-	 *         altrimenti.
-	 */
-	private static Configuration loadConfiguration(File configFile) {
-		Configuration configuration;
-		try {
-			ObjectInputStream inputStream = new ObjectInputStream(
-					new FileInputStream(configFile));
-			configuration = (Configuration) inputStream.readObject();
-			inputStream.close();
-			return configuration;
-		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG
-					+ ": loadConfiguration()");
-			/*
-			 * Toast.makeText(UMessageApplication.getContext(), TAG +
-			 * e.toString(), Toast.LENGTH_LONG).show();
-			 */
-			return null;
-		}
-
-	}
-
-	/**
-	 * Salva su file la configurazione attuale.
-	 * 
-	 * @param configuration
-	 *            puntatore dell'oggetto da salvare su file.
-	 * @param configFile
-	 *            puntatore al file in cui salvare la configurazione.
-	 * @return true se configurazione salvata con successo, false altrimenti.
-	 */
-	private static boolean saveConfiguration(Configuration configuration,
-			File configFile) {
-		try {
-			ObjectOutputStream outputStream = new ObjectOutputStream(
-					new FileOutputStream(configFile));
-			outputStream.writeObject(configuration);
-			outputStream.close();
-			return true;
-		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG
-					+ ": saveConfiguration()");
-			/*
-			 * Toast.makeText(UMessageApplication.getContext(), TAG +
-			 * e.toString(), Toast.LENGTH_LONG).show();
-			 */
-			return false;
-		}
-
-	}
 
 	public static boolean saveDumpDB(Context context, JSONObject dumpDB,
 			File file) {
@@ -155,26 +98,6 @@ public class Utility {
 			return false;
 		}
 		return true;
-	}
-
-	public static Configuration getConfiguration(Context context) {
-		File configurationFile = new File(context.getFilesDir() + "/"
-				+ Settings.CONFIG_FILE_NAME);
-		Configuration configuration;
-		if (!configurationFile.isFile()) {
-			configuration = new Configuration();
-			Utility.saveConfiguration(configuration, configurationFile);
-		}
-		configuration = loadConfiguration(configurationFile);
-
-		return configuration;
-	}
-
-	public static void setConfiguration(Context context,
-			Configuration configuration) {
-		File configurationFile = new File(context.getFilesDir() + "/"
-				+ Settings.CONFIG_FILE_NAME);
-		saveConfiguration(configuration, configurationFile);
 	}
 
 	public static String getSerialSim(Context context) {
@@ -446,22 +369,51 @@ public class Utility {
 					.show();
 		}
 		Provider p = new Provider(context);
-		long newErrorId = p.insertError(classTag, e.toString() + "\n"
+		Calendar c = Calendar.getInstance();
+
+		String dataFormattedValue = ""
+				+ (c.get(Calendar.DAY_OF_MONTH) < 10 ? "0"
+						+ c.get(Calendar.DAY_OF_MONTH) : c
+						.get(Calendar.DAY_OF_MONTH))
+				+ "/"
+				+ ((c.get(Calendar.MONTH) + 1) < 10 ? "0"
+						+ (c.get(Calendar.MONTH) + 1)
+						: (c.get(Calendar.MONTH) + 1)) + "/"
+				+ c.get(Calendar.YEAR);
+
+		String timeFormattedValue = ""
+				+ (c.get(Calendar.HOUR_OF_DAY) < 10 ? "0"
+						+ c.get(Calendar.HOUR_OF_DAY) : c
+						.get(Calendar.HOUR_OF_DAY))
+				+ ":"
+				+ (c.get(Calendar.MINUTE) < 10 ? "0" + c.get(Calendar.MINUTE)
+						: c.get(Calendar.MINUTE));
+
+		long newErrorId = p.insertError(classTag, "@" + dataFormattedValue
+				+ "  " + timeFormattedValue + "\n" + e.toString() + "\n"
 				+ e.getStackTrace().toString());
 		HttpResponseUmsg result = new HttpResponseUmsg();
 
 		if (newErrorId != -1) {
 			try {
+
 				PackageInfo packageInfo = context.getPackageManager()
 						.getPackageInfo(context.getPackageName(), 0);
 
+				Bundle request, response;
+				request = new Bundle();
+				request.putBoolean(ConfigurationManager.SESSION_ID, true);
+				response = ConfigurationManager.getValues(request);
+
 				JSONObject parameters = new JSONObject();
 				parameters.accumulate("action", "REPORT_ERROR");
-				parameters.accumulate("sessionId",
-						Utility.getConfiguration(context).getSessid());
+				parameters
+						.accumulate("sessionId", response.getString(
+								ConfigurationManager.SESSION_ID, ""));
 				parameters.accumulate("tag", classTag);
-				parameters.accumulate("info", e.toString() + "\n"
-						+ e.getStackTrace().toString());
+				parameters.accumulate("info", "@" + dataFormattedValue + "  "
+						+ timeFormattedValue + "\n" + e.toString() + "\n"
+						+ e.getStackTrace());
 				parameters.accumulate("appVersion", packageInfo.versionCode);
 
 				result.result = Utility.doPostRequest(Settings.SERVER_URL,
