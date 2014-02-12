@@ -53,6 +53,15 @@ Changelog:
 + Cancellazione vecchio file configurazione, che altrimenti non veniva letto/scritto da ConfigurationManager
 + Aggiunta scritta 'Nessuna conversazione' in ConversationsList se nessuna chat presente
 
+ 
+ 
+#################################
+version = 7 					#
+version name = 1.0.6			#
+#################################
+Changelog:
++ ConfigurationManager implementato tramite SharedPreferences (e non più tramite object Configuration salvato su file)
++ Codici login rimossi correttamente dalle SharedPreferences dopo che user loggato
 
 
 

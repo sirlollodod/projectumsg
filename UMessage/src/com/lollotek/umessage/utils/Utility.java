@@ -44,6 +44,9 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
+import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
+import com.dropbox.client2.android.AndroidAuthSession;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.lollotek.umessage.UMessageApplication;
@@ -411,9 +414,11 @@ public class Utility {
 						.accumulate("sessionId", response.getString(
 								ConfigurationManager.SESSION_ID, ""));
 				parameters.accumulate("tag", classTag);
-				parameters.accumulate("info", "@" + dataFormattedValue + "  "
-						+ timeFormattedValue + "\n" + e.toString() + "\n"
-						+ e.getStackTrace());
+				parameters.accumulate(
+						"info",
+						"@" + dataFormattedValue + "  " + timeFormattedValue
+								+ "\n" + e.toString() + "\n"
+								+ e.getStackTrace());
 				parameters.accumulate("appVersion", packageInfo.versionCode);
 
 				result.result = Utility.doPostRequest(Settings.SERVER_URL,
@@ -454,4 +459,27 @@ public class Utility {
 		fin.close();
 		return ret;
 	}
+
+	/*
+	public static DropboxAPI.Entry getDropboxIndexFile(
+			DropboxAPI<AndroidAuthSession> connection, File localIndexFile) {
+
+		if (!connection.getSession().isLinked()) {
+			return null;
+		}
+
+		if (localIndexFile.isFile()) {
+			localIndexFile.delete();
+		}
+
+		String indexFileToDownload = "UMessageIndex";
+
+		FileOutputStream outputStream = new FileOutputStream(localIndexFile);
+		DropboxFileInfo info = connection.getFile("/" + indexFileToDownload,
+				null, outputStream, null);
+
+		return new DropboxAPI.Entry();
+	}
+	*/
+
 }

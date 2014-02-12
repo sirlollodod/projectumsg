@@ -455,7 +455,7 @@ public class MainThread extends Thread {
 							request = new Bundle();
 							request.putString(ConfigurationManager.SESSION_ID,
 									"");
-							if (ConfigurationManager.saveValues(request)) {
+							if (!ConfigurationManager.saveValues(request)) {
 								Utility.reportError(
 										UMessageApplication.getContext(),
 										new Exception(
@@ -541,7 +541,7 @@ public class MainThread extends Thread {
 					if (!httpResult.result.getBoolean("isSessionValid")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.SESSION_ID, "");
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -667,7 +667,7 @@ public class MainThread extends Thread {
 					if (!httpResult.result.getBoolean("isSessionValid")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.SESSION_ID, "");
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -1096,7 +1096,7 @@ public class MainThread extends Thread {
 					if (!httpResult.result.getBoolean("isSessionValid")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.SESSION_ID, "");
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -1277,7 +1277,7 @@ public class MainThread extends Thread {
 					if (!httpResult.result.getBoolean("isSessionValid")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.SESSION_ID, "");
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -1291,7 +1291,7 @@ public class MainThread extends Thread {
 					if (httpResult.result.getBoolean("isGcmIdUpdated")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.GCM_ID, regid);
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(

@@ -1,24 +1,19 @@
 package com.lollotek.umessage.managers;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 
 import com.lollotek.umessage.UMessageApplication;
-import com.lollotek.umessage.utils.Settings;
-import com.lollotek.umessage.utils.Utility;
 
 public class ConfigurationManager {
 
 	private static final String TAG = ConfigurationManager.class.getName()
 			+ ":\n";
 
-	private static Configuration mConfiguration = null;
-	private static boolean mConfigurationToReload = false;
+	private static final String SHARED_PREFS_CONFIGURATION_MANAGER = "CONFIGURATION_MANAGER_PREFS";
 
 	public static final String PREFIX = "PREFIX";
 	public static final String NUM = "NUM";
@@ -33,205 +28,162 @@ public class ConfigurationManager {
 	public static final String PROFILE_IMAGE_TO_UPLOAD = "PROFILE_IMAGE_TO_UPLOAD";
 	public static final String LAST_DATA_DUMP_DB = "LAST_DATA_DUMP_DB";
 
-	private static boolean checkConfigurationReady() {
-		if ((mConfiguration == null) || (mConfigurationToReload)) {
-			File configurationFile = new File(UMessageApplication.getContext()
-					.getFilesDir() + "/" + Settings.CONFIG_FILE_NAME);
-			try {
-				if (!configurationFile.isFile()) {
-					mConfiguration = new Configuration();
-					ObjectOutputStream outputStream = new ObjectOutputStream(
-							new FileOutputStream(configurationFile));
-					outputStream.writeObject(mConfiguration);
-					outputStream.close();
-				} else {
-					ObjectInputStream inputStream = new ObjectInputStream(
-							new FileInputStream(configurationFile));
-					mConfiguration = (Configuration) inputStream.readObject();
-					inputStream.close();
-				}
-			} catch (Exception e) {
-				Utility.reportError(UMessageApplication.getContext(), e, TAG
-						+ " checkConfigurationReady()");
-				return false;
-			}
+	private static boolean checkSharedPrefReady() {
+		File sharedPrefsConfigurationManager = new File(
+				"/data/data/com.lollotek.umessage/shared_prefs/"
+						+ SHARED_PREFS_CONFIGURATION_MANAGER + ".xml");
 
-			mConfigurationToReload = false;
+		if (!sharedPrefsConfigurationManager.isFile()) {
+			SharedPreferences prefs = UMessageApplication.getContext()
+					.getSharedPreferences(SHARED_PREFS_CONFIGURATION_MANAGER,
+							UMessageApplication.getContext().MODE_PRIVATE);
+			Editor edit = prefs.edit();
+
+			edit.putString(PREFIX, "");
+			edit.putString(NUM, "");
+			edit.putString(SESSION_ID, "");
+			edit.putString(GCM_ID, "");
+			edit.putString(SIM_SERIAL, "");
+			edit.putString(EMAIL, "");
+			edit.putString(OLD_PREFIX, "");
+			edit.putString(OLD_NUM, "");
+			edit.putBoolean(FIRST_EXECUTION_APP, true);
+			edit.putBoolean(SIM_IS_LOGGING, false);
+			edit.putBoolean(PROFILE_IMAGE_TO_UPLOAD, false);
+			edit.putLong(LAST_DATA_DUMP_DB, 0);
+
+			edit.commit();
 		}
 
 		return true;
-
-	}
-
-	private static boolean writeConfigurationOnFile() {
-		File configurationFile = new File(UMessageApplication.getContext()
-				.getFilesDir() + "/" + Settings.CONFIG_FILE_NAME);
-
-		try {
-			ObjectOutputStream outputStream = new ObjectOutputStream(
-					new FileOutputStream(configurationFile));
-			outputStream.writeObject(mConfiguration);
-			outputStream.close();
-		} catch (Exception e) {
-			Utility.reportError(UMessageApplication.getContext(), e, TAG
-					+ " checkConfigurationReady()");
-			return false;
-		}
-
-		return true;
-
 	}
 
 	public static synchronized Bundle getValues(Bundle valuesWanted) {
-		if (!checkConfigurationReady()) {
-			return new Bundle();
-		}
+		checkSharedPrefReady();
+
+		SharedPreferences prefs = UMessageApplication.getContext()
+				.getSharedPreferences(SHARED_PREFS_CONFIGURATION_MANAGER,
+						UMessageApplication.getContext().MODE_PRIVATE);
 
 		Bundle values = new Bundle();
 
 		if (valuesWanted.getBoolean(PREFIX, false)) {
-			values.putString(PREFIX, mConfiguration.prefix);
+			values.putString(PREFIX, prefs.getString(PREFIX, ""));
 		}
 
 		if (valuesWanted.getBoolean(NUM, false)) {
-			values.putString(NUM, mConfiguration.num);
+			values.putString(NUM, prefs.getString(NUM, ""));
 		}
 
 		if (valuesWanted.getBoolean(SESSION_ID, false)) {
-			values.putString(SESSION_ID, mConfiguration.sessId);
+			values.putString(SESSION_ID, prefs.getString(SESSION_ID, ""));
 		}
 
 		if (valuesWanted.getBoolean(GCM_ID, false)) {
-			values.putString(GCM_ID, mConfiguration.gcmId);
+			values.putString(GCM_ID, prefs.getString(GCM_ID, ""));
 		}
 
 		if (valuesWanted.getBoolean(SIM_SERIAL, false)) {
-			values.putString(SIM_SERIAL, mConfiguration.simSerial);
+			values.putString(SIM_SERIAL, prefs.getString(SIM_SERIAL, ""));
 		}
 
 		if (valuesWanted.getBoolean(EMAIL, false)) {
-			values.putString(EMAIL, mConfiguration.email);
+			values.putString(EMAIL, prefs.getString(EMAIL, ""));
 		}
 
 		if (valuesWanted.getBoolean(OLD_PREFIX, false)) {
-			values.putString(OLD_PREFIX, mConfiguration.oldPrefix);
+			values.putString(OLD_PREFIX, prefs.getString(OLD_PREFIX, ""));
 		}
 
 		if (valuesWanted.getBoolean(OLD_NUM, false)) {
-			values.putString(OLD_NUM, mConfiguration.oldNum);
+			values.putString(OLD_NUM, prefs.getString(OLD_NUM, ""));
 		}
 
 		if (valuesWanted.getBoolean(FIRST_EXECUTION_APP, false)) {
 			values.putBoolean(FIRST_EXECUTION_APP,
-					mConfiguration.firstExecutionApp);
+					prefs.getBoolean(FIRST_EXECUTION_APP, true));
 		}
 		if (valuesWanted.getBoolean(SIM_IS_LOGGING, false)) {
-			values.putBoolean(SIM_IS_LOGGING, mConfiguration.simIsLogging);
+			values.putBoolean(SIM_IS_LOGGING,
+					prefs.getBoolean(SIM_IS_LOGGING, false));
 		}
 		if (valuesWanted.getBoolean(PROFILE_IMAGE_TO_UPLOAD, false)) {
 			values.putBoolean(PROFILE_IMAGE_TO_UPLOAD,
-					mConfiguration.profileImageToUpload);
+					prefs.getBoolean(PROFILE_IMAGE_TO_UPLOAD, false));
 		}
 		if (valuesWanted.getBoolean(LAST_DATA_DUMP_DB, false)) {
-			values.putLong(LAST_DATA_DUMP_DB, mConfiguration.lastDataDumpDB);
+			values.putLong(LAST_DATA_DUMP_DB,
+					prefs.getLong(LAST_DATA_DUMP_DB, 0));
 		}
 
 		return values;
 	}
 
 	public static synchronized boolean saveValues(Bundle valuesToUpdate) {
-		if (!checkConfigurationReady()) {
-			return false;
-		}
+		checkSharedPrefReady();
+
+		SharedPreferences prefs = UMessageApplication.getContext()
+				.getSharedPreferences(SHARED_PREFS_CONFIGURATION_MANAGER,
+						UMessageApplication.getContext().MODE_PRIVATE);
+		Editor edit = prefs.edit();
 
 		if (valuesToUpdate.containsKey(PREFIX)) {
-			mConfiguration.prefix = valuesToUpdate.getString(PREFIX, "");
+			edit.putString(PREFIX, valuesToUpdate.getString(PREFIX, ""));
 		}
 
 		if (valuesToUpdate.containsKey(NUM)) {
-			mConfiguration.num = valuesToUpdate.getString(NUM, "");
+			edit.putString(NUM, valuesToUpdate.getString(NUM, ""));
 		}
 
 		if (valuesToUpdate.containsKey(SESSION_ID)) {
-			mConfiguration.sessId = valuesToUpdate.getString(SESSION_ID, "");
+			edit.putString(SESSION_ID, valuesToUpdate.getString(SESSION_ID, ""));
 		}
 
 		if (valuesToUpdate.containsKey(GCM_ID)) {
-			mConfiguration.gcmId = valuesToUpdate.getString(GCM_ID, "");
+			edit.putString(GCM_ID, valuesToUpdate.getString(GCM_ID, ""));
 		}
 
 		if (valuesToUpdate.containsKey(SIM_SERIAL)) {
-			mConfiguration.simSerial = valuesToUpdate.getString(SIM_SERIAL, "");
+			edit.putString(SIM_SERIAL, valuesToUpdate.getString(SIM_SERIAL, ""));
 		}
 
 		if (valuesToUpdate.containsKey(EMAIL)) {
-			mConfiguration.email = valuesToUpdate.getString(EMAIL, "");
+			edit.putString(EMAIL, valuesToUpdate.getString(EMAIL, ""));
 		}
 
 		if (valuesToUpdate.containsKey(OLD_PREFIX)) {
-			mConfiguration.oldPrefix = valuesToUpdate.getString(OLD_PREFIX, "");
+			edit.putString(OLD_PREFIX, valuesToUpdate.getString(OLD_PREFIX, ""));
 		}
 
 		if (valuesToUpdate.containsKey(OLD_NUM)) {
-			mConfiguration.oldNum = valuesToUpdate.getString(OLD_NUM, "");
+			edit.putString(OLD_NUM, valuesToUpdate.getString(OLD_NUM, ""));
 		}
 
 		if (valuesToUpdate.containsKey(FIRST_EXECUTION_APP)) {
-			mConfiguration.firstExecutionApp = valuesToUpdate.getBoolean(
-					FIRST_EXECUTION_APP, false);
+			edit.putBoolean(FIRST_EXECUTION_APP,
+					valuesToUpdate.getBoolean(FIRST_EXECUTION_APP, true));
 		}
 
 		if (valuesToUpdate.containsKey(SIM_IS_LOGGING)) {
-			mConfiguration.simIsLogging = valuesToUpdate.getBoolean(
-					SIM_IS_LOGGING, false);
+			edit.putBoolean(SIM_IS_LOGGING,
+					valuesToUpdate.getBoolean(SIM_IS_LOGGING, false));
 		}
 
 		if (valuesToUpdate.containsKey(PROFILE_IMAGE_TO_UPLOAD)) {
-			mConfiguration.profileImageToUpload = valuesToUpdate.getBoolean(
-					PROFILE_IMAGE_TO_UPLOAD, false);
+			edit.putBoolean(PROFILE_IMAGE_TO_UPLOAD,
+					valuesToUpdate.getBoolean(PROFILE_IMAGE_TO_UPLOAD, false));
 		}
 
 		if (valuesToUpdate.containsKey(LAST_DATA_DUMP_DB)) {
-			mConfiguration.lastDataDumpDB = valuesToUpdate.getLong(
-					LAST_DATA_DUMP_DB, 0);
+			edit.putLong(LAST_DATA_DUMP_DB,
+					valuesToUpdate.getLong(LAST_DATA_DUMP_DB, 0));
 		}
 
-		// Qui valuesToReload = true ???
-		if (writeConfigurationOnFile()) {
+		if (edit.commit()) {
 			return false;
 		}
 
 		return true;
-	}
-
-}
-
-class Configuration implements java.io.Serializable {
-
-	/**
-	 * Autogenerato
-	 */
-	private static final long serialVersionUID = 1L;
-
-	public String prefix, num, sessId, gcmId, simSerial, email, oldPrefix,
-			oldNum;
-	public boolean firstExecutionApp, simIsLogging, profileImageToUpload;
-	public long lastDataDumpDB;
-
-	public Configuration() {
-		super();
-		this.prefix = "";
-		this.num = "";
-		this.sessId = "";
-		this.gcmId = "";
-		this.simSerial = "";
-		this.firstExecutionApp = true;
-		this.simIsLogging = false;
-		this.profileImageToUpload = false;
-		this.oldPrefix = "";
-		this.oldNum = "";
-		this.lastDataDumpDB = 0;
-
 	}
 
 }
