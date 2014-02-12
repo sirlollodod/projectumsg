@@ -33,34 +33,42 @@ public class Main extends Activity {
 
 		setContentView(R.layout.activity_main);
 
-		// debug, solo per versione 6, poi da togliere
-		PackageInfo packageInfo;
-		SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_MAIN,
-				MODE_PRIVATE);
-		boolean configurationFileToDelete = prefs.getBoolean(
-				"configFileToDelete", true);
+		// debug, solo fino a versione 7
+		File configurationFile = new File(UMessageApplication.getContext()
+				.getFilesDir() + "/" + Settings.CONFIG_FILE_NAME);
 
-		if (configurationFileToDelete) {
-			try {
-				packageInfo = this.getPackageManager().getPackageInfo(
-						this.getPackageName(), 0);
-
-				if (packageInfo.versionCode == 6) {
-					File configurationFile = new File(UMessageApplication
-							.getContext().getFilesDir()
-							+ "/"
-							+ Settings.CONFIG_FILE_NAME);
-					if (configurationFile.isFile()
-							&& configurationFile.delete()) {
-						Editor edit = prefs.edit();
-						edit.putBoolean("configFileToDelete", false);
-						edit.commit();
-					}
-				}
-			} catch (Exception e) {
-
-			}
+		if (configurationFile.isFile()) {
+			configurationFile.delete();
 		}
+
+		File sharedPrefsMain = new File(
+				"/data/data/com.lollotek.umessage/shared_prefs/"
+						+ SHARED_PREFS_MAIN + ".xml");
+		if (sharedPrefsMain.isFile()) {
+			sharedPrefsMain.delete();
+		}
+		// fine debug
+
+		
+		// debug, solo per versione 6, poi da togliere
+		/*
+		 * PackageInfo packageInfo; SharedPreferences prefs =
+		 * getSharedPreferences(SHARED_PREFS_MAIN, MODE_PRIVATE); boolean
+		 * configurationFileToDelete = prefs.getBoolean( "configFileToDelete",
+		 * true);
+		 * 
+		 * if (configurationFileToDelete) { try { packageInfo =
+		 * this.getPackageManager().getPackageInfo( this.getPackageName(), 0);
+		 * 
+		 * if (packageInfo.versionCode == 6) { File configurationFile = new
+		 * File(UMessageApplication .getContext().getFilesDir() + "/" +
+		 * Settings.CONFIG_FILE_NAME); if (configurationFile.isFile() &&
+		 * configurationFile.delete()) { Editor edit = prefs.edit();
+		 * edit.putBoolean("configFileToDelete", false); edit.commit(); } } }
+		 * catch (Exception e) {
+		 * 
+		 * } }
+		 */
 		// fine debug
 
 		Intent service = new Intent(this,

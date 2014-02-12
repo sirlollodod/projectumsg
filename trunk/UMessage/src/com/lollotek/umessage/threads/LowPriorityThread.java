@@ -190,7 +190,7 @@ public class LowPriorityThread extends Thread {
 						request.putBoolean(
 								ConfigurationManager.PROFILE_IMAGE_TO_UPLOAD,
 								false);
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -201,7 +201,7 @@ public class LowPriorityThread extends Thread {
 					} else if (!result.getBoolean("isSessionValid")) {
 						request = new Bundle();
 						request.putString(ConfigurationManager.SESSION_ID, "");
-						if (ConfigurationManager.saveValues(request)) {
+						if (!ConfigurationManager.saveValues(request)) {
 							Utility.reportError(
 									UMessageApplication.getContext(),
 									new Exception(
@@ -441,10 +441,9 @@ public class LowPriorityThread extends Thread {
 			case MessageTypes.MAKE_DB_DUMP:
 				if (Settings.debugMode) {
 					Toast.makeText(UMessageApplication.getContext(),
-							TAG + "MAKE_DB_DUMP",
-							Toast.LENGTH_SHORT).show();
+							TAG + "MAKE_DB_DUMP", Toast.LENGTH_SHORT).show();
 				}
-				
+
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.MAKE_DB_DUMP);
 
@@ -589,7 +588,7 @@ public class LowPriorityThread extends Thread {
 					request = new Bundle();
 					request.putLong(ConfigurationManager.LAST_DATA_DUMP_DB,
 							dataDump);
-					if (ConfigurationManager.saveValues(request)) {
+					if (!ConfigurationManager.saveValues(request)) {
 						Utility.reportError(
 								UMessageApplication.getContext(),
 								new Exception(
@@ -651,7 +650,7 @@ public class LowPriorityThread extends Thread {
 							TAG + "START_DROPBOX_SYNCHRONIZATION",
 							Toast.LENGTH_SHORT).show();
 				}
-				
+
 				lowPriorityThreadHandler
 						.removeMessages(MessageTypes.START_DROPBOX_SYNCHRONIZATION);
 
