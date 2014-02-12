@@ -74,5 +74,14 @@ Changelog:
 
 
 
+#################################
+version = 9 					#
+version name = 1.0.8			#
+#################################
+Changelog:
++ Errore: dimenticato parte in Main per rimozione vecchio file configurazione
+
+
+
 
 
