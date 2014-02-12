@@ -65,4 +65,14 @@ Changelog:
 
 
 
+#################################
+version = 8 					#
+version name = 1.0.7			#
+#################################
+Changelog:
++ Rimosso startWakefulService nel GCMBroadcastReceiver; service viene lanciato senza wakeLock adesso
+
+
+
+
 

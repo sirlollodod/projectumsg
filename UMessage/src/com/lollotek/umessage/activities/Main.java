@@ -1,29 +1,20 @@
 package com.lollotek.umessage.activities;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageInfo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.utils.MessageTypes;
-import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
 
 	private static final String TAG = Main.class.getName() + ":\n";
-
-	private static final String SHARED_PREFS_MAIN = "MAIN_DELETE_CONFIG_FILE";
 
 	Bundle request, response;
 
@@ -32,44 +23,6 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_main);
-
-		// debug, solo fino a versione 7
-		File configurationFile = new File(UMessageApplication.getContext()
-				.getFilesDir() + "/" + Settings.CONFIG_FILE_NAME);
-
-		if (configurationFile.isFile()) {
-			configurationFile.delete();
-		}
-
-		File sharedPrefsMain = new File(
-				"/data/data/com.lollotek.umessage/shared_prefs/"
-						+ SHARED_PREFS_MAIN + ".xml");
-		if (sharedPrefsMain.isFile()) {
-			sharedPrefsMain.delete();
-		}
-		// fine debug
-
-		
-		// debug, solo per versione 6, poi da togliere
-		/*
-		 * PackageInfo packageInfo; SharedPreferences prefs =
-		 * getSharedPreferences(SHARED_PREFS_MAIN, MODE_PRIVATE); boolean
-		 * configurationFileToDelete = prefs.getBoolean( "configFileToDelete",
-		 * true);
-		 * 
-		 * if (configurationFileToDelete) { try { packageInfo =
-		 * this.getPackageManager().getPackageInfo( this.getPackageName(), 0);
-		 * 
-		 * if (packageInfo.versionCode == 6) { File configurationFile = new
-		 * File(UMessageApplication .getContext().getFilesDir() + "/" +
-		 * Settings.CONFIG_FILE_NAME); if (configurationFile.isFile() &&
-		 * configurationFile.delete()) { Editor edit = prefs.edit();
-		 * edit.putBoolean("configFileToDelete", false); edit.commit(); } } }
-		 * catch (Exception e) {
-		 * 
-		 * } }
-		 */
-		// fine debug
 
 		Intent service = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
