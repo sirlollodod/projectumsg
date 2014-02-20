@@ -83,5 +83,18 @@ Changelog:
 
 
 
+#################################
+version = 10 					#
+version name = 1.0.9			#
+#################################
+Changelog:
++ Implementazione in corso DropBoxManager con metodi per gestione index online/locale e file di upload/download file di bk
+
+
+
+
+
+
+
 
 

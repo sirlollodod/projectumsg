@@ -179,7 +179,7 @@ public class ConfigurationManager {
 					valuesToUpdate.getLong(LAST_DATA_DUMP_DB, 0));
 		}
 
-		if (edit.commit()) {
+		if (!edit.commit()) {
 			return false;
 		}
 

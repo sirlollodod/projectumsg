@@ -265,7 +265,7 @@ public class MainThread extends Thread {
 					m = new Message();
 					m.what = MessageTypes.MAKE_DB_DUMP;
 					m.setData(msg.getData());
-					lowPriorityThreadHandler.sendMessage(m);
+					sendToLowPriorityThreadHandler(m);
 				} catch (Exception e) {
 					addToQueue(msg, TIME_MINUTE, 4, true, false);
 				}
