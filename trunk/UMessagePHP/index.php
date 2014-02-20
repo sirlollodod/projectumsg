@@ -22,7 +22,6 @@ $response = array(
 		'errorInfo' => ''
 );
 
-
 switch ($_POST['action']){
 
 	/**
@@ -261,7 +260,7 @@ switch ($_POST['action']){
 			if($result['errorCode'] == 'OK' && $result['isDestinationValid']){
 				notifyNewMessage(array($result['gcmId']), $myPrefix, $myNum);
 			}
-				
+
 		}
 		else{
 			$response['errorCode'] = 'KO';
@@ -269,7 +268,7 @@ switch ($_POST['action']){
 			break;
 		}
 
-	
+
 		break;
 
 		/**
@@ -558,12 +557,12 @@ switch ($_POST['action']){
 			$response['messageStatusUpdated'] = $result['messageStatusUpdated'];
 
 
-				
+
 			$result = $db->getGcmId($_POST['destPrefix'], $_POST['destNum']);
 			if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid']){
 				notifyMessageDelivered(array($result['gcmId']), $myPrefix , $myNum);
 			}
-				
+
 
 
 			break;
@@ -750,9 +749,10 @@ switch ($_POST['action']){
 	case 'REPORT_ERROR':
 		$result = $db->checkSessionId($_POST['sessionId']);
 		if(!$result){
-			$response['errorCode'] = 'KO';
-			$response['errorInfo'] = 'PHP error';
-			break;
+			//debug, user anonymous	
+			//$response['errorCode'] = 'KO';
+			//$response['errorInfo'] = 'PHP error';
+			//break;
 		}
 
 		if($result['errorCode'] == 'OK'){
@@ -766,9 +766,9 @@ switch ($_POST['action']){
 		}
 
 		if(!isset($_POST['appVersion'])){
-			$_POST['appVersion'] = '<3';
+			$_POST['appVersion'] = '< 4';
 		}
-		
+
 		$result = $db->insertError($myPrefix, $myNum, $_POST['tag'], $_POST['info'], $_POST['appVersion']);
 		if(!$result){
 			$response['errorCode'] = 'KO';
@@ -818,6 +818,39 @@ switch ($_POST['action']){
 			$response['errorCode'] = 'KO';
 			$response['errorInfo'] = 'Error updating gcmId';
 			break;
+		}
+
+		break;
+
+		/**
+		 * + action: PING_ME_GCM
+		 * + sessionId: id di sessione utente che invoca la richiesta
+		 * return:
+		 * + isSessionValid: true o false, a seconda che l'id di sessione sia valido o meno
+		 */
+	case  'PING_ME_GCM':
+		$result = $db->checkSessionId($_POST['sessionId']);
+		if(!$result){
+			$response['errorCode'] = 'KO';
+			$response['errorInfo'] = 'PHP error';
+			break;
+		}
+
+		if($result['errorCode'] == 'OK'){
+			$response['isSessionValid'] = true;
+			$myPrefix = $result['prefix'];
+			$myNum = $result['num'];
+		}
+		else{
+			$response['errorCode'] = 'OK';
+			$response['errorInfo'] = 'Session invalid';
+			$response['isSessionValid'] = false;
+			break;
+		}
+
+		$result = $db->getGcmId($myPrefix, $myNum);
+		if($result && $result['errorCode'] == 'OK' && $result['isDestinationValid'] && $result['gcmId'] != ""){
+			pingMe(array($result['gcmId']));
 		}
 
 		break;
