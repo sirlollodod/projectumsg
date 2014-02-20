@@ -10,6 +10,9 @@ public class Settings {
 	public static final String MY_PROFILE_IMAGE_SRC = "/me.jpg";
 	public static final String MY_PROFILE_IMAGE_SRC_TEMP = "/temp_me.jpg";
 	public static final String DUMP_DB_BASE_FILE_NAME = "/dumpDB";
+	public static final String DROPBOX_INDEX_LOCAL_FILE_TEMP = "/dropbox_index_temp";
+	public static final String DROPBOX_INDEX_FILE = "/indexUsersBk";
+	public static final String DROPBOX_USER_BK = "/dropbox_user_bk";
 
 	public static final boolean debugMode = false;
 

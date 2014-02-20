@@ -460,26 +460,4 @@ public class Utility {
 		return ret;
 	}
 
-	/*
-	public static DropboxAPI.Entry getDropboxIndexFile(
-			DropboxAPI<AndroidAuthSession> connection, File localIndexFile) {
-
-		if (!connection.getSession().isLinked()) {
-			return null;
-		}
-
-		if (localIndexFile.isFile()) {
-			localIndexFile.delete();
-		}
-
-		String indexFileToDownload = "UMessageIndex";
-
-		FileOutputStream outputStream = new FileOutputStream(localIndexFile);
-		DropboxFileInfo info = connection.getFile("/" + indexFileToDownload,
-				null, outputStream, null);
-
-		return new DropboxAPI.Entry();
-	}
-	*/
-
 }

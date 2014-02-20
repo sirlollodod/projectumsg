@@ -1,7 +1,5 @@
 package com.lollotek.umessage.activities;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,15 +10,12 @@ import com.lollotek.umessage.R;
 import com.lollotek.umessage.UMessageApplication;
 import com.lollotek.umessage.managers.ConfigurationManager;
 import com.lollotek.umessage.utils.MessageTypes;
-import com.lollotek.umessage.utils.Settings;
 import com.lollotek.umessage.utils.Utility;
 
 public class Main extends Activity {
 
 	private static final String TAG = Main.class.getName() + ":\n";
-	
-	private static final String SHARED_PREFS_MAIN = "MAIN_DELETE_CONFIG_FILE";
-	
+
 	Bundle request, response;
 
 	@Override
@@ -29,22 +24,6 @@ public class Main extends Activity {
 
 		setContentView(R.layout.activity_main);
 
-		// debug, solo fino a versione 9
-        File configurationFile = new File(UMessageApplication.getContext()
-                        .getFilesDir() + "/" + Settings.CONFIG_FILE_NAME);
-
-        if (configurationFile.isFile()) {
-                configurationFile.delete();
-        }
-
-        File sharedPrefsMain = new File(
-                        "/data/data/com.lollotek.umessage/shared_prefs/"
-                                        + SHARED_PREFS_MAIN + ".xml");
-        if (sharedPrefsMain.isFile()) {
-                sharedPrefsMain.delete();
-        }
-        // fine debug
-        
 		Intent service = new Intent(this,
 				com.lollotek.umessage.services.UMessageService.class);
 
