@@ -25,11 +25,16 @@ function notifyMessageDelivered($gcmId, $prefix, $num){
 	send_notification($gcmId, $message);
 }
 
+function pingMe($gcmId){
+	$message = array(
+			'action' => '93'
+	);
+
+	send_notification($gcmId, $message);
+}
+
 function send_notification($registatoin_ids, $message) {
 
-	//new server key: davide.lorenzi.vr@gmail.com
-	//value= 'AIzaSyDjmCQmxWNYDPuUajMCx0Zd2FSd0KLkNjw'
-	// old value @ sirlollodod@gmail.com = 'AIzaSyDGjIoxS6WXXm_wvXqgPc-2bQqTDxI0gsA'
 	define("GOOGLE_API_KEY", "AIzaSyDjmCQmxWNYDPuUajMCx0Zd2FSd0KLkNjw"); // Place your Google API Key
 
 	// Set POST variables
